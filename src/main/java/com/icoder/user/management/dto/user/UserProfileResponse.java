@@ -1,5 +1,7 @@
 package com.icoder.user.management.dto.user;
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,6 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class UserProfileResponse {
     @NotBlank
     private String handle;
@@ -18,7 +21,7 @@ public class UserProfileResponse {
     @NotBlank
     private String email;
     private String school;
-    private String pictureURL;
+    private String pictureUrl;
     @NotBlank
     private boolean verified;
     @NotBlank

@@ -35,7 +35,7 @@ public class User {
     @Column(nullable = false)
     private String email;
 
-    private String pictureURL;
+    private String pictureUrl;
 
     @Column(nullable = false)
     private boolean verified = false;

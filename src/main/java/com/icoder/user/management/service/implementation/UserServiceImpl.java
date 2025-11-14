@@ -78,8 +78,8 @@ public class UserServiceImpl implements UserService {
                 user.setNickname(request.getNickname());
             if (request.getSchool() != null && !request.getSchool().equals(user.getSchool()))
                 user.setSchool(request.getSchool());
-            if (request.getPictureURL() != null && !request.getPictureURL().equals(user.getPictureURL()))
-                user.setPictureURL(request.getPictureURL());
+            if (request.getPictureUrl() != null && !request.getPictureUrl().equals(user.getPictureUrl()))
+                user.setPictureUrl(request.getPictureUrl());
             userRepository.save(user);
             return userMapper.toDTO(user);
         } else
@@ -107,7 +107,7 @@ public class UserServiceImpl implements UserService {
             Path path = Paths.get(uploadDir, filename);
             Files.write(path, file.getBytes());
             String fileUrl = uploadDir + filename;
-            user.setPictureURL(fileUrl);
+            user.setPictureUrl(fileUrl);
             userRepository.save(user);
 
             return userMapper.toDTO(user);
@@ -142,5 +142,27 @@ public class UserServiceImpl implements UserService {
         String newEmail = jwtServiceImpl.extractClaim(token, claims -> (String) claims.get("newEmail"));
         result.user().setEmail(newEmail);
         userRepository.save(result.user());
+    }
+
+    @Transactional
+    public void deleteProfilePicture(Authentication authentication) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        User user = userRepository.findByHandle(userDetails.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        if (user.getPictureUrl() == null || user.getPictureUrl().isBlank()) {
+            throw new IllegalStateException("User does not have a profile picture.");
+        }
+        deleteImageFromStorage(user.getPictureUrl());
+        user.setPictureUrl(null);
+        userRepository.save(user);
+    }
+
+    private void deleteImageFromStorage(String imagePath) {
+        try {
+            Path path = Paths.get(imagePath);
+            Files.deleteIfExists(path);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to delete profile picture.", e);
+        }
     }
 }

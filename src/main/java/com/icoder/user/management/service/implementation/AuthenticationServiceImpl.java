@@ -1,6 +1,7 @@
 package com.icoder.user.management.service.implementation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.icoder.core.exception.ApiException;
 import com.icoder.core.exception.EmailException;
 import com.icoder.core.exception.PasswordException;
 import com.icoder.core.security.CustomUserDetails;
@@ -42,9 +43,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Transactional
     public String register(RegisterRequest request, HttpServletResponse response) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new ApiException("Email is already registered.");
+        }
+        if (userRepository.existsByHandle(request.getHandle())) {
+            throw new ApiException("Handle is already taken.");
+        }
         if (!request.getPassword().equals(request.getPasswordConfirmation())) {
             throw new PasswordException("New password and confirmation password do not match");
         }
+
         User user = authMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setCreatedAt(Instant.now().toString());

@@ -20,4 +20,6 @@ public interface UserService {
     void requestEmailUpdate(UpdateEmailRequest request, Authentication authentication);
 
     void confirmEmailUpdate(String token);
+
+    void deleteProfilePicture(Authentication authentication);
 }
