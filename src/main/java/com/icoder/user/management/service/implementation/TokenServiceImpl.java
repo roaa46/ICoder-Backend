@@ -19,9 +19,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TokenServiceImpl implements TokenService {
     private final TokenRepository tokenRepository;
-    @Value("${expiration}")
+    @Value("${token.expiration}")
     private Long tokenExpiration;
-    @Value("${refresh-token-expiration}")
+    @Value("${refresh.token.expiration}")
     private Long refreshTokenExpiration;
 
     @Transactional

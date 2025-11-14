@@ -38,7 +38,7 @@ public class UserServiceImpl implements UserService {
     private final TokenServiceImpl tokenServiceImpl;
     private final PasswordEncoder passwordEncoder;
     private final TokenHelper tokenHelper;
-    @Value("${upload-dir}")
+    @Value("${upload.dir}")
     private String uploadDir = "uploads/profile-pictures/";
 
     public UserProfileResponse getProfile(Authentication authentication) { // SecurityContextHolder.getContext().getAuthentication(); in service layer

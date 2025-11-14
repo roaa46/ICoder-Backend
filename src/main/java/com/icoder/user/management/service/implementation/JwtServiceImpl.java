@@ -18,13 +18,13 @@ import java.util.function.Function;
 
 @Service
 public class JwtServiceImpl implements JwtService {
-    @Value("${secret-key}")
+    @Value("${jwt.secret}")
     private String secretKey;
 
-    @Value("${expiration}")
+    @Value("${token.expiration}")
     private Long tokenExpiration;
 
-    @Value("${refresh-token-expiration}")
+    @Value("${refresh.token.expiration}")
     private Long refreshTokenExpiration;
 
     public String extractUserHandle(String token) {

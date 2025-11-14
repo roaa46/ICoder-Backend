@@ -2,6 +2,7 @@ package com.icoder;
 
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
+import io.github.cdimascio.dotenv.Dotenv;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -18,6 +19,18 @@ public class ICoderApplication {
     private final UserRepository userRepository;
 
     public static void main(String[] args) {
+        Dotenv dotenv = Dotenv.load();
+
+        System.setProperty("JWT_SECRET", dotenv.get("JWT_SECRET"));
+        System.setProperty("TOKEN_EXPIRATION", dotenv.get("TOKEN_EXPIRATION"));
+        System.setProperty("REFRESH_TOKEN_EXPIRATION", dotenv.get("REFRESH_TOKEN_EXPIRATION"));
+        System.setProperty("DB_URL", dotenv.get("DB_URL"));
+        System.setProperty("DB_USERNAME", dotenv.get("DB_USERNAME"));
+        System.setProperty("DB_PASSWORD", dotenv.get("DB_PASSWORD"));
+        System.setProperty("EMAIL", dotenv.get("EMAIL"));
+        System.setProperty("PASSWORD", dotenv.get("PASSWORD"));
+        System.setProperty("UPLOAD_DIR", dotenv.get("UPLOAD_DIR"));
+
         SpringApplication.run(ICoderApplication.class, args);
     }
 
