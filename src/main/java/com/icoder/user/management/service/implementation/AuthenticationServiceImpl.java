@@ -1,6 +1,7 @@
 package com.icoder.user.management.service.implementation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.icoder.core.dto.MessageResponse;
 import com.icoder.core.exception.ApiException;
 import com.icoder.core.security.CustomUserDetails;
 import com.icoder.core.util.TokenHelper;
@@ -42,7 +43,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final AuthMapper authMapper;
 
     @Transactional
-    public String register(RegisterRequest request, HttpServletResponse response) {
+    public MessageResponse register(RegisterRequest request, HttpServletResponse response) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ApiException(
                     "Email is already used",
@@ -76,7 +77,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         tokenServiceImpl.addTokenCookies(response, jwtToken, refreshJwtToken);
 
-        return "Account created successfully! Please verify your email before logging in.";
+        return new MessageResponse("Account created successfully! Please verify your email before logging in.");
     }
 
     public LoginResponse login(LoginRequest request, HttpServletResponse response) {
@@ -129,45 +130,49 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Transactional
-    public String verifyEmail(String token) {
+    public MessageResponse verifyEmail(String token) {
         String handle = jwtServiceImpl.extractUserHandle(token);
         User user = userRepository.findByHandle(handle)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid token"));
         user.setVerified(true);
         userRepository.save(user);
-        return "Email verified successfully! You can now log in.";
+        return new MessageResponse("Email verified successfully! You can now log in");
     }
 
     // if user forgot password call forgetPassword() then resetPassword()
-    public void forgetPassword(ForgetPasswordRequest request) {
+    public MessageResponse forgetPassword(ForgetPasswordRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ApiException("No user found with this email"));
         emailVerificationServiceImpl.sendPasswordResetEmail(user);
+        return new MessageResponse("Password change link is sent to your email");
     }
 
     @Transactional
-    public void resetPassword(ResetPasswordRequest request) {
+    public MessageResponse resetPassword(ResetPasswordRequest request) {
         validatePasswordChange.validatePasswordChange(request);
         var result = tokenHelper.validateAndExtract(request.getToken());
         result.user().setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(result.user());
+        return new MessageResponse("Password has been reset successfully");
     }
 
     // if he logged in changePassword() then confirmPasswordChange()
-    public void changePassword(ChangePasswordRequest request, Principal principal) {
+    public MessageResponse changePassword(ChangePasswordRequest request, Principal principal) {
         String userHandle = principal.getName();
         User user = userRepository.findByHandle(userHandle)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         validatePasswordChange.validatePasswordChange(request, user);
         String encodedNewPassword = passwordEncoder.encode(request.getNewPassword());
         emailVerificationServiceImpl.sendPasswordChangeVerificationEmail(user, encodedNewPassword);
+        return new MessageResponse("Password changed successfully, Please verify it from your email");
     }
 
     @Transactional
-    public void confirmPasswordChange(String token) {
+    public MessageResponse confirmPasswordChange(String token) {
         var result = tokenHelper.validateAndExtract(token);
         String encodedPassword = jwtServiceImpl.extractClaim(token, claims -> claims.get("newPassword").toString());
         result.user().setPassword(encodedPassword);
         userRepository.save(result.user());
+        return new MessageResponse("Password change confirmed");
     }
 }

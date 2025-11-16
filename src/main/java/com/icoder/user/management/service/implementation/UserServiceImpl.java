@@ -1,5 +1,6 @@
 package com.icoder.user.management.service.implementation;
 
+import com.icoder.core.dto.MessageResponse;
 import com.icoder.core.enums.TokenType;
 import com.icoder.core.exception.ApiException;
 import com.icoder.core.security.CustomUserDetails;
@@ -48,47 +49,50 @@ public class UserServiceImpl implements UserService {
         return userMapper.toDTO(user);
     }
 
-    public void requestAccountDeletion(Authentication authentication) {
+    public MessageResponse requestAccountDeletion(Authentication authentication) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
         User user = userRepository.findByHandle(userDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         emailVerificationServiceImpl.sendAccountDeletionEmail(user);
+        return new MessageResponse("A confirmation email has been sent to your email.");
     }
 
     @Transactional
-    public void confirmAccountDeletion(String token) {
+    public MessageResponse confirmAccountDeletion(String token) {
         var result = tokenHelper.validateAndExtract(token);
         if (!"ACCOUNT_DELETION".equals(result.type())) {
             throw new IllegalStateException("Invalid token type for deletion");
         }
         tokenServiceImpl.revokeAllUserTokens(result.user());
         userRepository.delete(result.user());
+        return new MessageResponse("Your account has been successfully deleted");
     }
 
     @Transactional
-    public UserProfileResponse updateProfile(UserProfileRequest request, Authentication authentication) {
+    public MessageResponse updateProfile(UserProfileRequest request, Authentication authentication) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         User user = userRepository.findByHandle(userDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-        if (passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            if (request.getNickname() != null && !request.getNickname().equals(user.getNickname()))
-                user.setNickname(request.getNickname());
-            if (request.getSchool() != null && !request.getSchool().equals(user.getSchool()))
-                user.setSchool(request.getSchool());
-            userRepository.save(user);
-            return userMapper.toDTO(user);
-        } else
-            throw new ApiException(
-                    "Current password is incorrect",
-                    Map.of("field", "current_password")
-            );
+        validateCurrentPassword(request.getCurrentPassword(), user.getPassword());
+        if (
+                (request.getNickname() != null && request.getNickname().equals(user.getNickname()))
+            ||
+                (request.getSchool() != null && request.getSchool().equals(user.getSchool()))
+            ) {
+            throw new ApiException("You must change at least one field");
+        }
+        if (request.getNickname() != null && !request.getNickname().equals(user.getNickname()))
+            user.setNickname(request.getNickname());
+        if (request.getSchool() != null && !request.getSchool().equals(user.getSchool()))
+            user.setSchool(request.getSchool());
+        userRepository.save(user);
+        return new MessageResponse("Your data has been successfully changed");
     }
 
     @Transactional
-    public UserProfileResponse changeProfilePicture(Authentication authentication, MultipartFile file) {
+    public MessageResponse changeProfilePicture(Authentication authentication, MultipartFile file) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         User user = userRepository.findByHandle(userDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
@@ -125,7 +129,7 @@ public class UserServiceImpl implements UserService {
             user.setPictureUrl(fileUrl);
             userRepository.save(user);
 
-            return userMapper.toDTO(user);
+            return new MessageResponse("Your profile picture has been successfully changed");
 
         } catch (IOException e) {
             throw new IllegalStateException("Failed to upload profile picture", e);
@@ -133,17 +137,21 @@ public class UserServiceImpl implements UserService {
     }
 
 
-    @Transactional
-    public void requestEmailUpdate(UpdateEmailRequest request, Authentication authentication) {
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        User user = userRepository.findByHandle(userDetails.getUsername())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+    private void validateCurrentPassword(String currentPassword, String userPassword) {
+        if (!passwordEncoder.matches(currentPassword, userPassword)) {
             throw new ApiException(
                     "Current password is incorrect",
                     Map.of("field", "current_password")
             );
         }
+    }
+
+    @Transactional
+    public MessageResponse requestEmailUpdate(UpdateEmailRequest request, Authentication authentication) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        User user = userRepository.findByHandle(userDetails.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        validateCurrentPassword(request.getCurrentPassword(), user.getPassword());
         if (userRepository.existsByEmail(request.getNewEmail())) {
             throw new ApiException(
                     "Email is already used",
@@ -151,10 +159,11 @@ public class UserServiceImpl implements UserService {
             );
         }
         emailVerificationServiceImpl.sendEmailUpdateVerificationEmail(user, request.getNewEmail());
+        return new MessageResponse("Verification link sent to new email.");
     }
 
     @Transactional
-    public void confirmEmailUpdate(String token) {
+    public MessageResponse confirmEmailUpdate(String token) {
         var result = tokenHelper.validateAndExtract(token);
         TokenType tokenType = TokenType.valueOf(result.type());
         if (tokenType != TokenType.EMAIL_UPDATE) {
@@ -163,10 +172,11 @@ public class UserServiceImpl implements UserService {
         String newEmail = jwtServiceImpl.extractClaim(token, claims -> (String) claims.get("newEmail"));
         result.user().setEmail(newEmail);
         userRepository.save(result.user());
+        return new MessageResponse("Email updated successfully.");
     }
 
     @Transactional
-    public void deleteProfilePicture(Authentication authentication) {
+    public MessageResponse deleteProfilePicture(Authentication authentication) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         User user = userRepository.findByHandle(userDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
@@ -176,6 +186,7 @@ public class UserServiceImpl implements UserService {
         deleteImageFromStorage(user.getPictureUrl());
         user.setPictureUrl(null);
         userRepository.save(user);
+        return new MessageResponse("Your profile picture has been successfully deleted");
     }
 
     private void deleteImageFromStorage(String imagePath) {

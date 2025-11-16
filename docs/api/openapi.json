@@ -34,7 +34,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserProfileResponse"
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -383,7 +383,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserProfileResponse"
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -486,53 +486,16 @@
           "nickname": {
             "type": "string"
           },
-          "email": {
-            "type": "string"
-          },
           "school": {
-            "type": "string"
-          },
-          "picture_url": {
             "type": "string"
           }
         }
       },
-      "UserProfileResponse": {
-        "required": [
-          "accepted_count",
-          "attempted_count",
-          "email",
-          "handle",
-          "nickname",
-          "verified"
-        ],
+      "MessageResponse": {
         "type": "object",
         "properties": {
-          "handle": {
+          "message": {
             "type": "string"
-          },
-          "nickname": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "school": {
-            "type": "string"
-          },
-          "picture_url": {
-            "type": "string"
-          },
-          "verified": {
-            "type": "boolean"
-          },
-          "accepted_count": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "attempted_count": {
-            "type": "integer",
-            "format": "int32"
           }
         }
       },
@@ -547,14 +510,6 @@
             "type": "string"
           },
           "current_password": {
-            "type": "string"
-          }
-        }
-      },
-      "MessageResponse": {
-        "type": "object",
-        "properties": {
-          "message": {
             "type": "string"
           }
         }
@@ -580,7 +535,7 @@
           },
           "password": {
             "maxLength": 20,
-            "minLength": 6,
+            "minLength": 8,
             "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$",
             "type": "string"
           },
@@ -625,7 +580,7 @@
           },
           "new_password": {
             "maxLength": 20,
-            "minLength": 6,
+            "minLength": 8,
             "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$",
             "type": "string"
           },
@@ -684,12 +639,51 @@
           },
           "new_password": {
             "maxLength": 20,
-            "minLength": 6,
+            "minLength": 8,
             "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$",
             "type": "string"
           },
           "password_confirmation": {
             "type": "string"
+          }
+        }
+      },
+      "UserProfileResponse": {
+        "required": [
+          "accepted_count",
+          "attempted_count",
+          "email",
+          "handle",
+          "nickname",
+          "verified"
+        ],
+        "type": "object",
+        "properties": {
+          "handle": {
+            "type": "string"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "school": {
+            "type": "string"
+          },
+          "picture_url": {
+            "type": "string"
+          },
+          "verified": {
+            "type": "boolean"
+          },
+          "accepted_count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "attempted_count": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       }
