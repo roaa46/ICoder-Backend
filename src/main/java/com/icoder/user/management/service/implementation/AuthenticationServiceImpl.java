@@ -2,8 +2,6 @@ package com.icoder.user.management.service.implementation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icoder.core.exception.ApiException;
-import com.icoder.core.exception.EmailException;
-import com.icoder.core.exception.PasswordException;
 import com.icoder.core.security.CustomUserDetails;
 import com.icoder.core.util.TokenHelper;
 import com.icoder.core.util.ValidatePasswordChange;
@@ -17,6 +15,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -27,6 +26,7 @@ import java.io.IOException;
 import java.security.Principal;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -44,13 +44,22 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Transactional
     public String register(RegisterRequest request, HttpServletResponse response) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new ApiException("Email is already registered.");
+            throw new ApiException(
+                    "Email is already used",
+                    Map.of("field", "email", "value", request.getEmail())
+            );
         }
         if (userRepository.existsByHandle(request.getHandle())) {
-            throw new ApiException("Handle is already taken.");
+            throw new ApiException(
+                    "Handle is already taken",
+                    Map.of("field", "handle", "value", request.getHandle())
+            );
         }
         if (!request.getPassword().equals(request.getPasswordConfirmation())) {
-            throw new PasswordException("New password and confirmation password do not match");
+            throw new ApiException(
+                    "New password and confirmation password do not match",
+                    Map.of("field", "password_confirmation")
+            );
         }
 
         User user = authMapper.toEntity(request);
@@ -77,7 +86,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         User user = userRepository.findByHandle(request.getHandle())
                 .orElseThrow(() -> new UsernameNotFoundException("user not found"));
         if (!user.isVerified()) {
-            throw new EmailException("Account is not verified. Please check your email.");
+            throw new ApiException("Account is not verified. Please check your email.");
         }
         String jwtToken = jwtServiceImpl.generateToken(new CustomUserDetails(user));
         String refreshJwtToken = jwtServiceImpl.generateRefreshToken(new CustomUserDetails(user));
@@ -132,7 +141,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     // if user forgot password call forgetPassword() then resetPassword()
     public void forgetPassword(ForgetPasswordRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new EmailException("No user found with this email"));
+                .orElseThrow(() -> new ApiException("No user found with this email"));
         emailVerificationServiceImpl.sendPasswordResetEmail(user);
     }
 

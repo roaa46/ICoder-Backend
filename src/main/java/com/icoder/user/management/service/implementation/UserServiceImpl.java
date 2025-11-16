@@ -1,8 +1,7 @@
 package com.icoder.user.management.service.implementation;
 
 import com.icoder.core.enums.TokenType;
-import com.icoder.core.exception.EmailException;
-import com.icoder.core.exception.PasswordException;
+import com.icoder.core.exception.ApiException;
 import com.icoder.core.security.CustomUserDetails;
 import com.icoder.core.util.TokenHelper;
 import com.icoder.user.management.dto.auth.UpdateEmailRequest;
@@ -26,6 +25,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -39,7 +39,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final TokenHelper tokenHelper;
     @Value("${upload.dir}")
-    private String uploadDir = "uploads/profile-pictures/";
+    private String uploadDir;
 
     public UserProfileResponse getProfile(Authentication authentication) { // SecurityContextHolder.getContext().getAuthentication(); in service layer
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
@@ -78,12 +78,13 @@ public class UserServiceImpl implements UserService {
                 user.setNickname(request.getNickname());
             if (request.getSchool() != null && !request.getSchool().equals(user.getSchool()))
                 user.setSchool(request.getSchool());
-            if (request.getPictureUrl() != null && !request.getPictureUrl().equals(user.getPictureUrl()))
-                user.setPictureUrl(request.getPictureUrl());
             userRepository.save(user);
             return userMapper.toDTO(user);
         } else
-            throw new PasswordException("Current password is incorrect");
+            throw new ApiException(
+                    "Current password is incorrect",
+                    Map.of("field", "current_password")
+            );
     }
 
     @Transactional
@@ -94,19 +95,33 @@ public class UserServiceImpl implements UserService {
 
         String contentType = file.getContentType();
         if (contentType == null ||
-                !(contentType.equals("image/png") || contentType.equals("image/jpeg") || contentType.equals("image/jpg") || contentType.equals("image/gif"))) {
+                !(contentType.equals("image/png") ||
+                        contentType.equals("image/jpeg") ||
+                        contentType.equals("image/jpg") ||
+                        contentType.equals("image/gif"))) {
             throw new IllegalStateException("Invalid file type. Only PNG, JPEG, JPG, and GIF are allowed.");
         }
 
         try {
-            File dir = new File(uploadDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
+            // delete old picture
+            if (user.getPictureUrl() != null) {
+                Path old = Paths.get(user.getPictureUrl());
+                Files.deleteIfExists(old);
             }
+
+            // create a folder if not exists
+            File dir = new File(uploadDir);
+            if (!dir.exists()) dir.mkdirs();
+
+            // save new picture
             String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
             Path path = Paths.get(uploadDir, filename);
             Files.write(path, file.getBytes());
-            String fileUrl = uploadDir + filename;
+
+            // URL to return
+            String fileUrl = "/uploads/" + filename;
+
+            // store a new path in DB
             user.setPictureUrl(fileUrl);
             userRepository.save(user);
 
@@ -124,10 +139,16 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByHandle(userDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            throw new PasswordException("Current password is incorrect");
+            throw new ApiException(
+                    "Current password is incorrect",
+                    Map.of("field", "current_password")
+            );
         }
         if (userRepository.existsByEmail(request.getNewEmail())) {
-            throw new EmailException("Email already in use");
+            throw new ApiException(
+                    "Email is already used",
+                    Map.of("field", "email", "value", request.getNewEmail())
+            );
         }
         emailVerificationServiceImpl.sendEmailUpdateVerificationEmail(user, request.getNewEmail());
     }

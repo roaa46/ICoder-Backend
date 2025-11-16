@@ -17,7 +17,5 @@ public class UserProfileRequest {
     @NotBlank
     String currentPassword;
     private String nickname;
-    private String email;
     private String school;
-    private String pictureUrl;
 }

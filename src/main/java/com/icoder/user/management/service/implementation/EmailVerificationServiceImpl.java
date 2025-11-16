@@ -1,7 +1,7 @@
 package com.icoder.user.management.service.implementation;
 
 import com.icoder.core.enums.TokenType;
-import com.icoder.core.exception.EmailException;
+import com.icoder.core.exception.ApiException;
 import com.icoder.core.security.CustomUserDetails;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
@@ -89,7 +89,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
             Instant nextAllowed = lastSent.plus(1, ChronoUnit.MINUTES);
             if (now.isBefore(nextAllowed)) {
                 long minutesLeft = Duration.between(now, nextAllowed).toMinutes();
-                throw new EmailException("Please wait " + minutesLeft + " minutes before requesting another email.");
+                throw new ApiException("Please wait " + minutesLeft + " minutes before requesting another email.");
             }
         }
     }
