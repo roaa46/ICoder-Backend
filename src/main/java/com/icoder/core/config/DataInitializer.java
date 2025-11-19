@@ -3,6 +3,7 @@ package com.icoder.core.config;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,6 +13,7 @@ import java.time.Instant;
 
 @RequiredArgsConstructor
 @Configuration
+@Slf4j
 public class DataInitializer {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
@@ -19,6 +21,7 @@ public class DataInitializer {
     @Bean
     public CommandLineRunner commandLineRunner() {
         return args -> {
+            log.info(">>>> Start Initializing");
 
             User admin = User.builder()
                     .handle("roaazz")
@@ -32,10 +35,10 @@ public class DataInitializer {
 
             if (!userRepository.existsByHandle(admin.getHandle())) {
                 userRepository.save(admin);
-                System.out.println("User created successfully.");
+                log.info("User created successfully.");
             }
             else {
-                System.out.println("User already exists.");
+                log.warn("User already exists.");
             }
         };
     }

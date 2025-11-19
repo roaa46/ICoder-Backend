@@ -68,21 +68,10 @@ _This section will be added once the directory structure and modules stabilize._
 ---
 
 # **Setup & Installation**
-
 ```bash
 # Clone the repository and Navigate to the project
 git clone https://github.com/roaa46/ICoder-backend.git
 cd ICoder-backend
-
-# Build and Run
-
-# Windows
-mvnw.cmd clean install
-mvnw.cmd spring-boot:run
-
-# Linux/Mac
-./mvnw clean install
-./mvnw spring-boot:run
 ```
 
 ### **Environment Variables**
@@ -110,6 +99,39 @@ UPLOAD_DIR=path
 
 # frontend url
 FRONTEND_URL=url
+```
+
+### Running with Docker
+
+Notes:
+
+- Uploaded files (profile pictures, etc.) will be stored in the local ./uploads folder.
+
+- Make sure .env is configured before running Docker.
+
+- The application will be available at http://localhost:8080.
+
+```bash
+# Build image
+docker-compose build
+# Start container
+docker-compose up -d
+# Stop container
+docker-compose down
+# View logs
+docker-compose logs -f
+```
+
+### **Running Local / Maven**
+
+```bash
+# Windows
+mvnw.cmd clean install
+mvnw.cmd spring-boot:run
+
+# Linux/Mac
+./mvnw clean install
+./mvnw spring-boot:run
 ```
 
 ---

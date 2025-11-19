@@ -67,7 +67,8 @@ public class UserServiceImpl implements UserService {
             throw new IllegalStateException("Invalid token type for deletion");
         }
         tokenServiceImpl.revokeAllUserTokens(result.user());
-        deleteImageFromStorage(result.user().getPictureUrl());
+        if (result.user().getPictureUrl() != null)
+            deleteImageFromStorage(result.user().getPictureUrl());
         userRepository.delete(result.user());
         SecurityContextHolder.clearContext();
         return new MessageResponse("Your account has been successfully deleted");
