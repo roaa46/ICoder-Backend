@@ -16,6 +16,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -66,7 +67,9 @@ public class UserServiceImpl implements UserService {
             throw new IllegalStateException("Invalid token type for deletion");
         }
         tokenServiceImpl.revokeAllUserTokens(result.user());
+        deleteImageFromStorage(result.user().getPictureUrl());
         userRepository.delete(result.user());
+        SecurityContextHolder.clearContext();
         return new MessageResponse("Your account has been successfully deleted");
     }
 
@@ -109,8 +112,7 @@ public class UserServiceImpl implements UserService {
         try {
             // delete old picture
             if (user.getPictureUrl() != null) {
-                Path old = Paths.get(user.getPictureUrl());
-                Files.deleteIfExists(old);
+                deleteImageFromStorage(user.getPictureUrl());
             }
 
             // create a folder if not exists
@@ -189,9 +191,10 @@ public class UserServiceImpl implements UserService {
         return new MessageResponse("Your profile picture has been successfully deleted");
     }
 
-    private void deleteImageFromStorage(String imagePath) {
+    private void deleteImageFromStorage(String imageUrl) {
         try {
-            Path path = Paths.get(imagePath);
+            String filename = Paths.get(imageUrl).getFileName().toString();
+            Path path = Paths.get(uploadDir, filename);
             Files.deleteIfExists(path);
         } catch (IOException e) {
             throw new RuntimeException("Failed to delete profile picture.", e);

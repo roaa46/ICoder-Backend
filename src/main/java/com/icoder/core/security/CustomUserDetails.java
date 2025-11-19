@@ -1,6 +1,5 @@
 package com.icoder.core.security;
 
-import com.icoder.user.management.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,7 +9,9 @@ import java.util.List;
 
 @RequiredArgsConstructor
 public class CustomUserDetails implements UserDetails {
-    private final User user;
+    private final String handle;
+    private final String password;
+    private final boolean verified;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -19,12 +20,12 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getPassword() {
-        return user.getPassword();
+        return password;
     }
 
     @Override
     public String getUsername() {
-        return user.getHandle();
+        return handle;
     }
 
     @Override
@@ -44,6 +45,6 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return verified;
     }
 }

@@ -16,9 +16,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -89,8 +90,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (!user.isVerified()) {
             throw new ApiException("Account is not verified. Please check your email.");
         }
-        String jwtToken = jwtServiceImpl.generateToken(new CustomUserDetails(user));
-        String refreshJwtToken = jwtServiceImpl.generateRefreshToken(new CustomUserDetails(user));
+        String jwtToken = jwtServiceImpl.generateToken(new CustomUserDetails(
+                user.getHandle(),
+                user.getPassword(),
+                user.isVerified()
+        ));
+        String refreshJwtToken = jwtServiceImpl.generateRefreshToken(new CustomUserDetails(
+                user.getHandle(),
+                user.getPassword(),
+                user.isVerified()
+        ));
         tokenServiceImpl.revokeAllUserTokens(user);
         tokenServiceImpl.saveUserToken(user, jwtToken);
 
@@ -114,8 +123,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (userEmail != null) {
             User user = this.userRepository.findByHandle(userEmail)
                     .orElseThrow();
-            if (jwtServiceImpl.isTokenValid(refreshToken, new CustomUserDetails(user))) {
-                String accessToken = jwtServiceImpl.generateToken(new CustomUserDetails(user));
+            if (jwtServiceImpl.isTokenValid(refreshToken, new CustomUserDetails(
+                    user.getHandle(),
+                    user.getPassword(),
+                    user.isVerified()
+            ))) {
+                String accessToken = jwtServiceImpl.generateToken(new CustomUserDetails(
+                        user.getHandle(),
+                        user.getPassword(),
+                        user.isVerified()
+                ));
                 tokenServiceImpl.revokeAllUserTokens(user);
                 tokenServiceImpl.saveUserToken(user, accessToken);
 
@@ -153,6 +170,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         var result = tokenHelper.validateAndExtract(request.getToken());
         result.user().setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(result.user());
+        refreshSecurityContext(result.user());
         return new MessageResponse("Password has been reset successfully");
     }
 
@@ -173,6 +191,23 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String encodedPassword = jwtServiceImpl.extractClaim(token, claims -> claims.get("newPassword").toString());
         result.user().setPassword(encodedPassword);
         userRepository.save(result.user());
+        refreshSecurityContext(result.user());
         return new MessageResponse("Password change confirmed");
+    }
+
+    private void refreshSecurityContext(User user) {
+        CustomUserDetails updatedDetails = new CustomUserDetails(
+                user.getHandle(),
+                user.getPassword(),
+                user.isVerified()
+        );
+
+        Authentication newAuth = new UsernamePasswordAuthenticationToken(
+                updatedDetails,
+                null,
+                updatedDetails.getAuthorities()
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(newAuth);
     }
 }

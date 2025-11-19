@@ -30,7 +30,11 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         validateEmailCooldown(user);
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", TokenType.ACCOUNT_ACTIVATION);
-        String token = jwtServiceImpl.generateToken(claims, new CustomUserDetails(user));
+        String token = jwtServiceImpl.generateToken(claims, new CustomUserDetails(
+                user.getHandle(),
+                user.getPassword(),
+                user.isVerified()
+        ));
         String link = "http://localhost:8080/api/v1/auth/verify?token=" + token;
         sendEmail(user.getEmail(), buildEmail(user.getNickname(), link, (TokenType) claims.get("type")));
         user.setLastVerificationEmailSentAt(Instant.now().toString());
@@ -64,9 +68,13 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", TokenType.PASSWORD_RESET);
 
-        String token = jwtServiceImpl.generateToken(claims, new CustomUserDetails(user));
+        String token = jwtServiceImpl.generateToken(claims, new CustomUserDetails(
+                user.getHandle(),
+                user.getPassword(),
+                user.isVerified()
+        ));
 
-        String link = "http://localhost:8080/api/v1/auth/reset-password?token=" + token;
+        String link = "http://localhost:8080/api/v1/auth/password/reset?token=" + token;
         sendEmail(user.getEmail(), buildEmail(user.getNickname(), link, (TokenType) claims.get("type")));
     }
 
@@ -76,9 +84,13 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         claims.put("type", TokenType.PASSWORD_CHANGE);
         claims.put("newPassword", encodedNewPassword);
 
-        String token = jwtServiceImpl.generateToken(claims, new CustomUserDetails(user));
+        String token = jwtServiceImpl.generateToken(claims, new CustomUserDetails(
+                user.getHandle(),
+                user.getPassword(),
+                user.isVerified()
+        ));
 
-        String link = "http://localhost:8080/api/v1/auth/confirm-password-change?token=" + token;
+        String link = "http://localhost:8080/api/v1/auth/password/change/confirm?token=" + token;
         sendEmail(user.getEmail(), buildEmail(user.getNickname(), link, (TokenType) claims.get("type")));
     }
 
@@ -99,8 +111,12 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         validateEmailCooldown(user);
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", TokenType.ACCOUNT_DELETION);
-        String token = jwtServiceImpl.generateToken(claims, new CustomUserDetails(user));
-        String link = "http://localhost:8080/api/v1/user/confirm-delete?token=" + token;
+        String token = jwtServiceImpl.generateToken(claims, new CustomUserDetails(
+                user.getHandle(),
+                user.getPassword(),
+                user.isVerified()
+        ));
+        String link = "http://localhost:8080/api/v1/user/delete/confirm?token=" + token;
         sendEmail(user.getEmail(), buildEmail(user.getNickname(), link, (TokenType) claims.get("type")));
         user.setLastVerificationEmailSentAt(Instant.now().toString());
         userRepository.save(user);
@@ -111,8 +127,12 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", TokenType.EMAIL_UPDATE);
         claims.put("newEmail", newEmail);
-        String token = jwtServiceImpl.generateToken(claims, new CustomUserDetails(user));
-        String link = "http://localhost:8080/api/v1/user/confirm-email-update?token=" + token;
+        String token = jwtServiceImpl.generateToken(claims, new CustomUserDetails(
+                user.getHandle(),
+                user.getPassword(),
+                user.isVerified()
+        ));
+        String link = "http://localhost:8080/api/v1/user/email/confirm?token=" + token;
         sendEmail(newEmail, buildEmail(user.getNickname(), link, (TokenType) claims.get("type")));
     }
 }

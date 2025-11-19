@@ -19,7 +19,11 @@ public class TokenHelper {
         User user = userRepository.findByHandle(handle)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        if (!jwtServiceImpl.isTokenValid(token, new CustomUserDetails(user))) {
+        if (!jwtServiceImpl.isTokenValid(token, new CustomUserDetails(
+                user.getHandle(),
+                user.getPassword(),
+                user.isVerified()
+        ))) {
             throw new IllegalStateException("Invalid or expired token");
         }
 
