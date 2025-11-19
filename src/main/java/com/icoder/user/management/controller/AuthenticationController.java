@@ -24,8 +24,7 @@ public class AuthenticationController {
 
     @PostMapping("/register")
     public ResponseEntity<MessageResponse> register(@Valid @RequestBody RegisterRequest request, HttpServletResponse response) {
-        String message = authenticationServiceImpl.register(request, response);
-        return ResponseEntity.ok(new MessageResponse(message));
+        return ResponseEntity.ok(authenticationServiceImpl.register(request, response));
     }
 
     @PostMapping("/login")
@@ -46,31 +45,26 @@ public class AuthenticationController {
 
     @GetMapping("/verify")
     public ResponseEntity<MessageResponse> verifyEmail(@RequestParam("token") String token) {
-        String result = authenticationServiceImpl.verifyEmail(token);
-        return ResponseEntity.ok(new MessageResponse(result));
+        return ResponseEntity.ok(authenticationServiceImpl.verifyEmail(token));
     }
 
     @PostMapping("/password/forget")
     public ResponseEntity<MessageResponse> forgetPassword(@Valid @RequestBody ForgetPasswordRequest request) {
-        authenticationServiceImpl.forgetPassword(request);
-        return ResponseEntity.ok(new MessageResponse("Password change link sent to your email."));
+        return ResponseEntity.ok(authenticationServiceImpl.forgetPassword(request));
     }
 
     @PostMapping("/password/reset")
     public ResponseEntity<MessageResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        authenticationServiceImpl.resetPassword(request);
-        return ResponseEntity.ok(new MessageResponse("Password has been reset successfully."));
+        return ResponseEntity.ok(authenticationServiceImpl.resetPassword(request));
     }
 
     @PatchMapping("password")
     public ResponseEntity<MessageResponse> changePassword(@Valid @RequestBody ChangePasswordRequest request, Principal principal) {
-        authenticationServiceImpl.changePassword(request, principal);
-        return ResponseEntity.ok(new MessageResponse("Password changed successfully. Please verify it from your email."));
+        return ResponseEntity.ok(authenticationServiceImpl.changePassword(request, principal));
     }
 
     @PostMapping("/password/change/confirm")
     public ResponseEntity<MessageResponse> confirmPasswordChange(@RequestParam String token) {
-        authenticationServiceImpl.confirmPasswordChange(token);
-        return ResponseEntity.ok(new MessageResponse("Password change confirmed."));
+        return ResponseEntity.ok(authenticationServiceImpl.confirmPasswordChange(token));
     }
 }

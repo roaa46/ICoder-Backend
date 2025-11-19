@@ -1,5 +1,6 @@
 package com.icoder.user.management.service.interfaces;
 
+import com.icoder.core.dto.MessageResponse;
 import com.icoder.user.management.dto.auth.UpdateEmailRequest;
 import com.icoder.user.management.dto.user.UserProfileRequest;
 import com.icoder.user.management.dto.user.UserProfileResponse;
@@ -9,17 +10,17 @@ import org.springframework.web.multipart.MultipartFile;
 public interface UserService {
     UserProfileResponse getProfile(Authentication authentication);
 
-    void requestAccountDeletion(Authentication authentication);
+    MessageResponse requestAccountDeletion(Authentication authentication);
 
-    void confirmAccountDeletion(String token);
+    MessageResponse confirmAccountDeletion(String token);
 
-    UserProfileResponse updateProfile(UserProfileRequest request, Authentication authentication);
+    MessageResponse updateProfile(UserProfileRequest request, Authentication authentication);
 
-    UserProfileResponse changeProfilePicture(Authentication authentication, MultipartFile file);
+    MessageResponse changeProfilePicture(Authentication authentication, MultipartFile file);
 
-    void requestEmailUpdate(UpdateEmailRequest request, Authentication authentication);
+    MessageResponse requestEmailUpdate(UpdateEmailRequest request, Authentication authentication);
 
-    void confirmEmailUpdate(String token);
+    MessageResponse confirmEmailUpdate(String token);
 
-    void deleteProfilePicture(Authentication authentication);
+    MessageResponse deleteProfilePicture(Authentication authentication);
 }

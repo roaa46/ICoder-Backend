@@ -30,7 +30,12 @@ public class ApplicationConfig {
                             .orElseThrow(() -> new UsernameNotFoundException(
                                     "User not found with handle: " + username));
 
-                    return new CustomUserDetails(user);
+                    return new CustomUserDetails(
+                            user.getHandle(),
+                            user.getPassword(),
+                            user.isVerified()
+                    );
+
                 } catch (Exception e) {
                     throw new UsernameNotFoundException("Error loading user: " + e.getMessage());
                 }

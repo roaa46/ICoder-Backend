@@ -25,35 +25,31 @@ public class UserController {
 
     @PostMapping("/delete/request")
     public ResponseEntity<MessageResponse> requestAccountDeletion(Authentication authentication) {
-        userServiceImpl.requestAccountDeletion(authentication);
-        return ResponseEntity.ok(new MessageResponse("A confirmation email has been sent to your address."));
+        return ResponseEntity.ok(userServiceImpl.requestAccountDeletion(authentication));
     }
 
     @PostMapping("/delete/confirm")
     public ResponseEntity<MessageResponse> confirmAccountDeletion(@RequestParam("token") String token) {
-        userServiceImpl.confirmAccountDeletion(token);
-        return ResponseEntity.ok(new MessageResponse("Your account has been permanently deleted."));
+        return ResponseEntity.ok(userServiceImpl.confirmAccountDeletion(token));
     }
 
     @PutMapping("/update")
-    public ResponseEntity<UserProfileResponse> updateProfile(
+    public ResponseEntity<MessageResponse> updateProfile(
             @Valid @RequestBody UserProfileRequest request,
             Authentication authentication) {
         return ResponseEntity.ok(userServiceImpl.updateProfile(request, authentication));
     }
 
     @PatchMapping("/profile-picture")
-    public ResponseEntity<UserProfileResponse> updateProfilePicture(
+    public ResponseEntity<MessageResponse> updateProfilePicture(
             Authentication authentication,
             @RequestParam("file") MultipartFile file) {
-        UserProfileResponse response = userServiceImpl.changeProfilePicture(authentication, file);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(userServiceImpl.changeProfilePicture(authentication, file));
     }
 
     @DeleteMapping("/profile-picture")
     public ResponseEntity<MessageResponse> deleteProfilePicture(Authentication authentication) {
-        userServiceImpl.deleteProfilePicture(authentication);
-        return ResponseEntity.ok(new MessageResponse("Profile picture deleted successfully."));
+        return ResponseEntity.ok(userServiceImpl.deleteProfilePicture(authentication));
     }
 
     @PostMapping("/email/request-update")
@@ -61,13 +57,11 @@ public class UserController {
             @Valid @RequestBody UpdateEmailRequest request,
             Authentication authentication
     ) {
-        userServiceImpl.requestEmailUpdate(request, authentication);
-        return ResponseEntity.ok(new MessageResponse("Verification link sent to new email."));
+        return ResponseEntity.ok(userServiceImpl.requestEmailUpdate(request, authentication));
     }
 
     @PostMapping("/email/confirm")
     public ResponseEntity<MessageResponse> confirmEmailUpdate(@RequestParam String token) {
-        userServiceImpl.confirmEmailUpdate(token);
-        return ResponseEntity.ok(new MessageResponse("Email updated successfully."));
+        return ResponseEntity.ok(userServiceImpl.confirmEmailUpdate(token));
     }
 }

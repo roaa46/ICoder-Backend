@@ -53,6 +53,5 @@ public class User {
     private List<Token> tokens;
 
     private String lastVerificationEmailSentAt;
-
 }
 

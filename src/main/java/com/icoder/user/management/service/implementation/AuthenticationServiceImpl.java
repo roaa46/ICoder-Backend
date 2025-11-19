@@ -1,9 +1,8 @@
 package com.icoder.user.management.service.implementation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.icoder.core.dto.MessageResponse;
 import com.icoder.core.exception.ApiException;
-import com.icoder.core.exception.EmailException;
-import com.icoder.core.exception.PasswordException;
 import com.icoder.core.security.CustomUserDetails;
 import com.icoder.core.util.TokenHelper;
 import com.icoder.core.util.ValidatePasswordChange;
@@ -19,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ import java.io.IOException;
 import java.security.Principal;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -42,15 +44,24 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final AuthMapper authMapper;
 
     @Transactional
-    public String register(RegisterRequest request, HttpServletResponse response) {
+    public MessageResponse register(RegisterRequest request, HttpServletResponse response) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new ApiException("Email is already registered.");
+            throw new ApiException(
+                    "Email is already used",
+                    Map.of("field", "email", "value", request.getEmail())
+            );
         }
         if (userRepository.existsByHandle(request.getHandle())) {
-            throw new ApiException("Handle is already taken.");
+            throw new ApiException(
+                    "Handle is already taken",
+                    Map.of("field", "handle", "value", request.getHandle())
+            );
         }
         if (!request.getPassword().equals(request.getPasswordConfirmation())) {
-            throw new PasswordException("New password and confirmation password do not match");
+            throw new ApiException(
+                    "New password and confirmation password do not match",
+                    Map.of("field", "password_confirmation")
+            );
         }
 
         User user = authMapper.toEntity(request);
@@ -67,7 +78,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         tokenServiceImpl.addTokenCookies(response, jwtToken, refreshJwtToken);
 
-        return "Account created successfully! Please verify your email before logging in.";
+        return new MessageResponse("Account created successfully! Please verify your email before logging in.");
     }
 
     public LoginResponse login(LoginRequest request, HttpServletResponse response) {
@@ -77,10 +88,18 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         User user = userRepository.findByHandle(request.getHandle())
                 .orElseThrow(() -> new UsernameNotFoundException("user not found"));
         if (!user.isVerified()) {
-            throw new EmailException("Account is not verified. Please check your email.");
+            throw new ApiException("Account is not verified. Please check your email.");
         }
-        String jwtToken = jwtServiceImpl.generateToken(new CustomUserDetails(user));
-        String refreshJwtToken = jwtServiceImpl.generateRefreshToken(new CustomUserDetails(user));
+        String jwtToken = jwtServiceImpl.generateToken(new CustomUserDetails(
+                user.getHandle(),
+                user.getPassword(),
+                user.isVerified()
+        ));
+        String refreshJwtToken = jwtServiceImpl.generateRefreshToken(new CustomUserDetails(
+                user.getHandle(),
+                user.getPassword(),
+                user.isVerified()
+        ));
         tokenServiceImpl.revokeAllUserTokens(user);
         tokenServiceImpl.saveUserToken(user, jwtToken);
 
@@ -104,8 +123,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (userEmail != null) {
             User user = this.userRepository.findByHandle(userEmail)
                     .orElseThrow();
-            if (jwtServiceImpl.isTokenValid(refreshToken, new CustomUserDetails(user))) {
-                String accessToken = jwtServiceImpl.generateToken(new CustomUserDetails(user));
+            if (jwtServiceImpl.isTokenValid(refreshToken, new CustomUserDetails(
+                    user.getHandle(),
+                    user.getPassword(),
+                    user.isVerified()
+            ))) {
+                String accessToken = jwtServiceImpl.generateToken(new CustomUserDetails(
+                        user.getHandle(),
+                        user.getPassword(),
+                        user.isVerified()
+                ));
                 tokenServiceImpl.revokeAllUserTokens(user);
                 tokenServiceImpl.saveUserToken(user, accessToken);
 
@@ -120,45 +147,67 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Transactional
-    public String verifyEmail(String token) {
+    public MessageResponse verifyEmail(String token) {
         String handle = jwtServiceImpl.extractUserHandle(token);
         User user = userRepository.findByHandle(handle)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid token"));
         user.setVerified(true);
         userRepository.save(user);
-        return "Email verified successfully! You can now log in.";
+        return new MessageResponse("Email verified successfully! You can now log in");
     }
 
     // if user forgot password call forgetPassword() then resetPassword()
-    public void forgetPassword(ForgetPasswordRequest request) {
+    public MessageResponse forgetPassword(ForgetPasswordRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new EmailException("No user found with this email"));
+                .orElseThrow(() -> new ApiException("No user found with this email"));
         emailVerificationServiceImpl.sendPasswordResetEmail(user);
+        return new MessageResponse("Password change link is sent to your email");
     }
 
     @Transactional
-    public void resetPassword(ResetPasswordRequest request) {
+    public MessageResponse resetPassword(ResetPasswordRequest request) {
         validatePasswordChange.validatePasswordChange(request);
         var result = tokenHelper.validateAndExtract(request.getToken());
         result.user().setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(result.user());
+        refreshSecurityContext(result.user());
+        return new MessageResponse("Password has been reset successfully");
     }
 
     // if he logged in changePassword() then confirmPasswordChange()
-    public void changePassword(ChangePasswordRequest request, Principal principal) {
+    public MessageResponse changePassword(ChangePasswordRequest request, Principal principal) {
         String userHandle = principal.getName();
         User user = userRepository.findByHandle(userHandle)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         validatePasswordChange.validatePasswordChange(request, user);
         String encodedNewPassword = passwordEncoder.encode(request.getNewPassword());
         emailVerificationServiceImpl.sendPasswordChangeVerificationEmail(user, encodedNewPassword);
+        return new MessageResponse("Password changed successfully, Please verify it from your email");
     }
 
     @Transactional
-    public void confirmPasswordChange(String token) {
+    public MessageResponse confirmPasswordChange(String token) {
         var result = tokenHelper.validateAndExtract(token);
         String encodedPassword = jwtServiceImpl.extractClaim(token, claims -> claims.get("newPassword").toString());
         result.user().setPassword(encodedPassword);
         userRepository.save(result.user());
+        refreshSecurityContext(result.user());
+        return new MessageResponse("Password change confirmed");
+    }
+
+    private void refreshSecurityContext(User user) {
+        CustomUserDetails updatedDetails = new CustomUserDetails(
+                user.getHandle(),
+                user.getPassword(),
+                user.isVerified()
+        );
+
+        Authentication newAuth = new UsernamePasswordAuthenticationToken(
+                updatedDetails,
+                null,
+                updatedDetails.getAuthorities()
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(newAuth);
     }
 }
