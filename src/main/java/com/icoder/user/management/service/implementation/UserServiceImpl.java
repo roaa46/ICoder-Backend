@@ -6,6 +6,7 @@ import com.icoder.core.exception.ApiException;
 import com.icoder.core.security.CustomUserDetails;
 import com.icoder.core.util.TokenHelper;
 import com.icoder.user.management.dto.auth.UpdateEmailRequest;
+import com.icoder.user.management.dto.user.UpdateUserProfileRequest;
 import com.icoder.user.management.dto.user.UserProfileRequest;
 import com.icoder.user.management.dto.user.UserProfileResponse;
 import com.icoder.user.management.entity.User;
@@ -27,7 +28,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.Principal;
 import java.util.Map;
 import java.util.UUID;
 
@@ -44,9 +44,8 @@ public class UserServiceImpl implements UserService {
     @Value("${upload.dir}")
     private String uploadDir;
 
-    public UserProfileResponse getProfile(Authentication authentication) { // SecurityContextHolder.getContext().getAuthentication(); in service layer
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        User user = userRepository.findByHandle(userDetails.getUsername())
+    public UserProfileResponse getProfile(UserProfileRequest userProfileRequest) {
+        User user = userRepository.findByHandle(userProfileRequest.getHandle())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         return userMapper.toDTO(user);
     }
@@ -79,7 +78,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
-    public MessageResponse updateProfile(UserProfileRequest request, Authentication authentication) {
+    public MessageResponse updateProfile(UpdateUserProfileRequest request, Authentication authentication) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         User user = userRepository.findByHandle(userDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));

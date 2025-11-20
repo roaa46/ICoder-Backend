@@ -13,7 +13,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class UserProfileRequest {
+public class UpdateUserProfileRequest {
     @NotBlank
-    private String handle;
+    String currentPassword;
+    private String nickname;
+    private String school;
 }

@@ -2,6 +2,7 @@ package com.icoder.user.management.controller;
 
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.user.management.dto.auth.UpdateEmailRequest;
+import com.icoder.user.management.dto.user.UpdateUserProfileRequest;
 import com.icoder.user.management.dto.user.UserProfileRequest;
 import com.icoder.user.management.dto.user.UserProfileResponse;
 import com.icoder.user.management.service.implementation.UserServiceImpl;
@@ -19,8 +20,9 @@ public class UserController {
     private final UserServiceImpl userServiceImpl;
 
     @GetMapping
-    public ResponseEntity<UserProfileResponse> getProfile(Authentication authentication) {
-        return ResponseEntity.ok(userServiceImpl.getProfile(authentication));
+    public ResponseEntity<UserProfileResponse> getProfile(@RequestParam String handle) {
+        UserProfileRequest request = UserProfileRequest.builder().handle(handle).build();
+        return ResponseEntity.ok(userServiceImpl.getProfile(request));
     }
 
     @PostMapping("/delete/request")
@@ -35,7 +37,7 @@ public class UserController {
 
     @PutMapping("/update")
     public ResponseEntity<MessageResponse> updateProfile(
-            @Valid @RequestBody UserProfileRequest request,
+            @Valid @RequestBody UpdateUserProfileRequest request,
             Authentication authentication) {
         return ResponseEntity.ok(userServiceImpl.updateProfile(request, authentication));
     }
