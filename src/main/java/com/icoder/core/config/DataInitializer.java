@@ -28,9 +28,8 @@ public class DataInitializer {
                     .nickname("Roaa Mohamed")
                     .email("roaaamohamed66@gmail.com")
                     .password(passwordEncoder.encode("Password@123"))
-                    .verified(true)
+                    .verified(false)
                     .createdAt(Instant.now().toString())
-                    .lastVerificationEmailSentAt(Instant.now().toString())
                     .build();
 
             if (!userRepository.existsByHandle(admin.getHandle())) {

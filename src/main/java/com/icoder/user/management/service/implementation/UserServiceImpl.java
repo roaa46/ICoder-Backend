@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.Principal;
 import java.util.Map;
 import java.util.UUID;
 
@@ -62,6 +63,9 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     public MessageResponse confirmAccountDeletion(String token) {
+        if (jwtServiceImpl.isTokenExpired(token)) {
+            throw new ApiException("Verification link has expired");
+        }
         var result = tokenHelper.validateAndExtract(token);
         if (!"ACCOUNT_DELETION".equals(result.type())) {
             throw new IllegalStateException("Invalid token type for deletion");
@@ -167,6 +171,9 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     public MessageResponse confirmEmailUpdate(String token) {
+        if (jwtServiceImpl.isTokenExpired(token)) {
+            throw new ApiException("Verification link has expired");
+        }
         var result = tokenHelper.validateAndExtract(token);
         TokenType tokenType = TokenType.valueOf(result.type());
         if (tokenType != TokenType.EMAIL_UPDATE) {

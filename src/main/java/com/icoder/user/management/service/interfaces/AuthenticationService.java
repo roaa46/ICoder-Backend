@@ -17,11 +17,11 @@ public interface AuthenticationService {
 
     MessageResponse verifyEmail(String token);
 
+    MessageResponse sendEmailVerification(SendVerificationEmailRequest request);
+
     MessageResponse forgetPassword(ForgetPasswordRequest request);
 
     MessageResponse resetPassword(ResetPasswordRequest request);
 
     MessageResponse changePassword(ChangePasswordRequest request, Principal principal);
-
-    MessageResponse confirmPasswordChange(String token);
 }

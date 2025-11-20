@@ -1,5 +1,6 @@
 package com.icoder.user.management.service.interfaces;
 
+import com.icoder.core.security.CustomUserDetails;
 import io.jsonwebtoken.Claims;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -12,6 +13,12 @@ public interface JwtService {
     <T> T extractClaim(String token, Function<Claims, T> claimsResolver);
 
     String generateToken(UserDetails userDetails);
+
+    String generateTokenWithCustomExpiration(
+            Map<String, Object> claims,
+            CustomUserDetails userDetails,
+            Long expiration
+    );
 
     String generateToken(Map<String, Object> extraClaims, UserDetails userDetails);
 

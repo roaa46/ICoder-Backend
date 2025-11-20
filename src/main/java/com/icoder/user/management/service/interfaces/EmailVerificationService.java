@@ -7,8 +7,6 @@ public interface EmailVerificationService {
 
     void sendPasswordResetEmail(User user);
 
-    void sendPasswordChangeVerificationEmail(User user, String encodedNewPassword);
-
     void sendAccountDeletionEmail(User user);
 
     void sendEmailUpdateVerificationEmail(User user, String newEmail);

@@ -70,7 +70,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         User savedUser = userRepository.save(user);
         org.springframework.security.core.userdetails.UserDetails userDetails =
                 new org.springframework.security.core.userdetails.User(user.getHandle(), user.getPassword(), new ArrayList<>());
-        emailVerificationServiceImpl.sendVerificationEmail(savedUser);
+//        emailVerificationServiceImpl.sendVerificationEmail(savedUser);
         String jwtToken = jwtServiceImpl.generateToken(userDetails);
         String refreshJwtToken = jwtServiceImpl.generateRefreshToken(userDetails);
         tokenServiceImpl.revokeAllUserTokens(savedUser);
@@ -87,9 +87,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         );
         User user = userRepository.findByHandle(request.getHandle())
                 .orElseThrow(() -> new UsernameNotFoundException("user not found"));
-        if (!user.isVerified()) {
-            throw new ApiException("Account is not verified. Please check your email.");
-        }
         String jwtToken = jwtServiceImpl.generateToken(new CustomUserDetails(
                 user.getHandle(),
                 user.getPassword(),
@@ -148,12 +145,27 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Transactional
     public MessageResponse verifyEmail(String token) {
+        if (jwtServiceImpl.isTokenExpired(token)) {
+            throw new ApiException("Verification link has expired");
+        }
         String handle = jwtServiceImpl.extractUserHandle(token);
         User user = userRepository.findByHandle(handle)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid token"));
         user.setVerified(true);
         userRepository.save(user);
         return new MessageResponse("Email verified successfully! You can now log in");
+    }
+
+    public MessageResponse sendEmailVerification(SendVerificationEmailRequest request) {
+        User user = userRepository.findByHandle(request.getHandle())
+                .orElseThrow(() -> new ApiException("User not found"));
+
+        if (user.isVerified()) {
+            throw new ApiException("Email is already verified");
+        }
+
+        emailVerificationServiceImpl.sendVerificationEmail(user);
+        return new MessageResponse("Verification email sent, please check your email");
     }
 
     // if user forgot password call forgetPassword() then resetPassword()
@@ -166,6 +178,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Transactional
     public MessageResponse resetPassword(ResetPasswordRequest request) {
+        if (jwtServiceImpl.isTokenExpired(request.getToken())) {
+            throw new ApiException("Verification link has expired");
+        }
         validatePasswordChange.validatePasswordChange(request);
         var result = tokenHelper.validateAndExtract(request.getToken());
         result.user().setPassword(passwordEncoder.encode(request.getNewPassword()));
@@ -174,25 +189,18 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return new MessageResponse("Password has been reset successfully");
     }
 
-    // if he logged in changePassword() then confirmPasswordChange()
+    // if he logged in
+    @Transactional
     public MessageResponse changePassword(ChangePasswordRequest request, Principal principal) {
         String userHandle = principal.getName();
         User user = userRepository.findByHandle(userHandle)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         validatePasswordChange.validatePasswordChange(request, user);
         String encodedNewPassword = passwordEncoder.encode(request.getNewPassword());
-        emailVerificationServiceImpl.sendPasswordChangeVerificationEmail(user, encodedNewPassword);
-        return new MessageResponse("Password changed successfully, Please verify it from your email");
-    }
-
-    @Transactional
-    public MessageResponse confirmPasswordChange(String token) {
-        var result = tokenHelper.validateAndExtract(token);
-        String encodedPassword = jwtServiceImpl.extractClaim(token, claims -> claims.get("newPassword").toString());
-        result.user().setPassword(encodedPassword);
-        userRepository.save(result.user());
-        refreshSecurityContext(result.user());
-        return new MessageResponse("Password change confirmed");
+        user.setPassword(encodedNewPassword);
+        userRepository.save(user);
+        refreshSecurityContext(user);
+        return new MessageResponse("Password changed successfully");
     }
 
     private void refreshSecurityContext(User user) {
@@ -210,4 +218,5 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         SecurityContextHolder.getContext().setAuthentication(newAuth);
     }
+
 }

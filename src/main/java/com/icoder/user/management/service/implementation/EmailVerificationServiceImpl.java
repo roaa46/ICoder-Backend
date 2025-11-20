@@ -27,14 +27,12 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
 
     @Transactional
     public void sendVerificationEmail(User user) {
-        validateEmailCooldown(user);
+        validateEmailCooldown(user, 5);
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", TokenType.ACCOUNT_ACTIVATION);
-        String token = jwtServiceImpl.generateToken(claims, new CustomUserDetails(
-                user.getHandle(),
-                user.getPassword(),
-                user.isVerified()
-        ));
+
+        String token = generateToken(user, claims, 15 * 60 * 1000);
+
         String link = "http://localhost:8080/api/v1/auth/verify?token=" + token;
         sendEmail(user.getEmail(), buildEmail(user.getNickname(), link, (TokenType) claims.get("type")));
         user.setLastVerificationEmailSentAt(Instant.now().toString());
@@ -64,41 +62,21 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     }
 
     public void sendPasswordResetEmail(User user) {
-        validateEmailCooldown(user);
+        validateEmailCooldown(user, 3);
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", TokenType.PASSWORD_RESET);
 
-        String token = jwtServiceImpl.generateToken(claims, new CustomUserDetails(
-                user.getHandle(),
-                user.getPassword(),
-                user.isVerified()
-        ));
+        String token = generateToken(user, claims, 5 * 60 * 1000);
 
         String link = "http://localhost:8080/api/v1/auth/password/reset?token=" + token;
         sendEmail(user.getEmail(), buildEmail(user.getNickname(), link, (TokenType) claims.get("type")));
     }
 
-    public void sendPasswordChangeVerificationEmail(User user, String encodedNewPassword) {
-        validateEmailCooldown(user);
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("type", TokenType.PASSWORD_CHANGE);
-        claims.put("newPassword", encodedNewPassword);
-
-        String token = jwtServiceImpl.generateToken(claims, new CustomUserDetails(
-                user.getHandle(),
-                user.getPassword(),
-                user.isVerified()
-        ));
-
-        String link = "http://localhost:8080/api/v1/auth/password/change/confirm?token=" + token;
-        sendEmail(user.getEmail(), buildEmail(user.getNickname(), link, (TokenType) claims.get("type")));
-    }
-
-    private void validateEmailCooldown(User user) {
+    private void validateEmailCooldown(User user, int mins) {
         if (user.getLastVerificationEmailSentAt() != null) {
             Instant now = Instant.now();
             Instant lastSent = Instant.parse(user.getLastVerificationEmailSentAt());
-            Instant nextAllowed = lastSent.plus(1, ChronoUnit.MINUTES);
+            Instant nextAllowed = lastSent.plus(mins, ChronoUnit.MINUTES);
             if (now.isBefore(nextAllowed)) {
                 long minutesLeft = Duration.between(now, nextAllowed).toMinutes();
                 throw new ApiException("Please wait " + minutesLeft + " minutes before requesting another email.");
@@ -108,14 +86,12 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
 
     @Transactional
     public void sendAccountDeletionEmail(User user) {
-        validateEmailCooldown(user);
+        validateEmailCooldown(user, 15);
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", TokenType.ACCOUNT_DELETION);
-        String token = jwtServiceImpl.generateToken(claims, new CustomUserDetails(
-                user.getHandle(),
-                user.getPassword(),
-                user.isVerified()
-        ));
+
+        String token = generateToken(user, claims, 10 * 60 * 1000);
+
         String link = "http://localhost:8080/api/v1/user/delete/confirm?token=" + token;
         sendEmail(user.getEmail(), buildEmail(user.getNickname(), link, (TokenType) claims.get("type")));
         user.setLastVerificationEmailSentAt(Instant.now().toString());
@@ -123,16 +99,27 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     }
 
     public void sendEmailUpdateVerificationEmail(User user, String newEmail) {
-        validateEmailCooldown(user);
+        validateEmailCooldown(user, 5);
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", TokenType.EMAIL_UPDATE);
         claims.put("newEmail", newEmail);
-        String token = jwtServiceImpl.generateToken(claims, new CustomUserDetails(
-                user.getHandle(),
-                user.getPassword(),
-                user.isVerified()
-        ));
+
+        String token = generateToken(user, claims, 15 * 60 * 1000);
+
         String link = "http://localhost:8080/api/v1/user/email/confirm?token=" + token;
         sendEmail(newEmail, buildEmail(user.getNickname(), link, (TokenType) claims.get("type")));
+    }
+
+    private String generateToken(User user, Map<String, Object> claims, long verificationExpiration) {
+        String handle = user.getHandle();
+        String password = user.getPassword();
+        boolean verified = user.isVerified();
+
+        CustomUserDetails userDetails = new CustomUserDetails(handle, password, verified);
+        return jwtServiceImpl.generateTokenWithCustomExpiration(
+                claims,
+                userDetails,
+                verificationExpiration
+        );
     }
 }

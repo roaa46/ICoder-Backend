@@ -1,5 +1,6 @@
 package com.icoder.user.management.service.implementation;
 
+import com.icoder.core.security.CustomUserDetails;
 import com.icoder.user.management.service.interfaces.JwtService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -38,6 +39,14 @@ public class JwtServiceImpl implements JwtService {
 
     public String generateToken(UserDetails userDetails) {
         return generateToken(new HashMap<>(), userDetails);
+    }
+
+    public String generateTokenWithCustomExpiration(
+            Map<String, Object> claims,
+            CustomUserDetails userDetails,
+            Long expiration
+    ) {
+        return buildToken(claims, userDetails, expiration);
     }
 
     public String generateToken(

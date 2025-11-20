@@ -48,6 +48,11 @@ public class AuthenticationController {
         return ResponseEntity.ok(authenticationServiceImpl.verifyEmail(token));
     }
 
+    @PostMapping("/verify/send")
+    public ResponseEntity<MessageResponse> sendVerificationEmail(@RequestBody SendVerificationEmailRequest emailRequest) {
+        return ResponseEntity.ok(authenticationServiceImpl.sendEmailVerification(emailRequest));
+    }
+
     @PostMapping("/password/forget")
     public ResponseEntity<MessageResponse> forgetPassword(@Valid @RequestBody ForgetPasswordRequest request) {
         return ResponseEntity.ok(authenticationServiceImpl.forgetPassword(request));
@@ -63,8 +68,4 @@ public class AuthenticationController {
         return ResponseEntity.ok(authenticationServiceImpl.changePassword(request, principal));
     }
 
-    @PostMapping("/password/change/confirm")
-    public ResponseEntity<MessageResponse> confirmPasswordChange(@RequestParam String token) {
-        return ResponseEntity.ok(authenticationServiceImpl.confirmPasswordChange(token));
-    }
 }
