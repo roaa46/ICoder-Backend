@@ -39,17 +39,30 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
 
-                        // auth
-                        .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/auth/change-password",
-                                "/api/v1/auth/confirm-password-change", "/api/v1/auth/logout")
-                        .authenticated()
+                        // --------- auth ---------
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/auth/verify").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/verify/send").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/password/forget").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/password/reset").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/auth/password").authenticated()
 
-                        // user
-                        .requestMatchers(HttpMethod.GET, "/api/v1/user").permitAll()
-                        .requestMatchers("/api/v1/user/**").authenticated()
 
-                        // swagger
+                        // --------- users ---------
+                        .requestMatchers(HttpMethod.POST, "/api/v1/users/email/confirm").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/users/delete/confirm").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/users/delete/request").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/users/update").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/users/email/request-update").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/users/profile-picture").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/users/profile-picture").authenticated()
+
+
+                        // --------- swagger ---------
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
                         .requestMatchers("/uploads/**").permitAll()

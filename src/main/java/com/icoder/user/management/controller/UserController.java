@@ -8,6 +8,7 @@ import com.icoder.user.management.dto.user.UserProfileResponse;
 import com.icoder.user.management.service.implementation.UserServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
