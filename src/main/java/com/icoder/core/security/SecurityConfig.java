@@ -31,7 +31,7 @@ public class SecurityConfig {
     private final DaoAuthenticationProvider authenticationProvider;
     private final LogoutHandler logoutHandler;
     @Value("${alloowed.origins}")
-    private String alloowedOrigins;
+    private String allowedOrigins;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -39,7 +39,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
 
-                        // --------- auth ---------
+                        /// --------- auth ---------
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").authenticated()
@@ -51,7 +51,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/auth/password").authenticated()
 
 
-                        // --------- users ---------
+                        /// --------- users ---------
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/email/confirm").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/delete/confirm").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/users").permitAll()
@@ -62,7 +62,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/users/profile-picture").authenticated()
 
 
-                        // --------- swagger ---------
+                        ///  --------- problems ---------
+                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/*/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/problems").permitAll()
+
+                        /// --------- swagger ---------
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
                         .requestMatchers("/uploads/**").permitAll()
@@ -95,7 +99,7 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.addAllowedOriginPattern(alloowedOrigins);
+        config.addAllowedOriginPattern(allowedOrigins);
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         config.addExposedHeader("Authorization");
