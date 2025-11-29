@@ -1,5 +1,7 @@
 package com.icoder.user.management.entity;
 
+import com.icoder.group.management.entity.Group;
+import com.icoder.group.management.entity.UserGroupRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,7 +9,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Data
@@ -50,7 +55,16 @@ public class User {
     private int attemptedCount = 0;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<Token> tokens;
+    @Builder.Default
+    private List<Token> tokens = new ArrayList<>();
+
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private Set<Group> ownedGroups = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private Set<UserGroupRole> groupRoles = new HashSet<>();
 
     private String lastVerificationEmailSentAt;
 }
