@@ -2,6 +2,8 @@ package com.icoder.problem.management.enums;
 
 public enum FormatType {
     MARKDOWN,
-    PLAIN,
+    HTML,
+    PLAIN_TEXT,
+    LATEX,
     CODE
 }

@@ -1,6 +1,5 @@
 package com.icoder.problem.management.controller;
 
-import com.icoder.problem.management.enums.OJudgeType;
 import com.icoder.problem.management.dto.ProblemResponse;
 import com.icoder.problem.management.dto.ProblemStatementResponse;
 import com.icoder.problem.management.service.implementation.ProblemServiceImpl;
@@ -24,12 +23,21 @@ public class ProblemController {
     private final ProblemServiceImpl problemService;
 
     @GetMapping("/{judge_type}/{problem_code}")
-    @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Get a specific problem", description = "Returns a specific problem by its online judge and problem code")
-    public ResponseEntity<ProblemStatementResponse> getProblem(@PathVariable("judge_type") OJudgeType source,
+    @Operation(summary = "Get a specific problem", description = "Returns a specific problem statement by its online judge and problem code")
+    public ResponseEntity<ProblemStatementResponse> getProblem(@PathVariable("judge_type") String source,
                                                                @PathVariable("problem_code") String code) {
 
-        return ResponseEntity.ok(problemService.getProblem(source, code));
+        return ResponseEntity.ok(problemService.getProblemStatement(source, code));
+    }
+
+    @GetMapping("/{judge_type}/{problem_code}/metadata")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Get metadata of a specific problem", description = "Returns a specific problem metadata by its online judge and problem code " +
+            "(e.g., problem title, problem link, contest title, ...)")
+    public ResponseEntity<ProblemResponse> getProblemMetadata(@PathVariable("judge_type") String source,
+                                                               @PathVariable("problem_code") String code) {
+
+        return ResponseEntity.ok(problemService.getProblemMetadata(source, code));
     }
 
     @GetMapping

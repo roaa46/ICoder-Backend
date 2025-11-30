@@ -31,6 +31,13 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(status, ex.getMessage(), request.getRequestURI(), ex.getDetails());
     }
 
+    @ExceptionHandler(OnlineJudgeException.class)
+    public ResponseEntity<ErrorResponse> handleApiException(OnlineJudgeException ex, HttpServletRequest request) {
+        log.error("OnlineJudgeException Exception");
+        HttpStatus status = resolveStatus(ex);
+        return buildErrorResponse(status, ex.getMessage(), request.getRequestURI(), ex.getDetails());
+    }
+
     // handling any unexpected exception
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {

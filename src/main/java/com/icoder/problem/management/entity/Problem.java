@@ -17,7 +17,7 @@ import java.util.Set;
 @NoArgsConstructor
 @Table(name = "problems",
         uniqueConstraints = @UniqueConstraint(
-                columnNames = {"problemCode", "oJudgeSource"}
+                columnNames = {"problemCode", "onlineJudge"}
         )
 )
 public class Problem {
@@ -48,7 +48,9 @@ public class Problem {
 
     private long attemptedCount = 0;
 
-    private Instant fetchedAt = Instant.now();
+    private Instant fetchedAt;
+
+    private boolean isCached;
 
     @OneToMany(mappedBy = "problem",
             fetch = FetchType.LAZY,
@@ -67,4 +69,13 @@ public class Problem {
             cascade = CascadeType.ALL,
             orphanRemoval = true)
     private List<ProblemProperty> properties = new ArrayList<>();
+
+    public Problem(String problemCode, OJudgeType oJudgeType, String contestTitle, String contestLink, String problemTitle, String problemLink) {
+        this.problemCode = problemCode;
+        this.onlineJudge = oJudgeType;
+        this.contestTitle = contestTitle;
+        this.contestLink = contestLink;
+        this.problemTitle = problemTitle;
+        this.problemLink = problemLink;
+    }
 }
