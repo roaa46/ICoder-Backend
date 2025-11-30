@@ -5,7 +5,6 @@ import com.icoder.user.management.dto.auth.UpdateEmailRequest;
 import com.icoder.user.management.dto.user.UpdateUserProfileRequest;
 import com.icoder.user.management.dto.user.UserProfileRequest;
 import com.icoder.user.management.dto.user.UserProfileResponse;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
