@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.icoder.core.enums.ContestCoordinatorType;
 import com.icoder.core.enums.Visibility;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,9 +19,9 @@ import lombok.NoArgsConstructor;
 public class CreateGroupRequest {
     @NotBlank
     private String name;
-    @NotBlank
+    @NotNull
     private Visibility visibility;
-    @NotBlank
+    @NotNull
     private ContestCoordinatorType contestCoordinatorType;
     @NotBlank
     private String description;
