@@ -1,7 +1,7 @@
 package com.icoder.user.management.service.implementation;
 
 import com.icoder.core.dto.MessageResponse;
-import com.icoder.core.enums.TokenType;
+import com.icoder.user.management.enums.TokenType;
 import com.icoder.core.exception.ApiException;
 import com.icoder.core.security.CustomUserDetails;
 import com.icoder.core.util.TokenHelper;
@@ -16,7 +16,6 @@ import com.icoder.user.management.service.interfaces.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

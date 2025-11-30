@@ -49,7 +49,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/verify/send")
-    public ResponseEntity<MessageResponse> sendVerificationEmail(@RequestBody SendVerificationEmailRequest emailRequest) {
+    public ResponseEntity<MessageResponse> sendVerificationEmail(@Valid @RequestBody SendVerificationEmailRequest emailRequest) {
         return ResponseEntity.ok(authenticationServiceImpl.sendEmailVerification(emailRequest));
     }
 

@@ -66,7 +66,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         User user = authMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setCreatedAt(Instant.now().toString());
+        user.setCreatedAt(Instant.now());
         User savedUser = userRepository.save(user);
         org.springframework.security.core.userdetails.UserDetails userDetails =
                 new org.springframework.security.core.userdetails.User(user.getHandle(), user.getPassword(), new ArrayList<>());

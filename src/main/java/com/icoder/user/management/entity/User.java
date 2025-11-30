@@ -11,7 +11,6 @@ import java.util.List;
 
 @Entity
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "users")
@@ -37,21 +36,17 @@ public class User {
 
     private String pictureUrl;
 
-    @Column(nullable = false)
     private boolean verified = false;
 
-    @Column(nullable = false)
-    private String createdAt = Instant.now().toString();
+    private Instant createdAt = Instant.now();
 
-    @Column(nullable = false)
     private int acceptedCount = 0;
 
-    @Column(nullable = false)
     private int attemptedCount = 0;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Token> tokens;
 
-    private String lastVerificationEmailSentAt;
+    private Instant lastVerificationEmailSentAt;
 }
 

@@ -1,6 +1,6 @@
 package com.icoder.user.management.service.implementation;
 
-import com.icoder.core.enums.TokenType;
+import com.icoder.user.management.enums.TokenType;
 import com.icoder.core.exception.ApiException;
 import com.icoder.core.security.CustomUserDetails;
 import com.icoder.user.management.entity.User;
@@ -35,7 +35,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
 
         String link = "http://localhost:8080/api/v1/auth/verify?token=" + token;
         sendEmail(user.getEmail(), buildEmail(user.getNickname(), link, (TokenType) claims.get("type")));
-        user.setLastVerificationEmailSentAt(Instant.now().toString());
+        user.setLastVerificationEmailSentAt(Instant.now());
         userRepository.save(user);
     }
 
@@ -75,7 +75,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     private void validateEmailCooldown(User user, int mins) {
         if (user.getLastVerificationEmailSentAt() != null) {
             Instant now = Instant.now();
-            Instant lastSent = Instant.parse(user.getLastVerificationEmailSentAt());
+            Instant lastSent = user.getLastVerificationEmailSentAt();
             Instant nextAllowed = lastSent.plus(mins, ChronoUnit.MINUTES);
             if (now.isBefore(nextAllowed)) {
                 long minutesLeft = Duration.between(now, nextAllowed).toMinutes();
@@ -94,7 +94,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
 
         String link = "http://localhost:8080/api/v1/user/delete/confirm?token=" + token;
         sendEmail(user.getEmail(), buildEmail(user.getNickname(), link, (TokenType) claims.get("type")));
-        user.setLastVerificationEmailSentAt(Instant.now().toString());
+        user.setLastVerificationEmailSentAt(Instant.now());
         userRepository.save(user);
     }
 
