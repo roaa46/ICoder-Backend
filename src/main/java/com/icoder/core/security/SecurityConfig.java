@@ -63,7 +63,7 @@ public class SecurityConfig {
 
 
                         ///  --------- problems ---------
-                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/*/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/*/*").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/problems").permitAll()
 
                         /// --------- swagger ---------
