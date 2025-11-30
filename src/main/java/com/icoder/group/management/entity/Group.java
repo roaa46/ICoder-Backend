@@ -1,7 +1,7 @@
 package com.icoder.group.management.entity;
 
-import com.icoder.core.enums.ContestCoordinatorType;
-import com.icoder.core.enums.Visibility;
+import com.icoder.group.enums.ContestCoordinatorType;
+import com.icoder.group.enums.Visibility;
 import com.icoder.user.management.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

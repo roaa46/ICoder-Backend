@@ -1,4 +1,4 @@
-package com.icoder.core.enums;
+package com.icoder.group.enums;
 
 public enum ContestCoordinatorType {
     LEADER,

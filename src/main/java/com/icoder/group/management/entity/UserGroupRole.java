@@ -1,6 +1,6 @@
 package com.icoder.group.management.entity;
 
-import com.icoder.core.enums.GroupRole;
+import com.icoder.group.enums.GroupRole;
 import com.icoder.user.management.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
