@@ -3,6 +3,7 @@ package com.icoder.group.management.service.implementation;
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.core.security.CustomUserDetails;
 import com.icoder.group.management.dto.CreateGroupRequest;
+import com.icoder.group.management.dto.GroupResponse;
 import com.icoder.group.management.entity.Group;
 import com.icoder.group.management.mapper.GroupMapper;
 import com.icoder.group.management.repository.GroupRepository;
@@ -10,6 +11,8 @@ import com.icoder.group.management.service.interfaces.GroupService;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -42,5 +45,14 @@ public class GroupServiceImpl implements GroupService {
         }while (groupRepository.existsByCode(group.getCode()));
         groupRepository.save(group);
         return new MessageResponse("Group created successfully");
+    }
+
+    public Page <GroupResponse> GetMyGroups(Authentication authentication, Pageable pageable){
+        if(authentication == null || !authentication.isAuthenticated()){
+            throw new RuntimeException("User not authenticated");
+        }
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Page <Group> myGroups = groupRepository.getMyGroups(userDetails.getUsername(), pageable);
+        return myGroups.map(groupMapper::toDTO);
     }
 }
