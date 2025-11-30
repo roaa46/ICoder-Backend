@@ -1,4 +1,4 @@
-package com.icoder.core.enums;
+package com.icoder.problem.management.enums;
 
 public enum FormatType {
     MARKDOWN,

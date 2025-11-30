@@ -2,7 +2,7 @@ package com.icoder.problem.management.dto;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import com.icoder.core.enums.OJudgeType;
+import com.icoder.problem.management.enums.OJudgeType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

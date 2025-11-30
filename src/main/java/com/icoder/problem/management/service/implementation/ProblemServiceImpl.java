@@ -1,6 +1,6 @@
 package com.icoder.problem.management.service.implementation;
 
-import com.icoder.core.enums.OJudgeType;
+import com.icoder.problem.management.enums.OJudgeType;
 import com.icoder.core.exception.ProblemNotFoundException;
 import com.icoder.problem.management.dto.ProblemResponse;
 import com.icoder.problem.management.dto.ProblemStatementResponse;

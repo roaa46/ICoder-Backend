@@ -1,6 +1,6 @@
 package com.icoder.problem.management.entity;
 
-import com.icoder.core.enums.FormatType;
+import com.icoder.problem.management.enums.FormatType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

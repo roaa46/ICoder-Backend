@@ -1,6 +1,6 @@
 package com.icoder.problem.management.entity;
 
-import com.icoder.core.enums.OJudgeType;
+import com.icoder.problem.management.enums.OJudgeType;
 import jakarta.persistence.*;
 import lombok.*;
 
