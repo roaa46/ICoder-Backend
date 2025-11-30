@@ -8,6 +8,7 @@ import com.icoder.user.management.repository.UserRepository;
 import com.icoder.user.management.service.interfaces.EmailVerificationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,8 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     private final UserRepository userRepository;
     private final JavaMailSender mailSender;
     private final JwtServiceImpl jwtServiceImpl;
+    @Value("${BASE_URL}")
+    private String baseUrl;
 
     @Transactional
     public void sendVerificationEmail(User user) {
@@ -33,7 +36,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
 
         String token = generateToken(user, claims, 15 * 60 * 1000);
 
-        String link = "http://localhost:8080/api/v1/auth/verify?token=" + token;
+        String link = baseUrl + "/api/v1/auth/verify?token=" + token;
         sendEmail(user.getEmail(), buildEmail(user.getNickname(), link, (TokenType) claims.get("type")));
         user.setLastVerificationEmailSentAt(Instant.now());
         userRepository.save(user);
@@ -68,7 +71,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
 
         String token = generateToken(user, claims, 5 * 60 * 1000);
 
-        String link = "http://localhost:8080/api/v1/auth/password/reset?token=" + token;
+        String link = baseUrl + "/api/v1/auth/password/reset?token=" + token;
         sendEmail(user.getEmail(), buildEmail(user.getNickname(), link, (TokenType) claims.get("type")));
     }
 
@@ -92,7 +95,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
 
         String token = generateToken(user, claims, 10 * 60 * 1000);
 
-        String link = "http://localhost:8080/api/v1/user/delete/confirm?token=" + token;
+        String link = baseUrl + "/api/v1/user/delete/confirm?token=" + token;
         sendEmail(user.getEmail(), buildEmail(user.getNickname(), link, (TokenType) claims.get("type")));
         user.setLastVerificationEmailSentAt(Instant.now());
         userRepository.save(user);
@@ -106,7 +109,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
 
         String token = generateToken(user, claims, 15 * 60 * 1000);
 
-        String link = "http://localhost:8080/api/v1/user/email/confirm?token=" + token;
+        String link = baseUrl + "/api/v1/user/email/confirm?token=" + token;
         sendEmail(newEmail, buildEmail(user.getNickname(), link, (TokenType) claims.get("type")));
     }
 

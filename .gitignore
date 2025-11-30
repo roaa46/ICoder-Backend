@@ -1,4 +1,4 @@
-.env
+env.properties
 uploads/
 HELP.md
 target/
