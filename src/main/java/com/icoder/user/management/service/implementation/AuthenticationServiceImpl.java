@@ -27,7 +27,6 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.security.Principal;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Map;
 
 @Service
@@ -67,17 +66,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         User user = authMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setCreatedAt(Instant.now());
-        User savedUser = userRepository.save(user);
-        org.springframework.security.core.userdetails.UserDetails userDetails =
-                new org.springframework.security.core.userdetails.User(user.getHandle(), user.getPassword(), new ArrayList<>());
-//        emailVerificationServiceImpl.sendVerificationEmail(savedUser);
-        String jwtToken = jwtServiceImpl.generateToken(userDetails);
-        String refreshJwtToken = jwtServiceImpl.generateRefreshToken(userDetails);
-        tokenServiceImpl.revokeAllUserTokens(savedUser);
-        tokenServiceImpl.saveUserToken(savedUser, jwtToken);
-
-        tokenServiceImpl.addTokenCookies(response, jwtToken, refreshJwtToken);
-
+        userRepository.save(user);
         return new MessageResponse("Account created successfully! Please verify your email before logging in.");
     }
 

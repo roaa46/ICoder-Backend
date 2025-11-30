@@ -3,7 +3,6 @@ package com.icoder.user.management.service.implementation;
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.user.management.enums.TokenType;
 import com.icoder.core.exception.ApiException;
-import com.icoder.core.security.CustomUserDetails;
 import com.icoder.core.util.TokenHelper;
 import com.icoder.user.management.dto.auth.UpdateEmailRequest;
 import com.icoder.user.management.dto.user.UpdateUserProfileRequest;
@@ -16,7 +15,6 @@ import com.icoder.user.management.service.interfaces.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +26,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.Principal;
 import java.util.Map;
 import java.util.UUID;
 
@@ -50,10 +49,8 @@ public class UserServiceImpl implements UserService {
         return userMapper.toDTO(user);
     }
 
-    public MessageResponse requestAccountDeletion(Authentication authentication) {
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-
-        User user = userRepository.findByHandle(userDetails.getUsername())
+    public MessageResponse requestAccountDeletion(Principal principal) {
+        User user = userRepository.findByHandle(principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         emailVerificationServiceImpl.sendAccountDeletionEmail(user);
@@ -78,9 +75,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
-    public MessageResponse updateProfile(UpdateUserProfileRequest request, Authentication authentication) {
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        User user = userRepository.findByHandle(userDetails.getUsername())
+    public MessageResponse updateProfile(UpdateUserProfileRequest request, Principal principal) {
+        User user = userRepository.findByHandle(principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         validateCurrentPassword(request.getCurrentPassword(), user.getPassword());
         if (
@@ -99,9 +95,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
-    public MessageResponse changeProfilePicture(Authentication authentication, MultipartFile file) {
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        User user = userRepository.findByHandle(userDetails.getUsername())
+    public MessageResponse changeProfilePicture(Principal principal, MultipartFile file) {
+        User user = userRepository.findByHandle(principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         String contentType = file.getContentType();
@@ -153,9 +148,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
-    public MessageResponse requestEmailUpdate(UpdateEmailRequest request, Authentication authentication) {
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        User user = userRepository.findByHandle(userDetails.getUsername())
+    public MessageResponse requestEmailUpdate(UpdateEmailRequest request, Principal principal) {
+        User user = userRepository.findByHandle(principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         validateCurrentPassword(request.getCurrentPassword(), user.getPassword());
         if (userRepository.existsByEmail(request.getNewEmail())) {
@@ -185,9 +179,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
-    public MessageResponse deleteProfilePicture(Authentication authentication) {
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        User user = userRepository.findByHandle(userDetails.getUsername())
+    public MessageResponse deleteProfilePicture(Principal principal) {
+        User user = userRepository.findByHandle(principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         if (user.getPictureUrl() == null || user.getPictureUrl().isBlank()) {
             throw new IllegalStateException("User does not have a profile picture.");

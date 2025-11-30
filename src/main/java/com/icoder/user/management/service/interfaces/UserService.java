@@ -5,23 +5,24 @@ import com.icoder.user.management.dto.auth.UpdateEmailRequest;
 import com.icoder.user.management.dto.user.UpdateUserProfileRequest;
 import com.icoder.user.management.dto.user.UserProfileRequest;
 import com.icoder.user.management.dto.user.UserProfileResponse;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.security.Principal;
 
 public interface UserService {
     UserProfileResponse getProfile(UserProfileRequest userProfileRequest);
 
-    MessageResponse requestAccountDeletion(Authentication authentication);
+    MessageResponse requestAccountDeletion(Principal principal);
 
     MessageResponse confirmAccountDeletion(String token);
 
-    MessageResponse updateProfile(UpdateUserProfileRequest request, Authentication authentication);
+    MessageResponse updateProfile(UpdateUserProfileRequest request, Principal principal);
 
-    MessageResponse changeProfilePicture(Authentication authentication, MultipartFile file);
+    MessageResponse changeProfilePicture(Principal principal, MultipartFile file);
 
-    MessageResponse requestEmailUpdate(UpdateEmailRequest request, Authentication authentication);
+    MessageResponse requestEmailUpdate(UpdateEmailRequest request, Principal principal);
 
     MessageResponse confirmEmailUpdate(String token);
 
-    MessageResponse deleteProfilePicture(Authentication authentication);
+    MessageResponse deleteProfilePicture(Principal principal);
 }
