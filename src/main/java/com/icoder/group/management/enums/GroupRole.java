@@ -1,4 +1,4 @@
-package com.icoder.group.enums;
+package com.icoder.group.management.enums;
 
 public enum GroupRole {
     MEMBER,

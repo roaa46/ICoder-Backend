@@ -2,8 +2,8 @@ package com.icoder.group.management.dto;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import com.icoder.group.enums.ContestCoordinatorType;
-import com.icoder.group.enums.Visibility;
+import com.icoder.group.management.enums.ContestCoordinatorType;
+import com.icoder.group.management.enums.Visibility;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
