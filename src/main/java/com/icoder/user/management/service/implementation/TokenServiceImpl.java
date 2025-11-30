@@ -1,6 +1,6 @@
 package com.icoder.user.management.service.implementation;
 
-import com.icoder.core.enums.TokenType;
+import com.icoder.user.management.enums.TokenType;
 import com.icoder.user.management.entity.Token;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.TokenRepository;

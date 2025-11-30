@@ -54,7 +54,7 @@ public class SecurityConfig {
                         // --------- users ---------
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/email/confirm").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/delete/confirm").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/users").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/delete/request").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/users/update").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/email/request-update").authenticated()

@@ -16,7 +16,6 @@ import java.util.Set;
 
 @Entity
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "users")
@@ -42,30 +41,23 @@ public class User {
 
     private String pictureUrl;
 
-    @Column(nullable = false)
     private boolean verified = false;
 
-    @Column(nullable = false)
-    private String createdAt = Instant.now().toString();
+    private Instant createdAt = Instant.now();
 
-    @Column(nullable = false)
     private int acceptedCount = 0;
 
-    @Column(nullable = false)
     private int attemptedCount = 0;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Builder.Default
     private List<Token> tokens = new ArrayList<>();
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Builder.Default
     private Set<Group> ownedGroups = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Builder.Default
     private Set<UserGroupRole> groupRoles = new HashSet<>();
 
-    private String lastVerificationEmailSentAt;
+    private Instant lastVerificationEmailSentAt;
 }
 

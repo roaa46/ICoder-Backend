@@ -1,6 +1,6 @@
 package com.icoder.user.management.entity;
 
-import com.icoder.core.enums.TokenType;
+import com.icoder.user.management.enums.TokenType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,13 +27,15 @@ public class Token {
     @Enumerated(EnumType.STRING)
     private TokenType tokenType;
 
-    @Column(name = "is_expired", nullable = false)
-    private boolean isExpired;
+    @Column(name = "is_expired")
+    @Builder.Default
+    private boolean isExpired = false;
 
-    @Column(name = "is_revoked", nullable = false)
-    private boolean isRevoked;
+    @Column(name = "is_revoked")
+    @Builder.Default
+    private boolean isRevoked = false;
 
-    @Column(nullable = false)
+    @Builder.Default
     private Instant createdAt = Instant.now();
 
     @ManyToOne(fetch = FetchType.LAZY)
