@@ -11,8 +11,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
-
 
 @Data
 @Builder
@@ -41,12 +39,12 @@ public class RegisterRequest {
     @NotBlank(message = "Password confirmation is required")
     private String passwordConfirmation;
 
-    private boolean verified = false;
+    private boolean verified;
     private String lastVerificationEmailSentAt;
-    private String createdAt = Instant.now().toString();
-    private int acceptedCount = 0;
-    private int attemptedCount = 0;
+    private String createdAt;
+    private int acceptedCount;
+    private int attemptedCount;
 
-    private String pictureURL;
+    private String pictureUrl;
     private String school;
 }

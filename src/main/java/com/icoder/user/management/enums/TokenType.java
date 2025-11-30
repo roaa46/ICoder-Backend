@@ -1,4 +1,4 @@
-package com.icoder.core.enums;
+package com.icoder.user.management.enums;
 
 public enum TokenType {
     BEARER,

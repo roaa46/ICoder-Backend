@@ -11,13 +11,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class ResetPasswordRequest {
 
-    // it's used when user forgets password, so we don't need old password.
+    // it's used when user forgets password, so we don't need the old password.
     // we need a token that came from email verification
 
     @NotBlank
