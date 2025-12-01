@@ -38,13 +38,5 @@ public class RegisterRequest {
 
     @NotBlank(message = "Password confirmation is required")
     private String passwordConfirmation;
-
-    private boolean verified;
-    private String lastVerificationEmailSentAt;
-    private String createdAt;
-    private int acceptedCount;
-    private int attemptedCount;
-
-    private String pictureUrl;
     private String school;
 }
