@@ -8,8 +8,12 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface ContentMapper {
+
     SectionContent toEntity(ContentScrapeDTO dto);
+
     ContentScrapeDTO toDTO(SectionContent entity);
+
     List<SectionContent> toListEntity(List<ContentScrapeDTO> list);
+
     List<ContentScrapeDTO> toListDTO(List<SectionContent> list);
 }

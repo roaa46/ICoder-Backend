@@ -2,7 +2,7 @@ package com.icoder.problem.management.service.implementation;
 
 import com.icoder.core.exception.ApiException;
 import com.icoder.core.exception.ProblemNotFoundException;
-import com.icoder.problem.management.dto.FavouriteRequest;
+import com.icoder.problem.management.dto.FavoriteRequest;
 import com.icoder.problem.management.dto.ProblemResponse;
 import com.icoder.problem.management.dto.ProblemStatementResponse;
 import com.icoder.problem.management.entity.Problem;
@@ -15,9 +15,11 @@ import com.icoder.problem.management.repository.ProblemRepository;
 import com.icoder.problem.management.repository.ProblemUserRelationRepository;
 import com.icoder.problem.management.scraping.service.ScrapingServiceImpl;
 import com.icoder.problem.management.service.interfaces.ProblemService;
+import com.icoder.problem.management.service.specification.ProblemSpecificationsBuilder;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
 import com.icoder.user.management.service.implementation.AuthenticationServiceImpl;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -25,6 +27,7 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -46,6 +49,7 @@ public class ProblemServiceImpl implements ProblemService {
     private static final long HYBRID_TTL_DAYS = 7;
 
     ///  get problem metadata
+    @Override
     public ProblemResponse getProblemMetadata(String source, String code) {
         Optional<Problem> existingProblem = problemRepository.findByProblemCodeAndOnlineJudge(code, OJudgeType.valueOf(source.toUpperCase()));
 
@@ -70,6 +74,7 @@ public class ProblemServiceImpl implements ProblemService {
     }
 
     ///  get a problem statement
+    @Override
     public ProblemStatementResponse getProblemStatement(String source, String code) {
         Problem problem = getProblemFromCacheOrDb(source, code);
         if (problem.getFetchedAt() != null) {
@@ -145,7 +150,9 @@ public class ProblemServiceImpl implements ProblemService {
         return fetchedAt.isBefore(Instant.now().minus(HYBRID_TTL_DAYS, ChronoUnit.DAYS));
     }
 
-    public void setFavourite(FavouriteRequest request) {
+    /// update favorite status of a problem
+    @Transactional
+    public void setFavorite(FavoriteRequest request) {
         User user = userRepository.findById(authenticationService.getCurrentUserId())
                 .orElseThrow(() -> new ApiException("User not found"));
         Problem problem = problemRepository.findById(request.getProblemId())
@@ -155,13 +162,47 @@ public class ProblemServiceImpl implements ProblemService {
                 .orElse(new ProblemUserRelation());
         relation.setUser(user);
         relation.setProblem(problem);
-        relation.setFavourite(request.isFavourite());
+        relation.setFavorite(request.isFavorite());
         relationRepository.save(relation);
     }
 
     /// get all problems
-    public Page<ProblemResponse> getAllProblems(Pageable pageable) {
-        Page<Problem> problemEntities = problemRepository.findAll(pageable);
-        return problemEntities.map(problemMapper::toResponseDTO);
+    @Override
+    public Page<ProblemResponse> getAllProblems(String oj, String code, String title, Pageable pageable) {
+        ProblemSpecificationsBuilder builder = new ProblemSpecificationsBuilder();
+
+        if (oj != null) builder.with("onlineJudge", ":", OJudgeType.valueOf(oj.toUpperCase()));
+        if (code != null) builder.with("problemCode", ":", code);
+        if (title != null) builder.with("problemTitle", ":", title);
+        if (title != null) builder.with("problemTitle", ":", title);
+
+        Specification<Problem> spec = builder.build();
+
+        Page<Problem> problems = problemRepository.findAll(spec, pageable);
+        return problems.map(problemMapper::toResponseDTO);
+    }
+
+    /// get all attempted problems
+    @Override
+    public Page<ProblemResponse> getAttempted(Pageable pageable) {
+        Long userId = authenticationService.getCurrentUserId();
+        Page<ProblemUserRelation> relations = relationRepository.findByUserIdAndIsAttemptedTrue(userId, pageable);
+        return relations.map(rel -> problemMapper.toResponseDTO(rel.getProblem()));
+    }
+
+    /// get all solved problems
+    @Override
+    public Page<ProblemResponse> getSolved(Pageable pageable) {
+        Long userId = authenticationService.getCurrentUserId();
+        Page<ProblemUserRelation> relations = relationRepository.findByUserIdAndIsSolvedTrue(userId, pageable);
+        return relations.map(rel -> problemMapper.toResponseDTO(rel.getProblem()));
+    }
+
+    /// get all favorite problems
+    @Override
+    public Page<ProblemResponse> getFavorites(Pageable pageable) {
+        Long userId = authenticationService.getCurrentUserId();
+        Page<ProblemUserRelation> relations = relationRepository.findByUserIdAndIsFavoriteTrue(userId, pageable);
+        return relations.map(rel -> problemMapper.toResponseDTO(rel.getProblem()));
     }
 }

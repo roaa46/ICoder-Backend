@@ -27,7 +27,7 @@ public class ProblemUserRelation {
     @JoinColumn(name = "problem_id")
     private Problem problem;
 
-    private boolean isFavourite;
+    private boolean isFavorite;
     private boolean isSolved;
     private boolean isAttempted;
 }

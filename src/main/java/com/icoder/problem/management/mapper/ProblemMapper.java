@@ -7,6 +7,8 @@ import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring", uses = {SectionMapper.class, PropertyMapper.class})
 public interface ProblemMapper {
+
     ProblemStatementResponse toStatementDTO(Problem problem);
+
     ProblemResponse toResponseDTO(Problem problem);
 }

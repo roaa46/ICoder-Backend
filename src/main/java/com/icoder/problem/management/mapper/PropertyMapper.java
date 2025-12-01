@@ -8,8 +8,12 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface PropertyMapper {
+
     ProblemProperty toEntity(PropertyScrapeDTO dto);
+
     PropertyScrapeDTO toDTO(ProblemProperty entity);
+
     List<ProblemProperty> toListEntity(List<PropertyScrapeDTO> list);
+
     List<PropertyScrapeDTO> toListDTO(List<ProblemProperty> list);
 }

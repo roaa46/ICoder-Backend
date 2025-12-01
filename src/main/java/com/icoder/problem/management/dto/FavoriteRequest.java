@@ -13,8 +13,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class FavouriteRequest {
+public class FavoriteRequest {
     @NotNull
     private Long problemId;
-    private boolean isFavourite;
+    private boolean isFavorite;
 }

@@ -1,6 +1,6 @@
 package com.icoder.problem.management.controller;
 
-import com.icoder.problem.management.dto.FavouriteRequest;
+import com.icoder.problem.management.dto.FavoriteRequest;
 import com.icoder.problem.management.dto.ProblemResponse;
 import com.icoder.problem.management.dto.ProblemStatementResponse;
 import com.icoder.problem.management.service.implementation.ProblemServiceImpl;
@@ -40,22 +40,77 @@ public class ProblemController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all problems", description = "Returns a paginated list of all problems")
+    @Operation(
+            summary = "Get all problems with optional filters",
+            description = "Returns a paginated list of problems. You can optionally filter by OJ, code, or title. Supports sorting and pagination."
+    )
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<ProblemResponse>> getAllProblems(
+            @RequestParam(required = false) String online_judge,
+            @RequestParam(required = false) String problem_code,
+            @RequestParam(required = false) String problem_title,
             @SortDefault(
                     sort = "fetchedAt", direction = Sort.Direction.DESC
-            )
-            Pageable pageable) {
-        return ResponseEntity.ok(problemService.getAllProblems(pageable));
+            ) Pageable pageable
+    ) {
+        Page<ProblemResponse> response = problemService.getAllProblems(online_judge, problem_code, problem_title, pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/reset-filters")
+    @Operation(
+            summary = "Get all problems without filters",
+            description = "Returns a paginated list of problems sorted DESC according to fetched time."
+    )
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<ProblemResponse>> resetFilters(
+            @SortDefault(sort = "fetchedAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        Page<ProblemResponse> response = problemService.getAllProblems(null, null, null, pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/favorites")
+    @Operation(
+            summary = "Get all favorite problems",
+            description = "Returns a paginated list of favorite problems sorted DESC according to fetched time."
+    )
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<ProblemResponse>> getFavoriteProblems(Pageable pageable) {
+        Page<ProblemResponse> response = problemService.getFavorites(pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/solved")
+    @Operation(
+            summary = "Get all solved problems",
+            description = "Returns a paginated list of solved problems sorted DESC according to fetched time."
+    )
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<ProblemResponse>> getSolvedProblems(Pageable pageable) {
+        Page<ProblemResponse> response = problemService.getSolved(pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/attempted")
+    @Operation(
+            summary = "Get all attempted problems",
+            description = "Returns a paginated list of attempted problems sorted DESC according to fetched time."
+    )
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<ProblemResponse>> getAttemptedProblems(Pageable pageable) {
+        Page<ProblemResponse> response = problemService.getAttempted(pageable);
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping
     @Operation(
-            summary = "Update favourite status",
-            description = "Adds or removes a problem from user's favourites"
+            summary = "Update favorite status of a problem",
+            description = "Adds or removes a problem from user's favorites"
     )
-    public ResponseEntity updateFavourite(@Valid @RequestBody FavouriteRequest request) {
-        problemService.setFavourite(request);
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity updateFavorite(@Valid @RequestBody FavoriteRequest request) {
+        problemService.setFavorite(request);
         return ResponseEntity.accepted().build();
     }
 }
