@@ -1,9 +1,11 @@
 package com.icoder.problem.management.controller;
 
+import com.icoder.problem.management.dto.FavouriteRequest;
 import com.icoder.problem.management.dto.ProblemResponse;
 import com.icoder.problem.management.dto.ProblemStatementResponse;
 import com.icoder.problem.management.service.implementation.ProblemServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,10 +13,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.SortDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/problems")
@@ -48,5 +47,15 @@ public class ProblemController {
             )
             Pageable pageable) {
         return ResponseEntity.ok(problemService.getAllProblems(pageable));
+    }
+
+    @PutMapping
+    @Operation(
+            summary = "Update favourite status",
+            description = "Adds or removes a problem from user's favourites"
+    )
+    public ResponseEntity updateFavourite(@Valid @RequestBody FavouriteRequest request) {
+        problemService.setFavourite(request);
+        return ResponseEntity.accepted().build();
     }
 }

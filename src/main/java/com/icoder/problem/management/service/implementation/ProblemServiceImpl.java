@@ -1,16 +1,23 @@
 package com.icoder.problem.management.service.implementation;
 
+import com.icoder.core.exception.ApiException;
 import com.icoder.core.exception.ProblemNotFoundException;
+import com.icoder.problem.management.dto.FavouriteRequest;
 import com.icoder.problem.management.dto.ProblemResponse;
 import com.icoder.problem.management.dto.ProblemStatementResponse;
 import com.icoder.problem.management.entity.Problem;
+import com.icoder.problem.management.entity.ProblemUserRelation;
 import com.icoder.problem.management.enums.OJudgeType;
 import com.icoder.problem.management.mapper.ProblemMapper;
 import com.icoder.problem.management.mapper.PropertyMapper;
 import com.icoder.problem.management.mapper.SectionMapper;
 import com.icoder.problem.management.repository.ProblemRepository;
+import com.icoder.problem.management.repository.ProblemUserRelationRepository;
 import com.icoder.problem.management.scraping.service.ScrapingServiceImpl;
 import com.icoder.problem.management.service.interfaces.ProblemService;
+import com.icoder.user.management.entity.User;
+import com.icoder.user.management.repository.UserRepository;
+import com.icoder.user.management.service.implementation.AuthenticationServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -33,6 +40,9 @@ public class ProblemServiceImpl implements ProblemService {
     private final PropertyMapper propertyMapper;
     private final SectionMapper sectionMapper;
     private final ScrapingServiceImpl scrapingService;
+    private final UserRepository userRepository;
+    private final ProblemUserRelationRepository relationRepository;
+    private final AuthenticationServiceImpl authenticationService;
     private static final long HYBRID_TTL_DAYS = 7;
 
     ///  get problem metadata
@@ -133,6 +143,20 @@ public class ProblemServiceImpl implements ProblemService {
     private boolean isEligibleForMigration(Instant fetchedAt) {
         if (fetchedAt == null) return false;
         return fetchedAt.isBefore(Instant.now().minus(HYBRID_TTL_DAYS, ChronoUnit.DAYS));
+    }
+
+    public void setFavourite(FavouriteRequest request) {
+        User user = userRepository.findById(authenticationService.getCurrentUserId())
+                .orElseThrow(() -> new ApiException("User not found"));
+        Problem problem = problemRepository.findById(request.getProblemId())
+                .orElseThrow(() -> new ProblemNotFoundException("Problem not found"));
+        ProblemUserRelation relation = relationRepository
+                .findByUserIdAndProblemId(user.getId(), problem.getId())
+                .orElse(new ProblemUserRelation());
+        relation.setUser(user);
+        relation.setProblem(problem);
+        relation.setFavourite(request.isFavourite());
+        relationRepository.save(relation);
     }
 
     /// get all problems
