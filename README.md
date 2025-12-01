@@ -85,7 +85,7 @@ Notes:
 
 - Make sure .env is configured before running Docker.
 
-- The application will be available at http://localhost:8080.
+- The application will be available at `http://localhost:${PORT}`.
 
 ```bash
 # Build image
@@ -116,7 +116,7 @@ mvnw.cmd spring-boot:run
 
 API docs (Swagger/OpenAPI) will be available at:
 
-Once the application is running, access the Swagger UI documentation at: `http://localhost:8080/swagger-ui.html`
+Once the application is running, access the Swagger UI documentation at: `http://localhost:${PORT}/swagger-ui.html`
 
 or navigate to `docs/api`
 
