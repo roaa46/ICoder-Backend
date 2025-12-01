@@ -35,7 +35,6 @@ public class Problem {
     @Column(nullable = false)
     private String contestTitle;
 
-    @Column(nullable = false)
     private String contestLink;
 
     @Column(nullable = false)
@@ -62,7 +61,7 @@ public class Problem {
             fetch = FetchType.LAZY,
             cascade = CascadeType.ALL,
             orphanRemoval = true)
-    private List<ProblemSection> sections = new ArrayList<>();
+    private List<ProblemSection> sections = new ArrayList<>();  // Problem Statement, Input, Output, Notes, Examples, Constraints, ...
 
     @OneToMany(mappedBy = "problem",
             fetch = FetchType.LAZY,

@@ -19,11 +19,13 @@ public class SectionContent {
     private Long id;
 
     @Column(nullable = false)
+//    uncomment when scraping is done
+//    @Lob
     private String content;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private FormatType formatType;
+    private FormatType formatType;  // I think we don't need it, as the type will be Markdown
 
     @Column(nullable = false)
     private Integer orderIndex;
