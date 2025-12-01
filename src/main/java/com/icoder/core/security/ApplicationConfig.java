@@ -22,23 +22,21 @@ public class ApplicationConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        return new UserDetailsService() {
-            @Override
-            public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-                try {
-                    User user = userRepository.findByHandle(username)
-                            .orElseThrow(() -> new UsernameNotFoundException(
-                                    "User not found with handle: " + username));
+        return username -> {
+            try {
+                User user = userRepository.findByHandle(username)
+                        .orElseThrow(() -> new UsernameNotFoundException(
+                                "User not found with handle: " + username));
 
-                    return new CustomUserDetails(
-                            user.getHandle(),
-                            user.getPassword(),
-                            user.isVerified()
-                    );
+                return new CustomUserDetails(
+                        user.getId(),
+                        user.getHandle(),
+                        user.getPassword(),
+                        user.isVerified()
+                );
 
-                } catch (Exception e) {
-                    throw new UsernameNotFoundException("Error loading user: " + e.getMessage());
-                }
+            } catch (Exception e) {
+                throw new UsernameNotFoundException("Error loading user: " + e.getMessage());
             }
         };
     }

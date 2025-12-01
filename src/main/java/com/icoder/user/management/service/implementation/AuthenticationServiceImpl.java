@@ -77,11 +77,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         User user = userRepository.findByHandle(request.getHandle())
                 .orElseThrow(() -> new UsernameNotFoundException("user not found"));
         String jwtToken = jwtServiceImpl.generateToken(new CustomUserDetails(
+                user.getId(),
                 user.getHandle(),
                 user.getPassword(),
                 user.isVerified()
         ));
         String refreshJwtToken = jwtServiceImpl.generateRefreshToken(new CustomUserDetails(
+                user.getId(),
                 user.getHandle(),
                 user.getPassword(),
                 user.isVerified()
@@ -110,11 +112,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             User user = this.userRepository.findByHandle(userEmail)
                     .orElseThrow();
             if (jwtServiceImpl.isTokenValid(refreshToken, new CustomUserDetails(
+                    user.getId(),
                     user.getHandle(),
                     user.getPassword(),
                     user.isVerified()
             ))) {
                 String accessToken = jwtServiceImpl.generateToken(new CustomUserDetails(
+                        user.getId(),
                         user.getHandle(),
                         user.getPassword(),
                         user.isVerified()
@@ -194,6 +198,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private void refreshSecurityContext(User user) {
         CustomUserDetails updatedDetails = new CustomUserDetails(
+                user.getId(),
                 user.getHandle(),
                 user.getPassword(),
                 user.isVerified()
@@ -208,4 +213,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         SecurityContextHolder.getContext().setAuthentication(newAuth);
     }
 
+    public Long getCurrentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        return userDetails.getId();
+    }
 }
