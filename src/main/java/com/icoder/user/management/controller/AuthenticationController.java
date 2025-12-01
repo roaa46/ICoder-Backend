@@ -46,9 +46,9 @@ public class AuthenticationController {
             summary = "User logout",
             description = "Invalidates the user's session and clears authentication cookies."
     )
-    public ResponseEntity<MessageResponse> logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
+    public ResponseEntity logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
         logoutServiceImpl.logout(request, response, authentication);
-        return ResponseEntity.ok(new MessageResponse("Logged out successfully."));
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("refresh")
