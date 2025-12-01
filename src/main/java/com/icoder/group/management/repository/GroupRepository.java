@@ -12,4 +12,7 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
 
     @Query("SELECT g FROM Group g WHERE g.owner.handle = :handle")
     Page<Group> getMyGroups(@Param("handle") String handle, Pageable pageable);
+
+    @Query("SELECT g FROM Group g WHERE g.visibility = :visibility")
+    Page<Group> getAllPublicGroups(@Param("visibility") String visibility, Pageable pageable);
 }

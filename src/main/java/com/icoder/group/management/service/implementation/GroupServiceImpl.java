@@ -5,6 +5,7 @@ import com.icoder.core.security.CustomUserDetails;
 import com.icoder.group.management.dto.CreateGroupRequest;
 import com.icoder.group.management.dto.GroupResponse;
 import com.icoder.group.management.entity.Group;
+import com.icoder.group.management.enums.Visibility;
 import com.icoder.group.management.mapper.GroupMapper;
 import com.icoder.group.management.repository.GroupRepository;
 import com.icoder.group.management.service.interfaces.GroupService;
@@ -27,6 +28,7 @@ public class GroupServiceImpl implements GroupService {
     private final GroupMapper groupMapper;
     private final UserRepository userRepository;
 
+    @Override
     public MessageResponse createGroup(CreateGroupRequest groupDetails, Authentication authentication){
         if(authentication == null || !authentication.isAuthenticated()){
             throw new RuntimeException("User not authenticated");
@@ -46,7 +48,7 @@ public class GroupServiceImpl implements GroupService {
         groupRepository.save(group);
         return new MessageResponse("Group created successfully");
     }
-
+    @Override
     public Page <GroupResponse> GetMyGroups(Authentication authentication, Pageable pageable){
         if(authentication == null || !authentication.isAuthenticated()){
             throw new RuntimeException("User not authenticated");
@@ -54,5 +56,10 @@ public class GroupServiceImpl implements GroupService {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         Page <Group> myGroups = groupRepository.getMyGroups(userDetails.getUsername(), pageable);
         return myGroups.map(groupMapper::toDTO);
+    }
+    @Override
+    public Page<GroupResponse> getAllGroups(Pageable pageable) {
+        Page<Group> groups = groupRepository.getAllPublicGroups(Visibility.PUBLIC.toString(), pageable);
+        return groups.map(groupMapper::toDTO);
     }
 }
