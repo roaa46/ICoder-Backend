@@ -7,3 +7,4 @@ services:
     restart: unless-stopped
     volumes:
       - ./uploads:/app/uploads
+      - ./env.properties:/app/env.properties
