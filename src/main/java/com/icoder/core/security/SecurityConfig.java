@@ -67,6 +67,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/problems/*/*/metadata").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/problems").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/problems").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/attempted").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/favorites").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/solved").authenticated()
 
                         /// --------- swagger ---------
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
