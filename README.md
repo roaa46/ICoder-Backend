@@ -75,31 +75,7 @@ cd ICoder-backend
 ```
 
 ### **Environment Variables**
-Copy `.env.example` → rename it to `.env` → fill in your configuration values.
-
-Alternatively, set the variables directly in the OS environment.
-
-```
-# DB
-DB_URL=url
-DB_USERNAME=user
-DB_PASSWORD=pass
-
-# JWT
-JWT_SECRET=secret
-TOKEN_EXPIRATION=exp
-REFRESH_TOKEN_EXPIRATION=ref
-
-# email verification
-EMAIL=email
-PASSWORD=pass
-
-# profile pic uploads path
-UPLOAD_DIR=path
-
-# frontend url
-FRONTEND_URL=url
-```
+Copy `env.properties.example` → rename it to `env.properties` → fill in your configuration values.
 
 ### Running with Docker
 
