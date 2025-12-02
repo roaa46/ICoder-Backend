@@ -12,7 +12,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,9 +22,10 @@ public class GroupController {
     private final GroupServiceImpl groupService;
 
     @GetMapping("/me")
-    public ResponseEntity<Page<GroupResponse>> getMyGroups(Authentication authentication,
+    @PreAuthorize(value = "isAuthenticated()")
+    public ResponseEntity<Page<GroupResponse>> getMyGroups(
            @PageableDefault(size = 9, sort = "name") Pageable pageable) {
-        return ResponseEntity.ok(groupService.GetMyGroups(authentication, pageable));
+        return ResponseEntity.ok(groupService.GetMyGroups(pageable));
     }
     @GetMapping("")
     @PreAuthorize(value = "isAuthenticated()")
@@ -35,15 +35,14 @@ public class GroupController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<MessageResponse> createGroup(@Valid @RequestBody CreateGroupRequest groupDetails,
-                                                       Authentication authentication) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(groupService.createGroup(groupDetails, authentication));
+    public ResponseEntity<MessageResponse> createGroup(@Valid @RequestBody CreateGroupRequest groupDetails) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(groupService.createGroup(groupDetails));
     }
 
     @PutMapping("join")
-    public ResponseEntity<MessageResponse> joinGroup(@RequestBody Long groupId, Authentication authentication){
-        groupService.joinGroup(groupId, authentication);
-        return ResponseEntity.ok(new MessageResponse("User joined the group successfully"));
+    @PreAuthorize(value = "isAuthenticated()")
+    public ResponseEntity<MessageResponse> joinGroup(@RequestBody Long groupId){
+        return ResponseEntity.ok(groupService.joinGroup(groupId));
 
     }
 }

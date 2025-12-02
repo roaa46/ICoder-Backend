@@ -1,7 +1,6 @@
 package com.icoder.group.management.service.implementation;
 
 import com.icoder.core.dto.MessageResponse;
-import com.icoder.core.security.CustomUserDetails;
 import com.icoder.group.management.dto.CreateGroupRequest;
 import com.icoder.group.management.dto.GroupResponse;
 import com.icoder.group.management.entity.Group;
@@ -11,11 +10,11 @@ import com.icoder.group.management.repository.GroupRepository;
 import com.icoder.group.management.service.interfaces.GroupService;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
+import com.icoder.user.management.service.interfaces.AuthenticationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -28,16 +27,14 @@ public class GroupServiceImpl implements GroupService {
     private final GroupRepository groupRepository;
     private final GroupMapper groupMapper;
     private final UserRepository userRepository;
+    private final AuthenticationService authenticationService;
 
     @Override
-    public Page <GroupResponse> GetMyGroups(Authentication authentication, Pageable pageable){
-        if(authentication == null || !authentication.isAuthenticated()){
-            throw new RuntimeException("User not authenticated");
-        }
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        Page <Group> myGroups = groupRepository.getMyGroups(userDetails.getUsername(), pageable);
+    public Page<GroupResponse> GetMyGroups(Pageable pageable) {
+        Page<Group> myGroups = groupRepository.getMyGroups(authenticationService.getCurrentUserUsername(), pageable);
         return myGroups.map(groupMapper::toDTO);
     }
+
     @Override
     public Page<GroupResponse> getAllGroups(Pageable pageable) {
         Page<Group> groups = groupRepository.getAllPublicGroups(Visibility.PUBLIC, pageable);
@@ -45,12 +42,8 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public MessageResponse createGroup(CreateGroupRequest groupDetails, Authentication authentication){
-        if(authentication == null || !authentication.isAuthenticated()){
-            throw new RuntimeException("User not authenticated");
-        }
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        User owner = userRepository.findByHandle(userDetails.getUsername())
+    public MessageResponse createGroup(CreateGroupRequest groupDetails) {
+        User owner = userRepository.findById(authenticationService.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         Group group = groupMapper.toEntity(groupDetails);
@@ -58,22 +51,16 @@ public class GroupServiceImpl implements GroupService {
         group.setOwner(owner);
         group.setCreatedAt(Instant.now());
 
-        do{
-            group.setCode(UUID.randomUUID().toString().substring(0,8).toUpperCase());
-        }while (groupRepository.existsByCode(group.getCode()));
+        do {
+            group.setCode(UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        } while (groupRepository.existsByCode(group.getCode()));
         groupRepository.save(group);
         return new MessageResponse("Group created successfully");
     }
+
     @Override
     @Transactional
-    public void joinGroup(Long groupId, Authentication authentication) {
-        if(authentication == null || !authentication.isAuthenticated()){
-            throw new RuntimeException("User not authenticated");
-        }
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        User user = userRepository.findByHandle(userDetails.getUsername())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-        groupRepository.addUserToGroup(user.getId(), groupId, "MEMBER");
+    public MessageResponse joinGroup(Long groupId) {
+        return groupRepository.addUserToGroup(authenticationService.getCurrentUserId(), groupId, "MEMBER");
     }
 }

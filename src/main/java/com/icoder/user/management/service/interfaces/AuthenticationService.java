@@ -24,4 +24,7 @@ public interface AuthenticationService {
     MessageResponse resetPassword(ResetPasswordRequest request);
 
     MessageResponse changePassword(ChangePasswordRequest request, Principal principal);
+
+    Long getCurrentUserId();
+    String getCurrentUserUsername();
 }

@@ -1,5 +1,6 @@
 package com.icoder.group.management.repository;
 
+import com.icoder.core.dto.MessageResponse;
 import com.icoder.group.management.entity.Group;
 import com.icoder.group.management.enums.Visibility;
 import org.springframework.data.domain.Page;
@@ -20,5 +21,5 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
 
     @Query ("INSERT INTO UserGroupRole (user, group, role) VALUES (:userId, :groupId, :role)")
     @Modifying
-    void addUserToGroup(Long userId, Long groupId, String role);
+    MessageResponse addUserToGroup(Long userId, Long groupId, String role);
 }
