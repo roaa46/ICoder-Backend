@@ -25,7 +25,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     private final UserRepository userRepository;
     private final JavaMailSender mailSender;
     private final JwtServiceImpl jwtServiceImpl;
-    @Value("${BASE_URL}")
+    @Value("${ALLOWED_ORIGIN}")
     private String baseUrl;
 
     @Transactional
@@ -114,11 +114,12 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     }
 
     private String generateToken(User user, Map<String, Object> claims, long verificationExpiration) {
+        Long id = user.getId();
         String handle = user.getHandle();
         String password = user.getPassword();
         boolean verified = user.isVerified();
 
-        CustomUserDetails userDetails = new CustomUserDetails(handle, password, verified);
+        CustomUserDetails userDetails = new CustomUserDetails(id, handle, password, verified);
         return jwtServiceImpl.generateTokenWithCustomExpiration(
                 claims,
                 userDetails,

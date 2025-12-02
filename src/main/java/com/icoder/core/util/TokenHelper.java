@@ -20,6 +20,7 @@ public class TokenHelper {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         if (!jwtServiceImpl.isTokenValid(token, new CustomUserDetails(
+                user.getId(),
                 user.getHandle(),
                 user.getPassword(),
                 user.isVerified()

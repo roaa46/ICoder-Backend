@@ -75,31 +75,7 @@ cd ICoder-backend
 ```
 
 ### **Environment Variables**
-Copy `.env.example` → rename it to `.env` → fill in your configuration values.
-
-Alternatively, set the variables directly in the OS environment.
-
-```
-# DB
-DB_URL=url
-DB_USERNAME=user
-DB_PASSWORD=pass
-
-# JWT
-JWT_SECRET=secret
-TOKEN_EXPIRATION=exp
-REFRESH_TOKEN_EXPIRATION=ref
-
-# email verification
-EMAIL=email
-PASSWORD=pass
-
-# profile pic uploads path
-UPLOAD_DIR=path
-
-# frontend url
-FRONTEND_URL=url
-```
+Copy `env.properties.example` → rename it to `env.properties` → fill in your configuration values.
 
 ### Running with Docker
 
@@ -109,7 +85,7 @@ Notes:
 
 - Make sure .env is configured before running Docker.
 
-- The application will be available at http://localhost:8080.
+- The application will be available at `http://localhost:${PORT}`.
 
 ```bash
 # Build image
@@ -140,7 +116,7 @@ mvnw.cmd spring-boot:run
 
 API docs (Swagger/OpenAPI) will be available at:
 
-Once the application is running, access the Swagger UI documentation at: `http://localhost:8080/swagger-ui.html`
+Once the application is running, access the Swagger UI documentation at: `http://localhost:${PORT}/swagger-ui.html`
 
 or navigate to `docs/api`
 
