@@ -14,7 +14,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -101,7 +100,7 @@ public class AuthenticationController {
             summary = "Change authenticated user's password",
             description = "Allows an authenticated user to change their password by providing the old and new passwords."
     )
-    public ResponseEntity<MessageResponse> changePassword(@Valid @RequestBody ChangePasswordRequest request, Principal principal) {
-        return ResponseEntity.ok(authenticationService.changePassword(request, principal));
+    public ResponseEntity<MessageResponse> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        return ResponseEntity.ok(authenticationService.changePassword(request));
     }
 }

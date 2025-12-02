@@ -7,22 +7,21 @@ import com.icoder.user.management.dto.user.UserProfileRequest;
 import com.icoder.user.management.dto.user.UserProfileResponse;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.security.Principal;
 
 public interface UserService {
     UserProfileResponse getProfile(UserProfileRequest userProfileRequest);
 
-    MessageResponse requestAccountDeletion(Principal principal);
+    MessageResponse requestAccountDeletion();
 
     MessageResponse confirmAccountDeletion(String token);
 
-    MessageResponse updateProfile(UpdateUserProfileRequest request, Principal principal);
+    MessageResponse updateProfile(UpdateUserProfileRequest request);
 
-    MessageResponse changeProfilePicture(Principal principal, MultipartFile file);
+    MessageResponse changeProfilePicture(MultipartFile file);
 
-    MessageResponse requestEmailUpdate(UpdateEmailRequest request, Principal principal);
+    MessageResponse requestEmailUpdate(UpdateEmailRequest request);
 
     MessageResponse confirmEmailUpdate(String token);
 
-    MessageResponse deleteProfilePicture(Principal principal);
+    MessageResponse deleteProfilePicture();
 }

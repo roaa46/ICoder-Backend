@@ -6,7 +6,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.security.Principal;
 
 public interface AuthenticationService {
     MessageResponse register(RegisterRequest request, HttpServletResponse response);
@@ -23,7 +22,7 @@ public interface AuthenticationService {
 
     MessageResponse resetPassword(ResetPasswordRequest request);
 
-    MessageResponse changePassword(ChangePasswordRequest request, Principal principal);
+    MessageResponse changePassword(ChangePasswordRequest request);
 
     Long getCurrentUserId();
 }
