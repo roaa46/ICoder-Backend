@@ -25,7 +25,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     private final UserRepository userRepository;
     private final JavaMailSender mailSender;
     private final JwtServiceImpl jwtServiceImpl;
-    @Value("${BASE_URL}")
+    @Value("${ALLOWED_ORIGIN}")
     private String baseUrl;
 
     @Transactional
