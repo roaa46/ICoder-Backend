@@ -5,9 +5,13 @@ import com.icoder.core.exception.ProblemNotFoundException;
 import com.icoder.problem.management.dto.FavoriteRequest;
 import com.icoder.problem.management.dto.ProblemResponse;
 import com.icoder.problem.management.dto.ProblemStatementResponse;
+import com.icoder.problem.management.dto.SectionScrapeDTO;
 import com.icoder.problem.management.entity.Problem;
+import com.icoder.problem.management.entity.ProblemSection;
 import com.icoder.problem.management.entity.ProblemUserRelation;
+import com.icoder.problem.management.entity.SectionContent;
 import com.icoder.problem.management.enums.OJudgeType;
+import com.icoder.problem.management.mapper.ContentMapper;
 import com.icoder.problem.management.mapper.ProblemMapper;
 import com.icoder.problem.management.mapper.PropertyMapper;
 import com.icoder.problem.management.mapper.SectionMapper;
@@ -22,16 +26,13 @@ import com.icoder.user.management.service.implementation.AuthenticationServiceIm
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -42,21 +43,24 @@ public class ProblemServiceImpl implements ProblemService {
     private final ProblemMapper problemMapper;
     private final PropertyMapper propertyMapper;
     private final SectionMapper sectionMapper;
+    private final ContentMapper contentMapper;
     private final ScrapingServiceImpl scrapingService;
     private final UserRepository userRepository;
     private final ProblemUserRelationRepository relationRepository;
     private final AuthenticationServiceImpl authenticationService;
-    private static final long HYBRID_TTL_DAYS = 7;
 
     ///  get problem metadata
     @Override
+    @Transactional
     public ProblemResponse getProblemMetadata(String source, String code) {
         Optional<Problem> existingProblem = problemRepository.findByProblemCodeAndOnlineJudge(code, OJudgeType.valueOf(source.toUpperCase()));
 
         if (existingProblem.isPresent() && existingProblem.get().getProblemTitle() != null) {
+            log.info("problem metadata is found in DB");
             return problemMapper.toResponseDTO(existingProblem.get());
         }
 
+        log.info("problem metadata will be scrapped");
         ProblemResponse response = scrapingService.scrapMetaData(source, code);
         Problem newProblem = new Problem(
                 response.getProblemCode(),
@@ -75,83 +79,50 @@ public class ProblemServiceImpl implements ProblemService {
 
     ///  get a problem statement
     @Override
+    @Transactional
     public ProblemStatementResponse getProblemStatement(String source, String code) {
-        Problem problem = getProblemFromCacheOrDb(source, code);
-        if (problem.getFetchedAt() != null) {
-            if (isEligibleForMigration(problem.getFetchedAt())) {
-                log.info("problem exceeded 7 days, scrap again.");
-                problem = scrapAndCacheFullStatement(source, code);
-                putStableProblemToCache(problem);
-                evictNewProblemCache(source, code);
-            }
-            log.info("problem doesn't exceed 7 days, get from cache.");
+        Optional<Problem> existingProblem = problemRepository.findByProblemCodeAndOnlineJudge(code, OJudgeType.valueOf(source.toUpperCase()));
+
+        if (existingProblem.isPresent() && existingProblem.get().getSections() != null) {
+            log.info("problem is found in DB");
+            return problemMapper.toStatementDTO(existingProblem.get());
         }
-        else {
+        log.info("problem will be scrapped");
 
-            log.info("problem metadata exists but there's no problem statement. fetch and scrap for the first time");
-            problem = scrapAndCacheFullStatement(source, code);
-        }
-
-        ProblemStatementResponse problemResponse = problemMapper.toStatementDTO(problem);
-        problemResponse.setOnlineJudge(source);
-
-        return problemResponse;
+        return scrapFullStatement(source, code);
     }
 
-    private Problem getProblemFromCacheOrDb(String source, String code) {
-        Problem stable = getStableProblemFromCache(source, code);
-        if (stable != null && stable.isCached()) return stable;
-
-        Problem newest = getNewProblemFromCache(source, code);
-        if (newest != null && newest.isCached()) return newest;
-
-        return problemRepository.findByProblemCodeAndOnlineJudge(code, OJudgeType.valueOf(source.toUpperCase()))
-                .orElseThrow(() -> new ProblemNotFoundException("Problem not found in DB or external judge"));
-    }
-
-    @Cacheable(value = "stableProblemsCache", key = "#source + '-' + #code")
-    public Problem getStableProblemFromCache(String source, String code) {
-        return problemRepository.findByProblemCodeAndOnlineJudge(code, OJudgeType.valueOf(source.toUpperCase())).orElse(null);
-    }
-
-    @Cacheable(value = "newProblemsCache", key = "#source + '-' + #code")
-    public Problem getNewProblemFromCache(String source, String code) {
-        return problemRepository.findByProblemCodeAndOnlineJudge(code, OJudgeType.valueOf(source.toUpperCase())).orElse(null);
-    }
-
-    /// scrap problem statement
-    @CachePut(value = "newProblemsCache", key = "#source + '-' + #code")
-    public Problem scrapAndCacheFullStatement(String source, String code) {
+    @Override
+    @Transactional
+    public ProblemStatementResponse scrapFullStatement(String source, String code) {
         ProblemStatementResponse scrapedResponse = scrapingService.scrapFullStatement(source, code);
 
         Problem problemToUpdate = problemRepository.findByProblemCodeAndOnlineJudge(code, OJudgeType.valueOf(source.toUpperCase()))
                 .orElseThrow(() -> new ProblemNotFoundException("Metadata not found for problem " + source + "-" + code));
+
+        List<ProblemSection> newSections = sectionMapper.toListEntity(scrapedResponse.getSections());
         problemToUpdate.setProperties(propertyMapper.toListEntity(scrapedResponse.getProperties()));
-        problemToUpdate.setSections(sectionMapper.toListEntity(scrapedResponse.getSections()));
-        problemToUpdate.setAttemptedCount(scrapedResponse.getAttemptedCount());
+        problemToUpdate.setSections(newSections);
+
+        for (int i = 0; i < newSections.size(); i++) {
+            ProblemSection sectionEntity = newSections.get(i);
+            SectionScrapeDTO sectionDTO = scrapedResponse.getSections().get(i);
+
+            List<SectionContent> contentEntities = contentMapper.toListEntity(sectionDTO.getContents());
+
+            contentEntities.forEach(content -> content.setSection(sectionEntity));
+
+            sectionEntity.setContents(contentEntities);
+        }
         problemToUpdate.setFetchedAt(Instant.now());
-        problemToUpdate.setCached(true);
+        Problem savedProblem = problemRepository.save(problemToUpdate);
 
-        return problemRepository.save(problemToUpdate);
-    }
-
-    @CachePut(value = "stableProblemsCache", key = "#problem.onlineJudge.toString().toLowerCase() + '-' + #problem.problemCode")
-    public Problem putStableProblemToCache(Problem problem) {
-        return problem;
-    }
-
-    @CacheEvict(value = "newProblemsCache", key = "#source + '-' + #code")
-    public void evictNewProblemCache(String source, String code) {
-
-    }
-
-    private boolean isEligibleForMigration(Instant fetchedAt) {
-        if (fetchedAt == null) return false;
-        return fetchedAt.isBefore(Instant.now().minus(HYBRID_TTL_DAYS, ChronoUnit.DAYS));
+        return problemMapper.toStatementDTO(savedProblem);
     }
 
     /// update favorite status of a problem
     @Transactional
+    @Override
     public void setFavorite(FavoriteRequest request) {
         User user = userRepository.findById(authenticationService.getCurrentUserId())
                 .orElseThrow(() -> new ApiException("User not found"));

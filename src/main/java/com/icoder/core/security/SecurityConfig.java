@@ -63,9 +63,11 @@ public class SecurityConfig {
 
 
                         ///  --------- problems ---------
-                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/*/*").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/*/*/metadata").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/problems").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/*/*/metadata").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/*/*").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/recrawl/*/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/problems").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/reset-filters").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/problems").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/problems/attempted").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/problems/favorites").authenticated()
@@ -93,7 +95,7 @@ public class SecurityConfig {
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/json");
-                            response.getWriter().write("{\"error\": \"Unauthorized\"}");
+                            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Authentication is required to access this resource.\"}");
                         }));
 
         return http.build();
