@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class Judge0SubmissionResult {
-    private String sourceCode;
-
+public class TokenResponse {
+    private String token;
 }

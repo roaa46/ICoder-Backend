@@ -6,9 +6,7 @@ import com.icoder.problem.management.dto.ProblemStatementResponse;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
 
-@Service
 public interface ProblemService {
     @Transactional
     ProblemResponse getProblemMetadata(String source, String code);

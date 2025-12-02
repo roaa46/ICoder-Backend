@@ -12,8 +12,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class Judge0SubmissionRequest {
-    private int languageId;
-    private String sourceCode;
-    private String stdin;
+public class LanguageResponse {
+    private Integer id;
+    private String name;
+    private boolean isArchived;
+    private String sourceFile;
+    private String compileCmd;
+    private String runCmd;
 }
