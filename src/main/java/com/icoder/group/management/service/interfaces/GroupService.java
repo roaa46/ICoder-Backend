@@ -8,7 +8,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 
 public interface GroupService {
-    MessageResponse createGroup(CreateGroupRequest groupDetails, Authentication authentication);
     Page <GroupResponse> GetMyGroups(Authentication authentication, Pageable pageable);
     Page<GroupResponse> getAllGroups(Pageable pageable);
+
+    MessageResponse createGroup(CreateGroupRequest groupDetails, Authentication authentication);
+
+    void joinGroup(Long groupId, Authentication authentication);
 }

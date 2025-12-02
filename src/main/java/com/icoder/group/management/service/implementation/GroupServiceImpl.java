@@ -11,6 +11,7 @@ import com.icoder.group.management.repository.GroupRepository;
 import com.icoder.group.management.service.interfaces.GroupService;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +28,21 @@ public class GroupServiceImpl implements GroupService {
     private final GroupRepository groupRepository;
     private final GroupMapper groupMapper;
     private final UserRepository userRepository;
+
+    @Override
+    public Page <GroupResponse> GetMyGroups(Authentication authentication, Pageable pageable){
+        if(authentication == null || !authentication.isAuthenticated()){
+            throw new RuntimeException("User not authenticated");
+        }
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Page <Group> myGroups = groupRepository.getMyGroups(userDetails.getUsername(), pageable);
+        return myGroups.map(groupMapper::toDTO);
+    }
+    @Override
+    public Page<GroupResponse> getAllGroups(Pageable pageable) {
+        Page<Group> groups = groupRepository.getAllPublicGroups(Visibility.PUBLIC, pageable);
+        return groups.map(groupMapper::toDTO);
+    }
 
     @Override
     public MessageResponse createGroup(CreateGroupRequest groupDetails, Authentication authentication){
@@ -49,17 +65,15 @@ public class GroupServiceImpl implements GroupService {
         return new MessageResponse("Group created successfully");
     }
     @Override
-    public Page <GroupResponse> GetMyGroups(Authentication authentication, Pageable pageable){
+    @Transactional
+    public void joinGroup(Long groupId, Authentication authentication) {
         if(authentication == null || !authentication.isAuthenticated()){
             throw new RuntimeException("User not authenticated");
         }
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        Page <Group> myGroups = groupRepository.getMyGroups(userDetails.getUsername(), pageable);
-        return myGroups.map(groupMapper::toDTO);
-    }
-    @Override
-    public Page<GroupResponse> getAllGroups(Pageable pageable) {
-        Page<Group> groups = groupRepository.getAllPublicGroups(Visibility.PUBLIC.toString(), pageable);
-        return groups.map(groupMapper::toDTO);
+        User user = userRepository.findByHandle(userDetails.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        groupRepository.addUserToGroup(user.getId(), groupId, "MEMBER");
     }
 }
