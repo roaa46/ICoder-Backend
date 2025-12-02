@@ -6,6 +6,7 @@ import com.icoder.core.security.CustomUserDetails;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
 import com.icoder.user.management.service.interfaces.EmailVerificationService;
+import com.icoder.user.management.service.interfaces.JwtService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,11 +25,12 @@ import java.util.Map;
 public class EmailVerificationServiceImpl implements EmailVerificationService {
     private final UserRepository userRepository;
     private final JavaMailSender mailSender;
-    private final JwtServiceImpl jwtServiceImpl;
+    private final JwtService jwtService;
     @Value("${ALLOWED_ORIGIN}")
     private String baseUrl;
 
     @Transactional
+    @Override
     public void sendVerificationEmail(User user) {
         validateEmailCooldown(user, 5);
         Map<String, Object> claims = new HashMap<>();
@@ -36,7 +38,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
 
         String token = generateToken(user, claims, 15 * 60 * 1000);
 
-        String link = baseUrl + "/api/v1/auth/verify?token=" + token;
+        String link = baseUrl + "/login?token=" + token;
         sendEmail(user.getEmail(), buildEmail(user.getNickname(), link, (TokenType) claims.get("type")));
         user.setLastVerificationEmailSentAt(Instant.now());
         userRepository.save(user);
@@ -64,6 +66,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         };
     }
 
+    @Override
     public void sendPasswordResetEmail(User user) {
         validateEmailCooldown(user, 3);
         Map<String, Object> claims = new HashMap<>();
@@ -71,7 +74,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
 
         String token = generateToken(user, claims, 5 * 60 * 1000);
 
-        String link = baseUrl + "/api/v1/auth/password/reset?token=" + token;
+        String link = baseUrl + "/change-password?token=" + token;
         sendEmail(user.getEmail(), buildEmail(user.getNickname(), link, (TokenType) claims.get("type")));
     }
 
@@ -88,6 +91,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     }
 
     @Transactional
+    @Override
     public void sendAccountDeletionEmail(User user) {
         validateEmailCooldown(user, 15);
         Map<String, Object> claims = new HashMap<>();
@@ -95,12 +99,13 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
 
         String token = generateToken(user, claims, 10 * 60 * 1000);
 
-        String link = baseUrl + "/api/v1/user/delete/confirm?token=" + token;
+        String link = baseUrl + "/landing-page?token=" + token;
         sendEmail(user.getEmail(), buildEmail(user.getNickname(), link, (TokenType) claims.get("type")));
         user.setLastVerificationEmailSentAt(Instant.now());
         userRepository.save(user);
     }
 
+    @Override
     public void sendEmailUpdateVerificationEmail(User user, String newEmail) {
         validateEmailCooldown(user, 5);
         Map<String, Object> claims = new HashMap<>();
@@ -109,7 +114,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
 
         String token = generateToken(user, claims, 15 * 60 * 1000);
 
-        String link = baseUrl + "/api/v1/user/email/confirm?token=" + token;
+        String link = baseUrl + "/profile?token=" + token;
         sendEmail(newEmail, buildEmail(user.getNickname(), link, (TokenType) claims.get("type")));
     }
 
@@ -120,7 +125,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         boolean verified = user.isVerified();
 
         CustomUserDetails userDetails = new CustomUserDetails(id, handle, password, verified);
-        return jwtServiceImpl.generateTokenWithCustomExpiration(
+        return jwtService.generateTokenWithCustomExpiration(
                 claims,
                 userDetails,
                 verificationExpiration

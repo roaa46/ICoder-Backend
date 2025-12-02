@@ -25,6 +25,7 @@ public class TokenServiceImpl implements TokenService {
     private Long refreshTokenExpiration;
 
     @Transactional
+    @Override
     public void revokeAllUserTokens(User user) {
         List<Token> validUserTokens = tokenRepository.findAllValidTokens(user.getId());
         if (validUserTokens.isEmpty())
@@ -39,6 +40,7 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Transactional
+    @Override
     public void saveUserToken(User savedUser, String refreshToken) {
         Token token = Token.builder()
                 .user(savedUser)
@@ -51,6 +53,7 @@ public class TokenServiceImpl implements TokenService {
         tokenRepository.save(token);
     }
 
+    @Override
     public void addTokenCookies(HttpServletResponse response, String accessToken, String refreshToken) {
         if (response == null)
             return;

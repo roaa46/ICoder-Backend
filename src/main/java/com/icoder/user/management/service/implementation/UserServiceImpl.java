@@ -11,6 +11,8 @@ import com.icoder.user.management.dto.user.UserProfileResponse;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.mapper.UserMapper;
 import com.icoder.user.management.repository.UserRepository;
+import com.icoder.user.management.service.interfaces.JwtService;
+import com.icoder.user.management.service.interfaces.TokenService;
 import com.icoder.user.management.service.interfaces.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -35,20 +37,22 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final JwtServiceImpl jwtServiceImpl;
+    private final JwtService jwtService;
     private final EmailVerificationServiceImpl emailVerificationServiceImpl;
-    private final TokenServiceImpl tokenServiceImpl;
+    private final TokenService tokenService;
     private final PasswordEncoder passwordEncoder;
     private final TokenHelper tokenHelper;
     @Value("${upload.dir}")
     private String uploadDir;
 
+    @Override
     public UserProfileResponse getProfile(UserProfileRequest userProfileRequest) {
         User user = userRepository.findByHandle(userProfileRequest.getHandle())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         return userMapper.toDTO(user);
     }
 
+    @Override
     public MessageResponse requestAccountDeletion(Principal principal) {
         User user = userRepository.findByHandle(principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
@@ -58,15 +62,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
+    @Override
     public MessageResponse confirmAccountDeletion(String token) {
-        if (jwtServiceImpl.isTokenExpired(token)) {
+        if (jwtService.isTokenExpired(token)) {
             throw new ApiException("Verification link has expired");
         }
         var result = tokenHelper.validateAndExtract(token);
         if (!"ACCOUNT_DELETION".equals(result.type())) {
             throw new IllegalStateException("Invalid token type for deletion");
         }
-        tokenServiceImpl.revokeAllUserTokens(result.user());
+        tokenService.revokeAllUserTokens(result.user());
         if (result.user().getPictureUrl() != null)
             deleteImageFromStorage(result.user().getPictureUrl());
         userRepository.delete(result.user());
@@ -75,6 +80,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
+    @Override
     public MessageResponse updateProfile(UpdateUserProfileRequest request, Principal principal) {
         User user = userRepository.findByHandle(principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
@@ -95,6 +101,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
+    @Override
     public MessageResponse changeProfilePicture(Principal principal, MultipartFile file) {
         User user = userRepository.findByHandle(principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
@@ -148,6 +155,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
+    @Override
     public MessageResponse requestEmailUpdate(UpdateEmailRequest request, Principal principal) {
         User user = userRepository.findByHandle(principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
@@ -163,8 +171,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
+    @Override
     public MessageResponse confirmEmailUpdate(String token) {
-        if (jwtServiceImpl.isTokenExpired(token)) {
+        if (jwtService.isTokenExpired(token)) {
             throw new ApiException("Verification link has expired");
         }
         var result = tokenHelper.validateAndExtract(token);
@@ -172,13 +181,14 @@ public class UserServiceImpl implements UserService {
         if (tokenType != TokenType.EMAIL_UPDATE) {
             throw new IllegalStateException("Invalid token type");
         }
-        String newEmail = jwtServiceImpl.extractClaim(token, claims -> (String) claims.get("newEmail"));
+        String newEmail = jwtService.extractClaim(token, claims -> (String) claims.get("newEmail"));
         result.user().setEmail(newEmail);
         userRepository.save(result.user());
         return new MessageResponse("Email updated successfully.");
     }
 
     @Transactional
+    @Override
     public MessageResponse deleteProfilePicture(Principal principal) {
         User user = userRepository.findByHandle(principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
