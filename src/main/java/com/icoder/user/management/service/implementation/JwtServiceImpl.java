@@ -28,19 +28,23 @@ public class JwtServiceImpl implements JwtService {
     @Value("${refresh.token.expiration}")
     private Long refreshTokenExpiration;
 
+    @Override
     public String extractUserHandle(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
+    @Override
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
+    @Override
     public String generateToken(UserDetails userDetails) {
         return generateToken(new HashMap<>(), userDetails);
     }
 
+    @Override
     public String generateTokenWithCustomExpiration(
             Map<String, Object> claims,
             CustomUserDetails userDetails,
@@ -49,6 +53,7 @@ public class JwtServiceImpl implements JwtService {
         return buildToken(claims, userDetails, expiration);
     }
 
+    @Override
     public String generateToken(
             Map<String, Object> extraClaims,
             UserDetails userDetails
@@ -56,6 +61,7 @@ public class JwtServiceImpl implements JwtService {
         return buildToken(extraClaims, userDetails, tokenExpiration);
     }
 
+    @Override
     public String generateRefreshToken(
             UserDetails userDetails
     ) {
@@ -76,11 +82,13 @@ public class JwtServiceImpl implements JwtService {
                 .compact();
     }
 
+    @Override
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUserHandle(token);
         return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 
+    @Override
     public boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
