@@ -28,7 +28,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.security.Principal;
 import java.time.Instant;
 import java.util.Map;
 
@@ -195,10 +194,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     // if he logged in
     @Transactional
     @Override
-    public MessageResponse changePassword(ChangePasswordRequest request, Principal principal) {
-
-        String userHandle = principal.getName();
-        User user = userRepository.findByHandle(userHandle)
+    public MessageResponse changePassword(ChangePasswordRequest request) {
+        User user = userRepository.findById(getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         validatePasswordChange.validatePasswordChange(request, user);
         String encodedNewPassword = passwordEncoder.encode(request.getNewPassword());

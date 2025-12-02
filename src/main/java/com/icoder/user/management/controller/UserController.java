@@ -13,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -36,8 +35,8 @@ public class UserController {
             summary = "Request account deletion",
             description = "Initiates the account deletion process by sending a confirmation link to the user's email."
     )
-    public ResponseEntity<MessageResponse> requestAccountDeletion(Principal principal) {
-        return ResponseEntity.ok(userService.requestAccountDeletion(principal));
+    public ResponseEntity<MessageResponse> requestAccountDeletion() {
+        return ResponseEntity.ok(userService.requestAccountDeletion());
     }
 
     @PostMapping("/delete/confirm")
@@ -55,9 +54,8 @@ public class UserController {
             description = "Allows the authenticated user to update their profile details. Requires current password verification."
     )
     public ResponseEntity<MessageResponse> updateProfile(
-            @Valid @RequestBody UpdateUserProfileRequest request,
-            Principal principal) {
-        return ResponseEntity.ok(userService.updateProfile(request, principal));
+            @Valid @RequestBody UpdateUserProfileRequest request) {
+        return ResponseEntity.ok(userService.updateProfile(request));
     }
 
     @PatchMapping("/profile-picture")
@@ -65,10 +63,8 @@ public class UserController {
             summary = "Update profile picture",
             description = "Uploads and sets a new profile picture for the authenticated user. Only accepts image file types (PNG, JPEG, JPG, GIF)."
     )
-    public ResponseEntity<MessageResponse> updateProfilePicture(
-            Principal principal,
-            @RequestParam("file") MultipartFile file) {
-        return ResponseEntity.ok(userService.changeProfilePicture(principal, file));
+    public ResponseEntity<MessageResponse> updateProfilePicture(@RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(userService.changeProfilePicture(file));
     }
 
     @DeleteMapping("/profile-picture")
@@ -76,8 +72,8 @@ public class UserController {
             summary = "Delete profile picture",
             description = "Removes the current profile picture of the authenticated user."
     )
-    public ResponseEntity<MessageResponse> deleteProfilePicture(Principal principal) {
-        return ResponseEntity.ok(userService.deleteProfilePicture(principal));
+    public ResponseEntity<MessageResponse> deleteProfilePicture() {
+        return ResponseEntity.ok(userService.deleteProfilePicture());
     }
 
     @PostMapping("/email/request-update")
@@ -85,11 +81,8 @@ public class UserController {
             summary = "Request email update",
             description = "Initiates the email update process by sending a verification link to the new email address. Requires current password verification."
     )
-    public ResponseEntity<MessageResponse> requestEmailUpdate(
-            @Valid @RequestBody UpdateEmailRequest request,
-            Principal principal
-    ) {
-        return ResponseEntity.ok(userService.requestEmailUpdate(request, principal));
+    public ResponseEntity<MessageResponse> requestEmailUpdate(@Valid @RequestBody UpdateEmailRequest request) {
+        return ResponseEntity.ok(userService.requestEmailUpdate(request));
     }
 
     @PostMapping("/email/confirm")
