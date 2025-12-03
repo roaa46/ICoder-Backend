@@ -81,10 +81,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/problems/solved").authenticated()
 
 
-                        ///  --------- problems ---------
-                        .requestMatchers("/api/v1/judge0/language", "/api/v1/judge0/languages").permitAll()
-                        .requestMatchers("/api/v1/judge0/submissions", "/api/v1/judge0/submissions/*").authenticated()
-
+                        ///  --------- editor ---------
+                        .requestMatchers("/api/v1/coding/editor/language", "/api/v1/coding/editor/languages").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/coding/editor/submissions/*", "/api/v1/coding/editor/submissions/batch").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/coding/editor/submissions", "/api/v1/coding/editor/submissions/batch").authenticated()
 
                         /// --------- swagger ---------
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()

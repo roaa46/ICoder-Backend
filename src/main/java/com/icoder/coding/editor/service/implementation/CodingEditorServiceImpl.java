@@ -1,29 +1,29 @@
 package com.icoder.coding.editor.service.implementation;
 
-import com.icoder.coding.editor.dto.LanguageResponse;
-import com.icoder.coding.editor.dto.SubmissionRequest;
-import com.icoder.coding.editor.dto.SubmissionResult;
-import com.icoder.coding.editor.dto.TokenResponse;
-import com.icoder.coding.editor.service.interfaces.Judge0Service;
+import com.icoder.coding.editor.dto.*;
+import com.icoder.coding.editor.service.interfaces.CodingEditorService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Mono;
 
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
-public class Judge0ServiceImpl implements Judge0Service {
-    private WebClient webClient;
+public class CodingEditorServiceImpl implements CodingEditorService {
+    private final WebClient webClient;
 
-    public Judge0ServiceImpl(
+    public CodingEditorServiceImpl(
             WebClient.Builder webClientBuilder,
             @Value("${judge0.api-url}") String apiUrl,
             @Value("${judge0.auth-key}") String authKey,
@@ -42,12 +42,12 @@ public class Judge0ServiceImpl implements Judge0Service {
 
     private String encodeToBase64(String input) {
         if (input == null || input.isEmpty()) {
-            return "";
+            return Base64.getEncoder().encodeToString(input.getBytes());
         }
         return Base64.getEncoder().encodeToString(input.getBytes());
     }
 
-    public String decodeFromBase64(String input) {
+    private String decodeFromBase64(String input) {
         if (input == null || input.isEmpty()) {
             return "";
         }
@@ -103,8 +103,7 @@ public class Judge0ServiceImpl implements Judge0Service {
                 .block();
     }
 
-    @Override
-    public SubmissionResult getRawResult(String token) {
+    private SubmissionResult getRawResult(String token) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/submissions/{token}")
                         .queryParam("base64_encoded", "true")
@@ -124,6 +123,82 @@ public class Judge0ServiceImpl implements Judge0Service {
             return new SubmissionResult();
         }
 
+        getResultStatus(result);
+
+        return result;
+    }
+
+    @Override
+    public List<TokenResponse> submitBatchCode(BatchRunRequest request) {
+        if (request.getTestInputs() == null || request.getTestInputs().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Test cases list cannot be empty for batch submission.");
+        }
+
+        List<BatchSubmissionRequestItem> batchItems = request.getTestInputs().stream()
+                .map(test -> BatchSubmissionRequestItem.builder()
+                        .languageId(request.getLanguageId())
+                        .sourceCode(encodeToBase64(request.getSourceCode()))
+                        .stdin(encodeToBase64(test.getInput()))
+                        .expectedOutput(encodeToBase64(test.getExpectedOutput()))
+                        .build())
+                .collect(Collectors.toList());
+
+        BatchSubmissionWrapper wrapper = BatchSubmissionWrapper.builder()
+                .submissions(batchItems)
+                .build();
+
+        ParameterizedTypeReference<List<TokenResponse>> typeRef =
+                new ParameterizedTypeReference<List<TokenResponse>>() {};
+
+        List<TokenResponse> response = webClient.post()
+                .uri(uriBuilder -> uriBuilder.path("/submissions/batch")
+                        .queryParam("base64_encoded", "true")
+                        .queryParam("wait", "false")
+                        .build())
+                .bodyValue(wrapper)
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> clientResponse.bodyToMono(String.class)
+                        .flatMap(error -> Mono.error(new ResponseStatusException(
+                                clientResponse.statusCode(), "Judge0 Batch Submission Error: " + error))))
+                .bodyToMono(typeRef)
+                .block();
+
+        if (response == null || response.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to get tokens from Judge0.");
+        }
+
+        return response;
+    }
+
+    @Override
+    public BatchSubmissionResult processAndGetBatchResults(List<String> tokens) {
+
+        String tokensString = String.join(",", tokens);
+
+        BatchSubmissionResult responseWrapper = webClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/submissions/batch")
+                        .queryParam("tokens", tokensString)
+                        .queryParam("base64_encoded", "true")
+                        .build())
+                .retrieve()
+                .bodyToMono(BatchSubmissionResult.class)
+                .block();
+
+        assert responseWrapper != null;
+        List<SubmissionResult> rawResults = responseWrapper.getSubmissions();
+
+        if (rawResults == null || rawResults.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No results found for provided tokens.");
+        }
+
+        for (SubmissionResult result : rawResults) {
+            if (result != null)
+                getResultStatus(result);
+        }
+        return new BatchSubmissionResult(rawResults);
+    }
+
+    private void getResultStatus(SubmissionResult result) {
         if (result.getStdout() != null) {
             result.setStdout(decodeFromBase64(result.getStdout()));
         }
@@ -133,7 +208,5 @@ public class Judge0ServiceImpl implements Judge0Service {
         if (result.getCompile_output() != null) {
             result.setCompile_output(decodeFromBase64(result.getCompile_output()));
         }
-
-        return result;
     }
 }
