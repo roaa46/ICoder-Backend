@@ -33,7 +33,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -140,6 +142,7 @@ public class ProblemServiceImpl implements ProblemService {
     /// get all problems
     @Override
     public Page<ProblemResponse> getAllProblems(String oj, String code, String title, Pageable pageable) {
+        Long currentUserId = authenticationService.getCurrentUserId();
         ProblemSpecificationsBuilder builder = new ProblemSpecificationsBuilder();
 
         if (oj != null) builder.with("onlineJudge", ":", OJudgeType.valueOf(oj.toUpperCase()));
@@ -149,8 +152,36 @@ public class ProblemServiceImpl implements ProblemService {
 
         Specification<Problem> spec = builder.build();
 
-        Page<Problem> problems = problemRepository.findAll(spec, pageable);
-        return problems.map(problemMapper::toResponseDTO);
+        Page<Problem> problemsPage = problemRepository.findAll(spec, pageable);
+
+        List<Problem> problems = problemsPage.getContent();
+        List<ProblemUserRelation> relations =
+                relationRepository.findByUserIdAndProblemIn(currentUserId, problems);
+        Map<Long, ProblemUserRelation> solvedStatusMap = relations.stream()
+                .collect(Collectors.toMap(
+                        relation -> relation.getProblem().getId(),
+                        relation -> relation
+                ));
+
+        Page<ProblemResponse> responsePage = problemsPage.map(problem -> {
+            ProblemResponse responseDTO = problemMapper.toResponseDTO(problem);
+
+            ProblemUserRelation relation = solvedStatusMap.get(problem.getId());
+
+            if (relation != null) {
+                responseDTO.setSolved(relation.isSolved());
+                responseDTO.setAttempted(relation.isAttempted());
+                responseDTO.setFavorite(relation.isFavorite());
+            } else {
+                responseDTO.setSolved(false);
+                responseDTO.setAttempted(false);
+                responseDTO.setFavorite(false);
+            }
+
+            return responseDTO;
+        });
+
+        return responsePage;
     }
 
     /// get all attempted problems
