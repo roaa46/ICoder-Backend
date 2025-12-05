@@ -1,7 +1,7 @@
 package com.icoder.core.security;
 
 import com.icoder.user.management.repository.TokenRepository;
-import com.icoder.user.management.service.implementation.JwtServiceImpl;
+import com.icoder.user.management.service.interfaces.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -22,7 +22,7 @@ import java.io.IOException;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private final JwtServiceImpl jwtServiceImpl;
+    private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
     private final TokenRepository tokenRepository;
 
@@ -57,14 +57,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if (jwtToken != null) {
-            String username = jwtServiceImpl.extractUserHandle(jwtToken);
+            String username = jwtService.extractUserHandle(jwtToken);
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
                 boolean isTokenValid = tokenRepository.findByToken(jwtToken)
                         .map(t -> !t.isExpired() && !t.isRevoked())
                         .orElse(false);
 
-                if (jwtServiceImpl.isTokenValid(jwtToken, userDetails) && isTokenValid) {
+                if (jwtService.isTokenValid(jwtToken, userDetails) && isTokenValid) {
                     UsernamePasswordAuthenticationToken authenticationToken =
                             new UsernamePasswordAuthenticationToken(
                                     userDetails, null, userDetails.getAuthorities()

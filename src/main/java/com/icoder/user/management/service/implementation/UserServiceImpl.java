@@ -11,7 +11,7 @@ import com.icoder.user.management.dto.user.UserProfileResponse;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.mapper.UserMapper;
 import com.icoder.user.management.repository.UserRepository;
-import com.icoder.user.management.service.interfaces.UserService;
+import com.icoder.user.management.service.interfaces.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.Principal;
 import java.util.Map;
 import java.util.UUID;
 
@@ -35,38 +34,42 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final JwtServiceImpl jwtServiceImpl;
-    private final EmailVerificationServiceImpl emailVerificationServiceImpl;
-    private final TokenServiceImpl tokenServiceImpl;
+    private final JwtService jwtService;
+    private final EmailVerificationService emailVerificationService;
+    private final AuthenticationService authenticationService;
+    private final TokenService tokenService;
     private final PasswordEncoder passwordEncoder;
     private final TokenHelper tokenHelper;
     @Value("${upload.dir}")
     private String uploadDir;
 
+    @Override
     public UserProfileResponse getProfile(UserProfileRequest userProfileRequest) {
         User user = userRepository.findByHandle(userProfileRequest.getHandle())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         return userMapper.toDTO(user);
     }
 
-    public MessageResponse requestAccountDeletion(Principal principal) {
-        User user = userRepository.findByHandle(principal.getName())
+    @Override
+    public MessageResponse requestAccountDeletion() {
+        User user = userRepository.findById(authenticationService.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        emailVerificationServiceImpl.sendAccountDeletionEmail(user);
+        emailVerificationService.sendAccountDeletionEmail(user);
         return new MessageResponse("A confirmation email has been sent to your email.");
     }
 
     @Transactional
+    @Override
     public MessageResponse confirmAccountDeletion(String token) {
-        if (jwtServiceImpl.isTokenExpired(token)) {
+        if (jwtService.isTokenExpired(token)) {
             throw new ApiException("Verification link has expired");
         }
         var result = tokenHelper.validateAndExtract(token);
         if (!"ACCOUNT_DELETION".equals(result.type())) {
             throw new IllegalStateException("Invalid token type for deletion");
         }
-        tokenServiceImpl.revokeAllUserTokens(result.user());
+        tokenService.revokeAllUserTokens(result.user());
         if (result.user().getPictureUrl() != null)
             deleteImageFromStorage(result.user().getPictureUrl());
         userRepository.delete(result.user());
@@ -75,8 +78,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
-    public MessageResponse updateProfile(UpdateUserProfileRequest request, Principal principal) {
-        User user = userRepository.findByHandle(principal.getName())
+    @Override
+    public MessageResponse updateProfile(UpdateUserProfileRequest request) {
+        User user = userRepository.findById(authenticationService.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         validateCurrentPassword(request.getCurrentPassword(), user.getPassword());
         if (
@@ -95,8 +99,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
-    public MessageResponse changeProfilePicture(Principal principal, MultipartFile file) {
-        User user = userRepository.findByHandle(principal.getName())
+    @Override
+    public MessageResponse changeProfilePicture(MultipartFile file) {
+        User user = userRepository.findById(authenticationService.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         String contentType = file.getContentType();
@@ -148,8 +153,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
-    public MessageResponse requestEmailUpdate(UpdateEmailRequest request, Principal principal) {
-        User user = userRepository.findByHandle(principal.getName())
+    @Override
+    public MessageResponse requestEmailUpdate(UpdateEmailRequest request) {
+        User user = userRepository.findById(authenticationService.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         validateCurrentPassword(request.getCurrentPassword(), user.getPassword());
         if (userRepository.existsByEmail(request.getNewEmail())) {
@@ -158,13 +164,14 @@ public class UserServiceImpl implements UserService {
                     Map.of("field", "email", "value", request.getNewEmail())
             );
         }
-        emailVerificationServiceImpl.sendEmailUpdateVerificationEmail(user, request.getNewEmail());
+        emailVerificationService.sendEmailUpdateVerificationEmail(user, request.getNewEmail());
         return new MessageResponse("Verification link sent to new email.");
     }
 
     @Transactional
+    @Override
     public MessageResponse confirmEmailUpdate(String token) {
-        if (jwtServiceImpl.isTokenExpired(token)) {
+        if (jwtService.isTokenExpired(token)) {
             throw new ApiException("Verification link has expired");
         }
         var result = tokenHelper.validateAndExtract(token);
@@ -172,15 +179,16 @@ public class UserServiceImpl implements UserService {
         if (tokenType != TokenType.EMAIL_UPDATE) {
             throw new IllegalStateException("Invalid token type");
         }
-        String newEmail = jwtServiceImpl.extractClaim(token, claims -> (String) claims.get("newEmail"));
+        String newEmail = jwtService.extractClaim(token, claims -> (String) claims.get("newEmail"));
         result.user().setEmail(newEmail);
         userRepository.save(result.user());
         return new MessageResponse("Email updated successfully.");
     }
 
     @Transactional
-    public MessageResponse deleteProfilePicture(Principal principal) {
-        User user = userRepository.findByHandle(principal.getName())
+    @Override
+    public MessageResponse deleteProfilePicture() {
+        User user = userRepository.findById(authenticationService.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         if (user.getPictureUrl() == null || user.getPictureUrl().isBlank()) {
             throw new IllegalStateException("User does not have a profile picture.");

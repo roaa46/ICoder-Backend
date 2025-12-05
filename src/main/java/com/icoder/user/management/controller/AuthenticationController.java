@@ -2,8 +2,8 @@ package com.icoder.user.management.controller;
 
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.user.management.dto.auth.*;
-import com.icoder.user.management.service.implementation.AuthenticationServiceImpl;
 import com.icoder.user.management.service.implementation.LogoutServiceImpl;
+import com.icoder.user.management.service.interfaces.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,13 +14,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthenticationController {
-    private final AuthenticationServiceImpl authenticationServiceImpl;
+    private final AuthenticationService authenticationService;
     private final LogoutServiceImpl logoutServiceImpl;
 
     @PostMapping("/register")
@@ -29,7 +28,7 @@ public class AuthenticationController {
             description = "Creates a new user account with the provided details and needs to be verified"
     )
     public ResponseEntity<MessageResponse> register(@Valid @RequestBody RegisterRequest request, HttpServletResponse response) {
-        return ResponseEntity.ok(authenticationServiceImpl.register(request, response));
+        return ResponseEntity.ok(authenticationService.register(request, response));
     }
 
     @PostMapping("/login")
@@ -38,7 +37,7 @@ public class AuthenticationController {
             description = "Authenticates a user with handle and password and sets authentication/refresh cookies."
     )
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
-        return ResponseEntity.ok(authenticationServiceImpl.login(request, response));
+        return ResponseEntity.ok(authenticationService.login(request, response));
     }
 
     @PostMapping("/logout")
@@ -57,7 +56,7 @@ public class AuthenticationController {
             description = "Uses the refresh token (sent via cookie) to generate a new access token and update the authentication cookie."
     )
     public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        authenticationServiceImpl.refreshToken(request, response);
+        authenticationService.refreshToken(request, response);
     }
 
     @PostMapping("/verify/send")
@@ -66,7 +65,7 @@ public class AuthenticationController {
             description = "Sends a new email containing the verification link to the user's email address."
     )
     public ResponseEntity<MessageResponse> sendVerificationEmail(@Valid @RequestBody SendVerificationEmailRequest emailRequest) {
-        return ResponseEntity.ok(authenticationServiceImpl.sendEmailVerification(emailRequest));
+        return ResponseEntity.ok(authenticationService.sendEmailVerification(emailRequest));
     }
 
     @GetMapping("/verify")
@@ -75,7 +74,7 @@ public class AuthenticationController {
             description = "Confirms the user's email address using a verification token sent via email."
     )
     public ResponseEntity<MessageResponse> verifyEmail(@RequestParam("token") String token) {
-        return ResponseEntity.ok(authenticationServiceImpl.verifyEmail(token));
+        return ResponseEntity.ok(authenticationService.verifyEmail(token));
     }
 
     @PostMapping("/password/forget")
@@ -84,7 +83,7 @@ public class AuthenticationController {
             description = "Sends a password reset link to the user's email address."
     )
     public ResponseEntity<MessageResponse> forgetPassword(@Valid @RequestBody ForgetPasswordRequest request) {
-        return ResponseEntity.ok(authenticationServiceImpl.forgetPassword(request));
+        return ResponseEntity.ok(authenticationService.forgetPassword(request));
     }
 
     @PostMapping("/password/reset")
@@ -93,7 +92,7 @@ public class AuthenticationController {
             description = "Resets the user's password using a valid reset token and a new password."
     )
     public ResponseEntity<MessageResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        return ResponseEntity.ok(authenticationServiceImpl.resetPassword(request));
+        return ResponseEntity.ok(authenticationService.resetPassword(request));
     }
 
     @PatchMapping("password")
@@ -101,7 +100,7 @@ public class AuthenticationController {
             summary = "Change authenticated user's password",
             description = "Allows an authenticated user to change their password by providing the old and new passwords."
     )
-    public ResponseEntity<MessageResponse> changePassword(@Valid @RequestBody ChangePasswordRequest request, Principal principal) {
-        return ResponseEntity.ok(authenticationServiceImpl.changePassword(request, principal));
+    public ResponseEntity<MessageResponse> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        return ResponseEntity.ok(authenticationService.changePassword(request));
     }
 }

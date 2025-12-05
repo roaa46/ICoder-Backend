@@ -11,6 +11,9 @@ import com.icoder.user.management.entity.User;
 import com.icoder.user.management.mapper.AuthMapper;
 import com.icoder.user.management.repository.UserRepository;
 import com.icoder.user.management.service.interfaces.AuthenticationService;
+import com.icoder.user.management.service.interfaces.EmailVerificationService;
+import com.icoder.user.management.service.interfaces.JwtService;
+import com.icoder.user.management.service.interfaces.TokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -25,7 +28,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.security.Principal;
 import java.time.Instant;
 import java.util.Map;
 
@@ -34,15 +36,16 @@ import java.util.Map;
 public class AuthenticationServiceImpl implements AuthenticationService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtServiceImpl jwtServiceImpl;
+    private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
-    private final TokenServiceImpl tokenServiceImpl;
-    private final EmailVerificationServiceImpl emailVerificationServiceImpl;
+    private final TokenService tokenService;
+    private final EmailVerificationService emailVerificationService;
     private final ValidatePasswordChange validatePasswordChange;
     private final TokenHelper tokenHelper;
     private final AuthMapper authMapper;
 
     @Transactional
+    @Override
     public MessageResponse register(RegisterRequest request, HttpServletResponse response) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ApiException(
@@ -70,28 +73,29 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return new MessageResponse("Account created successfully! Please verify your email before logging in.");
     }
 
+    @Override
     public LoginResponse login(LoginRequest request, HttpServletResponse response) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getHandle(), request.getPassword())
         );
         User user = userRepository.findByHandle(request.getHandle())
                 .orElseThrow(() -> new UsernameNotFoundException("user not found"));
-        String jwtToken = jwtServiceImpl.generateToken(new CustomUserDetails(
+        String jwtToken = jwtService.generateToken(new CustomUserDetails(
                 user.getId(),
                 user.getHandle(),
                 user.getPassword(),
                 user.isVerified()
         ));
-        String refreshJwtToken = jwtServiceImpl.generateRefreshToken(new CustomUserDetails(
+        String refreshJwtToken = jwtService.generateRefreshToken(new CustomUserDetails(
                 user.getId(),
                 user.getHandle(),
                 user.getPassword(),
                 user.isVerified()
         ));
-        tokenServiceImpl.revokeAllUserTokens(user);
-        tokenServiceImpl.saveUserToken(user, jwtToken);
+        tokenService.revokeAllUserTokens(user);
+        tokenService.saveUserToken(user, jwtToken);
 
-        tokenServiceImpl.addTokenCookies(response, jwtToken, refreshJwtToken);
+        tokenService.addTokenCookies(response, jwtToken, refreshJwtToken);
 
         return LoginResponse.builder()
                 .accessToken(jwtToken)
@@ -100,6 +104,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Transactional
+    @Override
     public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
@@ -107,26 +112,26 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             return;
         }
         String refreshToken = authHeader.substring(7);
-        String userEmail = jwtServiceImpl.extractUserHandle(refreshToken);
+        String userEmail = jwtService.extractUserHandle(refreshToken);
         if (userEmail != null) {
             User user = this.userRepository.findByHandle(userEmail)
                     .orElseThrow();
-            if (jwtServiceImpl.isTokenValid(refreshToken, new CustomUserDetails(
+            if (jwtService.isTokenValid(refreshToken, new CustomUserDetails(
                     user.getId(),
                     user.getHandle(),
                     user.getPassword(),
                     user.isVerified()
             ))) {
-                String accessToken = jwtServiceImpl.generateToken(new CustomUserDetails(
+                String accessToken = jwtService.generateToken(new CustomUserDetails(
                         user.getId(),
                         user.getHandle(),
                         user.getPassword(),
                         user.isVerified()
                 ));
-                tokenServiceImpl.revokeAllUserTokens(user);
-                tokenServiceImpl.saveUserToken(user, accessToken);
+                tokenService.revokeAllUserTokens(user);
+                tokenService.saveUserToken(user, accessToken);
 
-                tokenServiceImpl.addTokenCookies(response, accessToken, refreshToken);
+                tokenService.addTokenCookies(response, accessToken, refreshToken);
                 LoginResponse authenticationResponse = LoginResponse.builder()
                         .accessToken(accessToken)
                         .refreshToken(refreshToken)
@@ -137,11 +142,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Transactional
+    @Override
     public MessageResponse verifyEmail(String token) {
-        if (jwtServiceImpl.isTokenExpired(token)) {
+        if (jwtService.isTokenExpired(token)) {
             throw new ApiException("Verification link has expired");
         }
-        String handle = jwtServiceImpl.extractUserHandle(token);
+        String handle = jwtService.extractUserHandle(token);
         User user = userRepository.findByHandle(handle)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid token"));
         user.setVerified(true);
@@ -149,6 +155,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return new MessageResponse("Email verified successfully! You can now log in");
     }
 
+    @Override
     public MessageResponse sendEmailVerification(SendVerificationEmailRequest request) {
         User user = userRepository.findByHandle(request.getHandle())
                 .orElseThrow(() -> new ApiException("User not found"));
@@ -157,21 +164,23 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new ApiException("Email is already verified");
         }
 
-        emailVerificationServiceImpl.sendVerificationEmail(user);
+        emailVerificationService.sendVerificationEmail(user);
         return new MessageResponse("Verification email sent, please check your email");
     }
 
     // if user forgot password call forgetPassword() then resetPassword()
+    @Override
     public MessageResponse forgetPassword(ForgetPasswordRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ApiException("No user found with this email"));
-        emailVerificationServiceImpl.sendPasswordResetEmail(user);
+        emailVerificationService.sendPasswordResetEmail(user);
         return new MessageResponse("Password change link is sent to your email");
     }
 
     @Transactional
+    @Override
     public MessageResponse resetPassword(ResetPasswordRequest request) {
-        if (jwtServiceImpl.isTokenExpired(request.getToken())) {
+        if (jwtService.isTokenExpired(request.getToken())) {
             throw new ApiException("Verification link has expired");
         }
         validatePasswordChange.validatePasswordChange(request);
@@ -184,9 +193,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     // if he logged in
     @Transactional
-    public MessageResponse changePassword(ChangePasswordRequest request, Principal principal) {
-        String userHandle = principal.getName();
-        User user = userRepository.findByHandle(userHandle)
+    @Override
+    public MessageResponse changePassword(ChangePasswordRequest request) {
+        User user = userRepository.findById(getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         validatePasswordChange.validatePasswordChange(request, user);
         String encodedNewPassword = passwordEncoder.encode(request.getNewPassword());
