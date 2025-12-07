@@ -1,8 +1,10 @@
 package com.icoder.group.management.controller;
 
 import com.icoder.core.dto.MessageResponse;
+import com.icoder.group.management.dto.GroupMemberActionRequest;
 import com.icoder.group.management.dto.CreateGroupRequest;
 import com.icoder.group.management.dto.GroupResponse;
+import com.icoder.group.management.dto.JoinGroupRequest;
 import com.icoder.group.management.service.implementation.GroupServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -39,10 +41,14 @@ public class GroupController {
         return ResponseEntity.status(HttpStatus.CREATED).body(groupService.createGroup(groupDetails));
     }
 
-    @PutMapping("join")
+    @PutMapping("/join")
     @PreAuthorize(value = "isAuthenticated()")
-    public ResponseEntity<MessageResponse> joinGroup(@RequestBody Long groupId){
-        return ResponseEntity.ok(groupService.joinGroup(groupId));
-
+    public ResponseEntity<MessageResponse> joinGroup(@RequestBody JoinGroupRequest joinGroupRequest){
+        return ResponseEntity.ok(groupService.joinGroup(joinGroupRequest));
+    }
+    @PutMapping("/members/add")
+    @PreAuthorize(value = "isAuthenticated()")
+    public ResponseEntity<MessageResponse> addMemberToGroup(@RequestBody GroupMemberActionRequest groupMemberActionRequest){
+        return ResponseEntity.ok(groupService.addMemberToGroup(groupMemberActionRequest));
     }
 }

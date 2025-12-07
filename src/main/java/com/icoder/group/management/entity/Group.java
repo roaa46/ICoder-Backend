@@ -1,13 +1,11 @@
 package com.icoder.group.management.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.icoder.group.management.enums.ContestCoordinatorType;
 import com.icoder.group.management.enums.Visibility;
-import com.icoder.user.management.entity.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
@@ -15,8 +13,8 @@ import java.util.Set;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-@Data
+@Getter
+@Setter
 @Table(name = "groups")
 public class Group {
     @Id
@@ -45,11 +43,7 @@ public class Group {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id", nullable = false, updatable = false)
-    private User owner;
-
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Builder.Default
+    @JsonIgnore
     private Set<UserGroupRole> userRoles = new HashSet<>();
 }

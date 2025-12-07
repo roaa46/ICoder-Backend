@@ -1,8 +1,10 @@
 package com.icoder.group.management.service.interfaces;
 
 import com.icoder.core.dto.MessageResponse;
+import com.icoder.group.management.dto.GroupMemberActionRequest;
 import com.icoder.group.management.dto.CreateGroupRequest;
 import com.icoder.group.management.dto.GroupResponse;
+import com.icoder.group.management.dto.JoinGroupRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -12,5 +14,7 @@ public interface GroupService {
 
     MessageResponse createGroup(CreateGroupRequest groupDetails);
 
-    MessageResponse joinGroup(Long groupId);
+    MessageResponse joinGroup(JoinGroupRequest groupDetails);
+
+    MessageResponse addMemberToGroup(GroupMemberActionRequest groupMemberActionRequest);
 }

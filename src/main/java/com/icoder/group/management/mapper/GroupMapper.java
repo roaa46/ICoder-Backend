@@ -8,7 +8,6 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface GroupMapper {
-    @Mapping(target = "owner", ignore = true)
     @Mapping(target = "code", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     Group toEntity(CreateGroupRequest createGroupRequest);
