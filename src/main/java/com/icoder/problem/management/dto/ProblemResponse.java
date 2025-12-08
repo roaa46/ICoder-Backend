@@ -26,4 +26,7 @@ public class ProblemResponse {
     private String problemTitle;
     private long solvedCount;
     private Instant fetchedAt;
+    private boolean isSolved;
+    private boolean isAttempted;
+    private boolean isFavorite;
 }

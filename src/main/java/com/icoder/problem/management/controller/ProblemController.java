@@ -22,7 +22,7 @@ public class ProblemController {
 
     @GetMapping("/{judge_type}/{problem_code}/metadata")
     @Operation(summary = "Get metadata of a specific problem", description = "Returns a specific problem metadata by its online judge and problem code " +
-            "(e.g., problem title, problem link, contest title, ...) (doesn't require login)")
+            "(e.g., problem title, problem link, contest title, ...) (requires login)")
     public ResponseEntity<ProblemResponse> getProblemMetadata(@PathVariable("judge_type") String source,
                                                               @PathVariable("problem_code") String code) {
         return ResponseEntity.ok(problemService.getProblemMetadata(source, code));
@@ -36,7 +36,7 @@ public class ProblemController {
     }
 
     @GetMapping("/recrawl/{judge_type}/{problem_code}")
-    @Operation(summary = "Fetch a specific problem", description = "Fetches a specific problem statement by its online judge and problem code (doesn't require login)")
+    @Operation(summary = "Fetch a specific problem", description = "Fetches a specific problem statement by its online judge and problem code (requires login)")
     public ResponseEntity<ProblemStatementResponse> fetchProblem(@PathVariable("judge_type") String source,
                                                                @PathVariable("problem_code") String code) {
         return ResponseEntity.ok(problemService.scrapFullStatement(source, code));

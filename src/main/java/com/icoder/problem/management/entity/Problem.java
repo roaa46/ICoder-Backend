@@ -49,8 +49,6 @@ public class Problem {
 
     private Instant fetchedAt;
 
-    private boolean isCached;
-
     @OneToMany(mappedBy = "problem",
             fetch = FetchType.LAZY,
             cascade = CascadeType.ALL,

@@ -70,9 +70,9 @@ public class SecurityConfig {
 
 
                         ///  --------- problems ---------
-                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/*/*/metadata").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/*/*/metadata").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/problems/*/*").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/recrawl/*/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/recrawl/*/*").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/problems").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/problems/reset-filters").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/problems").authenticated()
