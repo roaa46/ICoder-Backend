@@ -53,6 +53,20 @@ public class GroupController {
         return ResponseEntity.ok(groupService.addMemberToGroup(groupMemberActionRequest));
     }
 
+    @PutMapping("members/promote")
+    @PreAuthorize(value = "isAuthenticated()")
+    public ResponseEntity<MessageResponse> promoteMemberToManager(
+            @RequestBody GroupMemberActionRequest groupMemberActionRequest){
+        return ResponseEntity.ok(groupService.promoteMemberToManager(groupMemberActionRequest));
+    }
+
+    @PutMapping("/members/demote")
+    @PreAuthorize(value = "isAuthenticated()")
+    public ResponseEntity<MessageResponse> demoteManagerToMember(
+            @RequestBody GroupMemberActionRequest groupMemberActionRequest){
+        return ResponseEntity.ok(groupService.demoteManagerToMember(groupMemberActionRequest));
+    }
+
     @DeleteMapping("/members/remove")
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<MessageResponse> removeMemberFromGroup(@RequestBody GroupMemberActionRequest group){

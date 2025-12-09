@@ -13,9 +13,11 @@ public interface GroupService {
     Page<GroupResponse> getAllGroups(Pageable pageable);
 
     MessageResponse createGroup(CreateGroupRequest groupDetails);
-
     MessageResponse joinGroup(JoinGroupRequest groupDetails);
-
     MessageResponse addMemberToGroup(GroupMemberActionRequest groupMemberActionRequest);
+    MessageResponse promoteMemberToManager(GroupMemberActionRequest groupMemberActionRequest);
+    MessageResponse demoteManagerToMember(GroupMemberActionRequest groupMemberActionRequest);
+
     MessageResponse removeMemberFromGroup(GroupMemberActionRequest groupMemberActionRequest);
+
 }

@@ -13,8 +13,8 @@ import com.icoder.group.management.mapper.GroupMapper;
 import com.icoder.group.management.repository.GroupRepository;
 import com.icoder.group.management.repository.UserGroupRoleRepository;
 import com.icoder.group.management.service.interfaces.GroupService;
+import com.icoder.group.management.util.GroupUtil;
 import com.icoder.user.management.entity.User;
-import com.icoder.user.management.repository.UserRepository;
 import com.icoder.user.management.service.interfaces.AuthenticationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +24,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.NoSuchElementException;
-import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -33,10 +31,9 @@ import java.util.UUID;
 public class GroupServiceImpl implements GroupService {
     private final GroupRepository groupRepository;
     private final GroupMapper groupMapper;
-    private final UserRepository userRepository;
     private final AuthenticationService authenticationService;
     private final UserGroupRoleRepository userGroupRoleRepository;
-
+    private final GroupUtil groupUtil;
     @Override
     public Page<GroupResponse> GetMyGroups(Pageable pageable) {
         Page<Group> myGroups = groupRepository.getMyGroups(authenticationService.getCurrentUserUsername(), pageable);
@@ -50,19 +47,20 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
+    @Transactional
     public MessageResponse createGroup(CreateGroupRequest groupDetails) {
         Group group = groupMapper.toEntity(groupDetails);
         group.setCreatedAt(Instant.now());
-        do {
-            group.setCode(UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-        } while (groupRepository.existsByCode(group.getCode()));
 
-        User owner = userRepository.findById(authenticationService.getCurrentUserId())
-                .orElseThrow(() -> new NoSuchElementException("User not found"));
+        group.setCode(UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+
+        User owner = groupUtil.findCurrentUser();
+
         UserGroupRole ownerRole = new UserGroupRole();
         ownerRole.setUser(owner);
         ownerRole.setGroup(group);
         ownerRole.setRole(GroupRole.OWNER);
+
         group.getUserRoles().add(ownerRole);
         groupRepository.save(group);
         return new MessageResponse("Group created successfully");
@@ -71,17 +69,15 @@ public class GroupServiceImpl implements GroupService {
     @Override
     @Transactional
     public MessageResponse joinGroup(JoinGroupRequest joinGroupRequest) {
-        User user = userRepository.findById(authenticationService.getCurrentUserId())
-                .orElseThrow(() -> new NoSuchElementException("User not found"));
+        User user = groupUtil.findCurrentUser();
 
-        Group group = groupRepository.findById(joinGroupRequest.getGroupId())
-                .orElseThrow(() -> new NoSuchElementException("Group not found"));
+        Group group = groupUtil.findGroup(joinGroupRequest.getGroupId());
 
         if (group.getVisibility() == Visibility.PRIVATE) {
             throw new AccessDeniedException("Cannot join a private group without an invitation");
         }
 
-        addUserToGroup(user, group);
+        groupUtil.addUserToGroup(user, group);
 
         return new MessageResponse("Joined group successfully");
     }
@@ -90,60 +86,75 @@ public class GroupServiceImpl implements GroupService {
     @Transactional
     public MessageResponse addMemberToGroup(GroupMemberActionRequest groupMemberActionRequest) {
 
-        User newMember = userRepository.findByHandle(groupMemberActionRequest.getUserHandle())
-                .orElseThrow(() -> new NoSuchElementException("User not found"));
+        User newMember = groupUtil.findUser(groupMemberActionRequest.getUserHandle());
 
-        Group group = groupRepository.findById(groupMemberActionRequest.getGroupId())
-                .orElseThrow(() -> new NoSuchElementException("Group not found"));
+        Group group = groupUtil.findGroup(groupMemberActionRequest.getGroupId());
 
-        Set<User> leaders = groupRepository.getLeaders(group.getId());
-        if (group.getVisibility() == Visibility.PRIVATE &&
-                leaders.stream().noneMatch(user -> user.getId().equals(authenticationService.getCurrentUserId()))) {
-            throw new AccessDeniedException("Only group leaders can add members");
+        if(group.getVisibility() == Visibility.PRIVATE) {
+            groupUtil.checkLeaderPermission(group);
         }
 
-        addUserToGroup(newMember, group);
-
+        groupUtil.addUserToGroup(newMember, group);
         return new MessageResponse("User added to group successfully");
     }
 
     @Override
     @Transactional
-    public MessageResponse removeMemberFromGroup(GroupMemberActionRequest groupMemberActionRequest) {
-        User member = userRepository.findByHandle(groupMemberActionRequest.getUserHandle())
-                .orElseThrow(() -> new NoSuchElementException("User not found"));
+    public MessageResponse promoteMemberToManager(GroupMemberActionRequest groupMemberActionRequest) {
+        User member = groupUtil.findUser(groupMemberActionRequest.getUserHandle());
 
-        Group group = groupRepository.findById(groupMemberActionRequest.getGroupId())
-                .orElseThrow(() -> new NoSuchElementException("Group not found"));
+        Group group = groupUtil.findGroup(groupMemberActionRequest.getGroupId());
 
-        Set<User> leaders = groupRepository.getLeaders(group.getId());
-        if (leaders.stream().noneMatch(user -> user.getId().equals(authenticationService.getCurrentUserId()))) {
-            throw new AccessDeniedException("Only group leaders can remove members");
+        groupUtil.checkLeaderPermission(group);
+
+        UserGroupRole userRole = groupUtil.findUserRole(member, group);
+
+        if (userRole.getRole() == GroupRole.MANAGER || userRole.getRole() == GroupRole.OWNER) {
+            throw new IllegalArgumentException("User is already a manager or owner");
         }
 
-        if (!groupRepository.existInGroup(member.getId(), group.getId())) {
-            throw new IllegalArgumentException("User is not a member of the group");
-        }
-
-
-        UserGroupRole userRole = userGroupRoleRepository.findByUserAndGroup(member, group)
-                .orElseThrow(() -> new NoSuchElementException("User role not found"));
-        userGroupRoleRepository.delete(userRole);
-        return new MessageResponse("User removed from group successfully");
+        userRole.setRole(GroupRole.MANAGER);
+        userGroupRoleRepository.save(userRole);
+        return new MessageResponse("User promoted to manager successfully");
     }
 
-    // utility method to add user to group
-    private void addUserToGroup(User user, Group group) {
-        if (groupRepository.existInGroup(user.getId(), group.getId())) {
-            throw new IllegalArgumentException("User is already a member of the group");
+    @Override
+    @Transactional
+    public MessageResponse demoteManagerToMember(GroupMemberActionRequest groupMemberActionRequest) {
+        User member = groupUtil.findUser(groupMemberActionRequest.getUserHandle());
+
+        Group group = groupUtil.findGroup(groupMemberActionRequest.getGroupId());
+
+        groupUtil.checkLeaderPermission(group);
+
+        UserGroupRole userRole = groupUtil.findUserRole(member, group);
+
+        if (userRole.getRole() == GroupRole.MEMBER) {
+            throw new IllegalArgumentException("The user is already a member");
+        }else if (userRole.getRole() == GroupRole.OWNER) {
+            throw new IllegalArgumentException("Cannot demote the group owner");
         }
 
-        UserGroupRole userRole = new UserGroupRole();
-        userRole.setUser(user);
-        userRole.setGroup(group);
         userRole.setRole(GroupRole.MEMBER);
+        userGroupRoleRepository.save(userRole);
+        return new MessageResponse("User demoted to member successfully");
+    }
 
-        group.getUserRoles().add(userRole);
-        groupRepository.save(group);
+    @Override
+    @Transactional
+    public MessageResponse removeMemberFromGroup(GroupMemberActionRequest groupMemberActionRequest) {
+        User member = groupUtil.findUser(groupMemberActionRequest.getUserHandle());
+
+        Group group = groupUtil.findGroup(groupMemberActionRequest.getGroupId());
+
+        groupUtil.checkLeaderPermission(group);
+
+        UserGroupRole userRole = groupUtil.findUserRole(member, group);
+        if(userRole.getRole() == GroupRole.OWNER) {
+            throw new IllegalArgumentException("Cannot remove the group owner");
+        }
+
+        userGroupRoleRepository.delete(userRole);
+        return new MessageResponse("User removed from group successfully");
     }
 }
