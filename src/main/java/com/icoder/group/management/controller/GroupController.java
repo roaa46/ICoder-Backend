@@ -37,6 +37,7 @@ public class GroupController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse> createGroup(@Valid @RequestBody CreateGroupRequest groupDetails) {
         return ResponseEntity.status(HttpStatus.CREATED).body(groupService.createGroup(groupDetails));
     }
@@ -50,5 +51,11 @@ public class GroupController {
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<MessageResponse> addMemberToGroup(@RequestBody GroupMemberActionRequest groupMemberActionRequest){
         return ResponseEntity.ok(groupService.addMemberToGroup(groupMemberActionRequest));
+    }
+
+    @DeleteMapping("/members/remove")
+    @PreAuthorize(value = "isAuthenticated()")
+    public ResponseEntity<MessageResponse> removeMemberFromGroup(@RequestBody GroupMemberActionRequest group){
+        return ResponseEntity.ok(groupService.removeMemberFromGroup(group));
     }
 }

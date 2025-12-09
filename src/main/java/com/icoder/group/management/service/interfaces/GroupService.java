@@ -17,4 +17,5 @@ public interface GroupService {
     MessageResponse joinGroup(JoinGroupRequest groupDetails);
 
     MessageResponse addMemberToGroup(GroupMemberActionRequest groupMemberActionRequest);
+    MessageResponse removeMemberFromGroup(GroupMemberActionRequest groupMemberActionRequest);
 }
