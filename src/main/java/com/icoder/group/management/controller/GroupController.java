@@ -1,10 +1,7 @@
 package com.icoder.group.management.controller;
 
 import com.icoder.core.dto.MessageResponse;
-import com.icoder.group.management.dto.GroupMemberActionRequest;
-import com.icoder.group.management.dto.CreateGroupRequest;
-import com.icoder.group.management.dto.GroupResponse;
-import com.icoder.group.management.dto.JoinGroupRequest;
+import com.icoder.group.management.dto.*;
 import com.icoder.group.management.service.implementation.GroupServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -44,8 +41,8 @@ public class GroupController {
 
     @PutMapping("/join")
     @PreAuthorize(value = "isAuthenticated()")
-    public ResponseEntity<MessageResponse> joinGroup(@RequestBody JoinGroupRequest joinGroupRequest){
-        return ResponseEntity.ok(groupService.joinGroup(joinGroupRequest));
+    public ResponseEntity<MessageResponse> joinGroup(@RequestBody GroupIdRequest groupIdRequest){
+        return ResponseEntity.ok(groupService.joinGroup(groupIdRequest));
     }
     @PutMapping("/members/add")
     @PreAuthorize(value = "isAuthenticated()")
@@ -65,6 +62,12 @@ public class GroupController {
     public ResponseEntity<MessageResponse> demoteManagerToMember(
             @RequestBody GroupMemberActionRequest groupMemberActionRequest){
         return ResponseEntity.ok(groupService.demoteManagerToMember(groupMemberActionRequest));
+    }
+    @PutMapping()
+    @PreAuthorize(value = "isAuthenticated()")
+    public ResponseEntity<MessageResponse> updateGroupDetails(
+            @Valid @RequestBody UpdateGroupRequest updateGroupRequest){
+        return ResponseEntity.ok(groupService.updateGroupDetails(updateGroupRequest));
     }
 
     @DeleteMapping("/members/remove")

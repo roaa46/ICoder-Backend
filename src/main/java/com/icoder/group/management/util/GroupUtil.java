@@ -13,6 +13,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.NoSuchElementException;
+import java.util.function.Consumer;
 
 @Service
 @RequiredArgsConstructor
@@ -64,5 +65,14 @@ public class GroupUtil {
         group.getUserRoles().add(userRole);
         // if didn't work try saving group instead
         userGroupRoleRepository.save(userRole);
+    }
+
+    public boolean updateField(String fieldValue, Consumer<String> setter) {
+        if (fieldValue != null) {
+            if (fieldValue.isBlank()) throw new IllegalArgumentException("Field cannot be blank");
+            setter.accept(fieldValue);
+            return true;
+        }
+        return false;
     }
 }

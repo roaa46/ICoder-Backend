@@ -13,7 +13,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class JoinGroupRequest {
+public class GroupIdRequest {
     @NotNull
     private Long groupId;
 }

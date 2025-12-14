@@ -1,10 +1,7 @@
 package com.icoder.group.management.service.implementation;
 
 import com.icoder.core.dto.MessageResponse;
-import com.icoder.group.management.dto.GroupMemberActionRequest;
-import com.icoder.group.management.dto.CreateGroupRequest;
-import com.icoder.group.management.dto.GroupResponse;
-import com.icoder.group.management.dto.JoinGroupRequest;
+import com.icoder.group.management.dto.*;
 import com.icoder.group.management.entity.Group;
 import com.icoder.group.management.entity.UserGroupRole;
 import com.icoder.group.management.enums.GroupRole;
@@ -68,10 +65,10 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     @Transactional
-    public MessageResponse joinGroup(JoinGroupRequest joinGroupRequest) {
+    public MessageResponse joinGroup(GroupIdRequest groupIdRequest) {
         User user = groupUtil.findCurrentUser();
 
-        Group group = groupUtil.findGroup(joinGroupRequest.getGroupId());
+        Group group = groupUtil.findGroup(groupIdRequest.getGroupId());
 
         if (group.getVisibility() == Visibility.PRIVATE) {
             throw new AccessDeniedException("Cannot join a private group without an invitation");
@@ -156,5 +153,34 @@ public class GroupServiceImpl implements GroupService {
 
         userGroupRoleRepository.delete(userRole);
         return new MessageResponse("User removed from group successfully");
+    }
+
+    @Override
+    @Transactional
+    public MessageResponse updateGroupDetails(UpdateGroupRequest updateGroupRequest) {
+
+        Group group = groupUtil.findGroup(updateGroupRequest.getGroupId());
+        groupUtil.checkLeaderPermission(group);
+
+        boolean updated = false;
+
+        updated |= groupUtil.updateField(updateGroupRequest.getName(), group::setName);
+        updated |= groupUtil.updateField(updateGroupRequest.getDescription(), group::setDescription);
+        updated |= groupUtil.updateField(updateGroupRequest.getPictureUrl(), group::setPictureUrl);
+
+        if(updateGroupRequest.getVisibility() != null) {
+            group.setVisibility(updateGroupRequest.getVisibility());
+            updated = true;
+        }
+        if(updateGroupRequest.getContestCoordinatorType() != null) {
+            group.setContestCoordinatorType(updateGroupRequest.getContestCoordinatorType());
+            updated = true;
+        }
+        if (!updated) {
+            throw new IllegalArgumentException("No valid fields provided for update");
+        }
+        groupRepository.save(group);
+        return new MessageResponse("Group details updated successfully");
+
     }
 }
