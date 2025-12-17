@@ -4,6 +4,6 @@ import com.icoder.problem.management.dto.ProblemResponse;
 import com.icoder.problem.management.dto.ProblemStatementResponse;
 
 public interface ScrapingService {
-    public ProblemStatementResponse scrapFullStatement(String source, String code);
-    public ProblemResponse scrapMetaData(String source, String code);
+    ProblemStatementResponse scrapFullStatement(String source, String code);
+    ProblemResponse scrapMetaData(String source, String code);
 }

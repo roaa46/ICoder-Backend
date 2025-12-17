@@ -5,13 +5,12 @@ import com.icoder.core.exception.ProblemNotFoundException;
 import com.icoder.problem.management.dto.FavoriteRequest;
 import com.icoder.problem.management.dto.ProblemResponse;
 import com.icoder.problem.management.dto.ProblemStatementResponse;
-import com.icoder.problem.management.dto.SectionScrapeDTO;
 import com.icoder.problem.management.entity.Problem;
+import com.icoder.problem.management.entity.ProblemProperty;
 import com.icoder.problem.management.entity.ProblemSection;
 import com.icoder.problem.management.entity.ProblemUserRelation;
-import com.icoder.problem.management.entity.SectionContent;
+import com.icoder.problem.management.enums.FormatType;
 import com.icoder.problem.management.enums.OJudgeType;
-import com.icoder.problem.management.mapper.ContentMapper;
 import com.icoder.problem.management.mapper.ProblemMapper;
 import com.icoder.problem.management.mapper.PropertyMapper;
 import com.icoder.problem.management.mapper.SectionMapper;
@@ -45,7 +44,6 @@ public class ProblemServiceImpl implements ProblemService {
     private final ProblemMapper problemMapper;
     private final PropertyMapper propertyMapper;
     private final SectionMapper sectionMapper;
-    private final ContentMapper contentMapper;
     private final ScrapingServiceImpl scrapingService;
     private final UserRepository userRepository;
     private final ProblemUserRelationRepository relationRepository;
@@ -74,7 +72,7 @@ public class ProblemServiceImpl implements ProblemService {
         );
         problemRepository.save(newProblem);
         ProblemResponse problemResponse = problemMapper.toResponseDTO(newProblem);
-        problemResponse.setOnlineJudge(source);
+        problemResponse.setOnlineJudge(source.toUpperCase());
 
         return problemMapper.toResponseDTO(newProblem);
     }
@@ -85,7 +83,7 @@ public class ProblemServiceImpl implements ProblemService {
     public ProblemStatementResponse getProblemStatement(String source, String code) {
         Optional<Problem> existingProblem = problemRepository.findByProblemCodeAndOnlineJudge(code, OJudgeType.valueOf(source.toUpperCase()));
 
-        if (existingProblem.isPresent() && existingProblem.get().getSections() != null) {
+        if (existingProblem.isPresent() && existingProblem.get().getFetchedAt() != null) {
             log.info("problem is found in DB");
             return problemMapper.toStatementDTO(existingProblem.get());
         }
@@ -102,20 +100,23 @@ public class ProblemServiceImpl implements ProblemService {
         Problem problemToUpdate = problemRepository.findByProblemCodeAndOnlineJudge(code, OJudgeType.valueOf(source.toUpperCase()))
                 .orElseThrow(() -> new ProblemNotFoundException("Metadata not found for problem " + source + "-" + code));
 
-        List<ProblemSection> newSections = sectionMapper.toListEntity(scrapedResponse.getSections());
-        problemToUpdate.setProperties(propertyMapper.toListEntity(scrapedResponse.getProperties()));
-        problemToUpdate.setSections(newSections);
-
-        for (int i = 0; i < newSections.size(); i++) {
-            ProblemSection sectionEntity = newSections.get(i);
-            SectionScrapeDTO sectionDTO = scrapedResponse.getSections().get(i);
-
-            List<SectionContent> contentEntities = contentMapper.toListEntity(sectionDTO.getContents());
-
-            contentEntities.forEach(content -> content.setSection(sectionEntity));
-
-            sectionEntity.setContents(contentEntities);
+        List<ProblemProperty> newProperty = propertyMapper.toListEntity(scrapedResponse.getProperties());
+        problemToUpdate.getProperties().clear();
+        for (ProblemProperty property : newProperty) {
+            property.setProblem(problemToUpdate);
+            property.setContentType(FormatType.PLAIN_TEXT);
+            problemToUpdate.getProperties().add(property);
         }
+
+        List<ProblemSection> newSections = sectionMapper.toListEntity(scrapedResponse.getSections());
+        problemToUpdate.getSections().clear();
+        for (ProblemSection section : newSections) {
+            section.setProblem(problemToUpdate);
+            section.setContent(section.getContent());
+            section.setContentType(FormatType.HTML);
+            problemToUpdate.getSections().add(section);
+        }
+
         problemToUpdate.setFetchedAt(Instant.now());
         Problem savedProblem = problemRepository.save(problemToUpdate);
 

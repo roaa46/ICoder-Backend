@@ -25,15 +25,22 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ProblemNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleApiException(ProblemNotFoundException ex, HttpServletRequest request) {
-        log.error("ProblemNotFoundException Exception");
+    public ResponseEntity<ErrorResponse> handleProblemNotFoundException(ProblemNotFoundException ex, HttpServletRequest request) {
+        log.error("ProblemNotFound Exception");
+        HttpStatus status = resolveStatus(ex);
+        return buildErrorResponse(status, ex.getMessage(), request.getRequestURI(), ex.getDetails());
+    }
+
+    @ExceptionHandler(ScrapingException.class)
+    public ResponseEntity<ErrorResponse> handleScrapingException(ScrapingException ex, HttpServletRequest request) {
+        log.error("Scraping Exception");
         HttpStatus status = resolveStatus(ex);
         return buildErrorResponse(status, ex.getMessage(), request.getRequestURI(), ex.getDetails());
     }
 
     @ExceptionHandler(OnlineJudgeException.class)
-    public ResponseEntity<ErrorResponse> handleApiException(OnlineJudgeException ex, HttpServletRequest request) {
-        log.error("OnlineJudgeException Exception");
+    public ResponseEntity<ErrorResponse> handleOnlineJudgeException(OnlineJudgeException ex, HttpServletRequest request) {
+        log.error("OnlineJudge Exception");
         HttpStatus status = resolveStatus(ex);
         return buildErrorResponse(status, ex.getMessage(), request.getRequestURI(), ex.getDetails());
     }

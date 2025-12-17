@@ -14,6 +14,4 @@ import lombok.NoArgsConstructor;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class ContentScrapeDTO {
     private String content;
-    private String formatType;  // use .toString()..toLowerCase() while scrapping
-    private Integer orderIndex;
 }

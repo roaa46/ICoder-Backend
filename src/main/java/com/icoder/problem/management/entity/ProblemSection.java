@@ -1,13 +1,11 @@
 package com.icoder.problem.management.entity;
 
+import com.icoder.problem.management.enums.FormatType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Getter
@@ -22,13 +20,16 @@ public class ProblemSection {
 
     private String title;
 
-    @Column(nullable = false)
-    private Integer orderIndex;
+    private int orderIndex;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "problem_id")
     private Problem problem;
 
-    @OneToMany(mappedBy = "section", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<SectionContent> contents = new ArrayList<>();
+    @Column(columnDefinition = "TEXT")
+    @Lob
+    private String content;
+
+    @Enumerated(EnumType.STRING)
+    private FormatType contentType;
 }
