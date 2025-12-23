@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class LanguageResponse {
+public class  LanguageResponse {
     private Integer id;
     private String name;
     private boolean isArchived;

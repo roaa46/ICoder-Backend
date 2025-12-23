@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 public class SubmissionResult {
     private String stdout;
 
-    private Double time;
+    private Float time;
 
     private Integer memory;
 

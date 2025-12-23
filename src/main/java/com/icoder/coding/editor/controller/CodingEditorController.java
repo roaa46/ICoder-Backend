@@ -51,7 +51,6 @@ public class CodingEditorController {
             description = "Polls the Judge0 service using the provided token. If processing is still ongoing, returns 202 Accepted. If finished, returns 200 OK with the final result (output, status, time, memory) (requires login)"
     )
     public ResponseEntity<SubmissionResult> getResult(@PathVariable String token) {
-
         SubmissionResult result = codingEditorService.processAndGetResult(token);
 
         if (result.getStatus() != null && result.getStatus().getId() < FINAL_STATUS_THRESHOLD) {
