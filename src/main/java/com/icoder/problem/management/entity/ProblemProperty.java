@@ -1,5 +1,6 @@
 package com.icoder.problem.management.entity;
 
+import com.icoder.problem.management.enums.FormatType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,8 +24,10 @@ public class ProblemProperty {
     @Column(nullable = false)
     private String content;
 
-    @Column(nullable = false)
-    private Integer orderIndex;
+    @Enumerated(EnumType.STRING)
+    private FormatType contentType;
+
+    private int orderIndex;
 
     private boolean isSpoiler;
 

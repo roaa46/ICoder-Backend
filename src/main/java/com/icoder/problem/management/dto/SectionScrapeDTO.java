@@ -8,8 +8,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,6 +16,7 @@ import java.util.List;
 public class SectionScrapeDTO {
     @JsonInclude(JsonInclude.Include.NON_NULL) // title is null in the problem statement section in CF & CSES
     private String title;
-    private Integer orderIndex;
-    private List<ContentScrapeDTO> contents;
+    private int orderIndex;
+    private String content;
+    private String contentType;
 }

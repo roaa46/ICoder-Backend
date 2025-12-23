@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 public class PropertyScrapeDTO {
     private String title;
     private String content;
-    private Integer orderIndex;
-    private boolean isSpoiler;
+    private int orderIndex;
+    private boolean spoiler;
+    private String contentType;
 }
