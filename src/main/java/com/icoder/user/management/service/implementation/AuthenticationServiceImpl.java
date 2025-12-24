@@ -98,6 +98,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         tokenService.addTokenCookies(response, jwtToken, refreshJwtToken);
 
         return LoginResponse.builder()
+                .userId(user.getId())
                 .accessToken(jwtToken)
                 .refreshToken(refreshJwtToken)
                 .build();
@@ -133,6 +134,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
                 tokenService.addTokenCookies(response, accessToken, refreshToken);
                 LoginResponse authenticationResponse = LoginResponse.builder()
+                        .userId(user.getId())
                         .accessToken(accessToken)
                         .refreshToken(refreshToken)
                         .build();
