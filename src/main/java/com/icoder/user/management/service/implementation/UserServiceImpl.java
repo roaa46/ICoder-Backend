@@ -3,6 +3,7 @@ package com.icoder.user.management.service.implementation;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.icoder.core.dto.MessageResponse;
+import com.icoder.user.management.dto.user.PictureUrlResponse;
 import com.icoder.user.management.enums.TokenType;
 import com.icoder.core.exception.ApiException;
 import com.icoder.core.util.TokenHelper;
@@ -218,6 +219,15 @@ public class UserServiceImpl implements UserService {
         }
 
         return new MessageResponse("Your profile picture has been successfully deleted");
+    }
+
+    @Override
+    public PictureUrlResponse viewProfilePicture(String handle) {
+        User user = userRepository.findByHandle(handle)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        return PictureUrlResponse.builder()
+                .pictureUrl(user.getPictureUrl())
+                .build();
     }
 
     private void deleteImageFromCloudinary(String imageUrl) throws IOException {
