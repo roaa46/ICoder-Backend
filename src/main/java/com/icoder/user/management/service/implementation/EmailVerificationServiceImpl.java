@@ -38,7 +38,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
 
         String token = generateToken(user, claims, 15 * 60 * 1000);
 
-        String link = baseUrl + "/login?token=" + token;
+        String link = baseUrl + "/confirm-email?token=" + token;
         sendEmail(user.getEmail(), buildEmail(user.getNickname(), link, (TokenType) claims.get("type")));
         user.setLastVerificationEmailSentAt(Instant.now());
         userRepository.save(user);
