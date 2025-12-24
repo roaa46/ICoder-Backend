@@ -1,5 +1,7 @@
 package com.icoder.user.management.service.implementation;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.user.management.enums.TokenType;
 import com.icoder.core.exception.ApiException;
@@ -14,22 +16,18 @@ import com.icoder.user.management.repository.UserRepository;
 import com.icoder.user.management.service.interfaces.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
-import java.util.UUID;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
@@ -40,8 +38,7 @@ public class UserServiceImpl implements UserService {
     private final TokenService tokenService;
     private final PasswordEncoder passwordEncoder;
     private final TokenHelper tokenHelper;
-    @Value("${upload.dir}")
-    private String uploadDir;
+    private final Cloudinary cloudinary;
 
     @Override
     public UserProfileResponse getProfile(UserProfileRequest userProfileRequest) {
@@ -62,20 +59,36 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public MessageResponse confirmAccountDeletion(String token) {
+
         if (jwtService.isTokenExpired(token)) {
             throw new ApiException("Verification link has expired");
         }
-        var result = tokenHelper.validateAndExtract(token);
+
+        TokenHelper.ValidatedTokenResult result = tokenHelper.validateAndExtract(token);
+
         if (!"ACCOUNT_DELETION".equals(result.type())) {
-            throw new IllegalStateException("Invalid token type for deletion");
+            throw new ApiException("Invalid token type for account deletion");
         }
-        tokenService.revokeAllUserTokens(result.user());
-        if (result.user().getPictureUrl() != null)
-            deleteImageFromStorage(result.user().getPictureUrl());
-        userRepository.delete(result.user());
+
+        User user = result.user();
+        String pictureUrl = user.getPictureUrl();
+
+        tokenService.revokeAllUserTokens(user);
+        userRepository.delete(user);
+
         SecurityContextHolder.clearContext();
+
+        if (pictureUrl != null && !pictureUrl.isBlank()) {
+            try {
+                deleteImageFromCloudinary(pictureUrl);
+            } catch (Exception e) {
+                log.warn("Failed to delete user image from Cloudinary during account deletion", e);
+            }
+        }
+
         return new MessageResponse("Your account has been successfully deleted");
     }
+
 
     @Transactional
     @Override
@@ -100,7 +113,8 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public MessageResponse changeProfilePicture(MultipartFile file) {
+    public MessageResponse uploadProfilePicture(MultipartFile file) {
+
         User user = userRepository.findById(authenticationService.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
@@ -110,29 +124,27 @@ public class UserServiceImpl implements UserService {
                         contentType.equals("image/jpeg") ||
                         contentType.equals("image/jpg") ||
                         contentType.equals("image/gif"))) {
-            throw new IllegalStateException("Invalid file type. Only PNG, JPEG, JPG, and GIF are allowed.");
+            throw new IllegalStateException(
+                    "Invalid file type. Only PNG, JPEG, JPG, and GIF are allowed."
+            );
         }
 
         try {
-            // delete old picture
             if (user.getPictureUrl() != null) {
-                deleteImageFromStorage(user.getPictureUrl());
+                deleteImageFromCloudinary(user.getPictureUrl());
             }
 
-            // create a folder if not exists
-            File dir = new File(uploadDir);
-            if (!dir.exists()) dir.mkdirs();
+            Map uploadResult = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    Map.of(
+                            "folder", "users/profile-pictures",
+                            "resource_type", "image"
+                    )
+            );
 
-            // save new picture
-            String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
-            Path path = Paths.get(uploadDir, filename);
-            Files.write(path, file.getBytes());
+            String imageUrl = uploadResult.get("secure_url").toString();
 
-            // URL to return
-            String fileUrl = "/uploads/" + filename;
-
-            // store a new path in DB
-            user.setPictureUrl(fileUrl);
+            user.setPictureUrl(imageUrl);
             userRepository.save(user);
 
             return new MessageResponse("Your profile picture has been successfully changed");
@@ -141,7 +153,6 @@ public class UserServiceImpl implements UserService {
             throw new IllegalStateException("Failed to upload profile picture", e);
         }
     }
-
 
     private void validateCurrentPassword(String currentPassword, String userPassword) {
         if (!passwordEncoder.matches(currentPassword, userPassword)) {
@@ -188,24 +199,45 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public MessageResponse deleteProfilePicture() {
+
         User user = userRepository.findById(authenticationService.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        if (user.getPictureUrl() == null || user.getPictureUrl().isBlank()) {
-            throw new IllegalStateException("User does not have a profile picture.");
+
+        String pictureUrl = user.getPictureUrl();
+        if (pictureUrl == null || pictureUrl.isBlank()) {
+            throw new ApiException("User does not have a profile picture");
         }
-        deleteImageFromStorage(user.getPictureUrl());
+
         user.setPictureUrl(null);
         userRepository.save(user);
+
+        try {
+            deleteImageFromCloudinary(pictureUrl);
+        } catch (Exception e) {
+            log.warn("Failed to delete profile image from Cloudinary", e);
+        }
+
         return new MessageResponse("Your profile picture has been successfully deleted");
     }
 
-    private void deleteImageFromStorage(String imageUrl) {
-        try {
-            String filename = Paths.get(imageUrl).getFileName().toString();
-            Path path = Paths.get(uploadDir, filename);
-            Files.deleteIfExists(path);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to delete profile picture.", e);
+    private void deleteImageFromCloudinary(String imageUrl) throws IOException {
+        String publicId = extractPublicId(imageUrl);
+
+        Map result = cloudinary.uploader().destroy(
+                publicId,
+                ObjectUtils.asMap("invalidate", true)
+        );
+
+        if (!"ok".equals(result.get("result"))) {
+            throw new IOException("Cloudinary deletion failed: " + result);
         }
+    }
+
+    private String extractPublicId(String imageUrl) {
+        // https://res.cloudinary.com/demo/image/upload/v123/users/profile-pictures/abc.png
+        String[] parts = imageUrl.split("/");
+        String filename = parts[parts.length - 1];
+        String folder = "users/profile-pictures";
+        return folder + "/" + filename.substring(0, filename.lastIndexOf('.'));
     }
 }

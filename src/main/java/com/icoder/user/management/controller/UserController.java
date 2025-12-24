@@ -64,7 +64,7 @@ public class UserController {
             description = "Uploads and sets a new profile picture for the authenticated user. Only accepts image file types (PNG, JPEG, JPG, GIF)."
     )
     public ResponseEntity<MessageResponse> updateProfilePicture(@RequestParam("file") MultipartFile file) {
-        return ResponseEntity.ok(userService.changeProfilePicture(file));
+        return ResponseEntity.ok(userService.uploadProfilePicture(file));
     }
 
     @DeleteMapping("/profile-picture")

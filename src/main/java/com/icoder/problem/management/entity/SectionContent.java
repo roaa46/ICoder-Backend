@@ -19,8 +19,7 @@ public class SectionContent {
     private Long id;
 
     @Column(nullable = false)
-//    uncomment when scraping is done
-//    @Lob
+    @Lob
     private String content;
 
     @Column(nullable = false)

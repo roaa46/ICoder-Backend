@@ -17,7 +17,7 @@ public interface UserService {
 
     MessageResponse updateProfile(UpdateUserProfileRequest request);
 
-    MessageResponse changeProfilePicture(MultipartFile file);
+    MessageResponse uploadProfilePicture(MultipartFile file);
 
     MessageResponse requestEmailUpdate(UpdateEmailRequest request);
 
