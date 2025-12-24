@@ -3,6 +3,8 @@ package com.icoder.problem.management.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,6 +19,8 @@ import java.time.Instant;
 @Builder
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class ProblemResponse {
+    @JsonSerialize(using = ToStringSerializer.class)
+    private String problemId;
     private String problemCode;
     private String problemLink;
     private String onlineJudge;  // use .toString()..toLowerCase() while scrapping

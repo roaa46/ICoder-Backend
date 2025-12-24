@@ -22,13 +22,13 @@ import com.icoder.problem.management.service.specification.ProblemSpecifications
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
 import com.icoder.user.management.service.implementation.AuthenticationServiceImpl;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -187,6 +187,7 @@ public class ProblemServiceImpl implements ProblemService {
 
     /// get all attempted problems
     @Override
+    @Transactional(readOnly = true)
     public Page<ProblemResponse> getAttempted(Pageable pageable) {
         Long userId = authenticationService.getCurrentUserId();
         Page<ProblemUserRelation> relations = relationRepository.findByUserIdAndIsAttemptedTrue(userId, pageable);
@@ -195,6 +196,7 @@ public class ProblemServiceImpl implements ProblemService {
 
     /// get all solved problems
     @Override
+    @Transactional(readOnly = true)
     public Page<ProblemResponse> getSolved(Pageable pageable) {
         Long userId = authenticationService.getCurrentUserId();
         Page<ProblemUserRelation> relations = relationRepository.findByUserIdAndIsSolvedTrue(userId, pageable);
@@ -203,6 +205,7 @@ public class ProblemServiceImpl implements ProblemService {
 
     /// get all favorite problems
     @Override
+    @Transactional(readOnly = true)
     public Page<ProblemResponse> getFavorites(Pageable pageable) {
         Long userId = authenticationService.getCurrentUserId();
         Page<ProblemUserRelation> relations = relationRepository.findByUserIdAndIsFavoriteTrue(userId, pageable);
