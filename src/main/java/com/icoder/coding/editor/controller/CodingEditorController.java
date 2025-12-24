@@ -4,9 +4,11 @@ import com.icoder.coding.editor.dto.*;
 import com.icoder.coding.editor.service.interfaces.CodingEditorService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -86,5 +88,59 @@ public class CodingEditorController {
         }
 
         return ResponseEntity.ok(results);
+    }
+
+    @PostMapping("/templates")
+    @Operation(
+            summary = "Add a new code template",
+            description = "Creates a new code template and returns its details along with the resource location (requires login)"
+    )
+    public ResponseEntity addTemplate(@RequestBody CodeTemplateRequest request) {
+
+        CodeTemplateResponse response =
+                codingEditorService.addTemplate(request);
+
+        URI location = URI.create("/templates/" + response.getTemplateId());
+
+        return ResponseEntity.created(location).body(response);
+    }
+
+    @GetMapping("/templates/{id}")
+    @Operation(
+            summary = "Retrieve a code template by ID",
+            description = "Returns the details of a single code template using its unique ID (requires login)"
+    )
+    public ResponseEntity<CodeTemplateResponse> getTemplate(@PathVariable String id) {
+        return ResponseEntity.ok(codingEditorService.getTemplate(id));
+    }
+
+    @GetMapping("/templates")
+    @Operation(
+            summary = "Retrieve all code templates",
+            description = "Returns a paginated list of all code templates (requires login)"
+    )
+    public ResponseEntity<Page<CodeTemplateResponse>> getAllTemplates(
+            @RequestParam(defaultValue = "0") int page) {
+        Page<CodeTemplateResponse> templates = codingEditorService.getTemplates(page);
+        return ResponseEntity.ok(templates);
+    }
+
+    @PutMapping("/templates/{id}")
+    @Operation(
+            summary = "Update an existing code template",
+            description = "Updates the details of a code template using its ID and returns the updated template (requires login)"
+    )
+    public ResponseEntity<CodeTemplateResponse> editTemplate(@PathVariable String id, @RequestBody CodeTemplateRequest request) {
+        return ResponseEntity.ok(codingEditorService.editTemplate(id, request));
+    }
+
+    @DeleteMapping("/templates/{id}")
+    @Operation(
+            summary = "Delete a code template",
+            description = "Deletes the code template identified by the given ID (requires login)"
+    )
+    public ResponseEntity deleteTemplate(@PathVariable String id) {
+        codingEditorService.deleteTemplate(id);
+        return ResponseEntity.noContent().build();
     }
 }

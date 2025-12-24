@@ -1,18 +1,32 @@
 package com.icoder.coding.editor.service.implementation;
 
 import com.icoder.coding.editor.dto.*;
+import com.icoder.coding.editor.entity.CodeTemplate;
+import com.icoder.coding.editor.mapper.TemplateMapper;
+import com.icoder.coding.editor.repository.CodeTemplateRepository;
 import com.icoder.coding.editor.service.interfaces.CodingEditorService;
+import com.icoder.core.exception.TemplateException;
+import com.icoder.user.management.entity.User;
+import com.icoder.user.management.repository.UserRepository;
+import com.icoder.user.management.service.interfaces.AuthenticationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
+import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -22,12 +36,25 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CodingEditorServiceImpl implements CodingEditorService {
     private final WebClient webClient;
+    private final CodeTemplateRepository templateRepository;
+    private final UserRepository userRepository;
+    private final AuthenticationService service;
+    private final TemplateMapper mapper;
 
     public CodingEditorServiceImpl(
             WebClient.Builder webClientBuilder,
+            CodeTemplateRepository templateRepository,
+            AuthenticationService service,
+            UserRepository userRepository,
+            TemplateMapper mapper,
             @Value("${judge0.api-url}") String apiUrl,
             @Value("${judge0.auth-key}") String authKey,
             @Value("${judge0.host}") String host) {
+
+        this.templateRepository = templateRepository;
+        this.service = service;
+        this.userRepository = userRepository;
+        this.mapper = mapper;
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-RapidAPI-Key", authKey);
@@ -196,6 +223,82 @@ public class CodingEditorServiceImpl implements CodingEditorService {
                 getResultStatus(result);
         }
         return new BatchSubmissionResult(rawResults);
+    }
+
+    @Transactional
+    @Override
+    public CodeTemplateResponse addTemplate(CodeTemplateRequest request) {
+        Long userId = service.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("user not found"));
+
+        CodeTemplate template = new CodeTemplate();
+        template.setTemplateName(request.getTemplateName());
+        template.setLanguage(request.getLanguage());
+        template.setCode(request.getCode());
+        template.setEnabled(request.isEnabled());
+        template.setUser(user);
+        template.setCreatedAndUpdatedAt(Instant.now());
+
+        templateRepository.save(template);
+
+        return mapper.toDTO(template);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CodeTemplateResponse getTemplate(String  templateId) {
+        Long userId = service.getCurrentUserId();
+
+        Long id = Long.parseLong(templateId);
+        CodeTemplate template = templateRepository
+                .findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new TemplateException("Template not found"));
+
+        return mapper.toDTO(template);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<CodeTemplateResponse> getTemplates(int page) {
+        Long userId = service.getCurrentUserId();
+
+        Pageable pageable = PageRequest.of(page, 5, Sort.by("createdAndUpdatedAt").descending()); // 5 templates per page
+
+        return templateRepository.findAllByUserId(userId, pageable)
+                .map(mapper::toDTO);
+    }
+
+    @Override
+    @Transactional
+    public CodeTemplateResponse editTemplate(String templateId, CodeTemplateRequest request) {
+        Long userId = service.getCurrentUserId();
+
+        Long id = Long.parseLong(templateId);
+        CodeTemplate template = templateRepository
+                .findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new TemplateException("Template not found"));
+
+        template.setTemplateName(request.getTemplateName());
+        template.setCode(request.getCode());
+        template.setLanguage(request.getLanguage());
+        template.setEnabled(request.isEnabled());
+        template.setCreatedAndUpdatedAt(Instant.now());
+
+        return mapper.toDTO(templateRepository.save(template));
+    }
+
+    @Override
+    @Transactional
+    public void deleteTemplate(String templateId) {
+        Long userId = service.getCurrentUserId();
+
+        Long id = Long.parseLong(templateId);
+        CodeTemplate template = templateRepository
+                .findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new TemplateException("Template not found"));
+
+        templateRepository.delete(template);
     }
 
     private void getResultStatus(SubmissionResult result) {

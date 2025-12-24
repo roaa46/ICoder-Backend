@@ -23,6 +23,12 @@ public class GlobalExceptionHandler {
         HttpStatus status = resolveStatus(ex);
         return buildErrorResponse(status, ex.getMessage(), request.getRequestURI(), ex.getDetails());
     }
+    @ExceptionHandler(TemplateException.class)
+    public ResponseEntity<ErrorResponse> handleTemplateException(TemplateException ex, HttpServletRequest request) {
+        log.error("Template Exception");
+        HttpStatus status = resolveStatus(ex);
+        return buildErrorResponse(status, ex.getMessage(), request.getRequestURI(), ex.getDetails());
+    }
 
     @ExceptionHandler(ProblemNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleProblemNotFoundException(ProblemNotFoundException ex, HttpServletRequest request) {

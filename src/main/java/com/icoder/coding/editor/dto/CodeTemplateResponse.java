@@ -9,14 +9,19 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class SubmissionRequest {
-    public String sourceCode;
+public class CodeTemplateResponse {
     @JsonSerialize(using = ToStringSerializer.class)
-    public int languageId;
-    public String stdin;
+    private Long templateId;
+    private String templateName;
+    private String language;
+    private String code;
+    private boolean enabled;
+    private Instant createdAndUpdatedAt;
 }
