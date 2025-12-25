@@ -99,9 +99,9 @@ public class UserServiceImpl implements UserService {
         validateCurrentPassword(request.getCurrentPassword(), user.getPassword());
         if (
                 (request.getNickname() != null && request.getNickname().equals(user.getNickname()))
-            ||
-                (request.getSchool() != null && request.getSchool().equals(user.getSchool()))
-            ) {
+                        ||
+                        (request.getSchool() != null && request.getSchool().equals(user.getSchool()))
+        ) {
             throw new ApiException("You must change at least one field");
         }
         if (request.getNickname() != null && !request.getNickname().equals(user.getNickname()))
