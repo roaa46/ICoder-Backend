@@ -2,6 +2,7 @@ package com.icoder.user.management.controller;
 
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.user.management.dto.auth.UpdateEmailRequest;
+import com.icoder.user.management.dto.user.PictureUrlResponse;
 import com.icoder.user.management.dto.user.UpdateUserProfileRequest;
 import com.icoder.user.management.dto.user.UserProfileRequest;
 import com.icoder.user.management.dto.user.UserProfileResponse;
@@ -58,13 +59,22 @@ public class UserController {
         return ResponseEntity.ok(userService.updateProfile(request));
     }
 
+    @GetMapping("/profile-picture")
+    @Operation(
+            summary = "View profile picture",
+            description = "View profile picture for the authenticated user."
+    )
+    public ResponseEntity<PictureUrlResponse> viewProfilePicture(@RequestParam String handle) {
+        return ResponseEntity.ok(userService.viewProfilePicture(handle));
+    }
+
     @PatchMapping("/profile-picture")
     @Operation(
             summary = "Update profile picture",
             description = "Uploads and sets a new profile picture for the authenticated user. Only accepts image file types (PNG, JPEG, JPG, GIF)."
     )
     public ResponseEntity<MessageResponse> updateProfilePicture(@RequestParam("file") MultipartFile file) {
-        return ResponseEntity.ok(userService.changeProfilePicture(file));
+        return ResponseEntity.ok(userService.uploadProfilePicture(file));
     }
 
     @DeleteMapping("/profile-picture")

@@ -32,6 +32,12 @@
         <lombok.version>1.18.32</lombok.version>
     </properties>
     <dependencies>
+        <!-- https://mvnrepository.com/artifact/com.cloudinary/cloudinary-http44 -->
+        <dependency>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http44</artifactId>
+            <version>1.32.2</version>
+        </dependency>
         <!--        Swagger-->
         <dependency>
             <groupId>org.springdoc</groupId>
