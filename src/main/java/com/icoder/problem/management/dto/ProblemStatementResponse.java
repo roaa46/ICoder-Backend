@@ -20,7 +20,7 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL) // contestLink is null in CSES
 public class ProblemStatementResponse {
     @JsonSerialize(using = ToStringSerializer.class)
-    private String problemId;
+    private Long problemId;
     private String problemCode;
     private String problemLink;
     private String onlineJudge;  // use .toString()..toLowerCase() while scrapping

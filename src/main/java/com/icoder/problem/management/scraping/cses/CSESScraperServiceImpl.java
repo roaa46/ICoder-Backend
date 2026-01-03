@@ -1,10 +1,7 @@
 package com.icoder.problem.management.scraping.cses;
 
 import com.icoder.core.exception.ScrapingException;
-import com.icoder.problem.management.dto.ProblemResponse;
-import com.icoder.problem.management.dto.ProblemStatementResponse;
-import com.icoder.problem.management.dto.PropertyScrapeDTO;
-import com.icoder.problem.management.dto.SectionScrapeDTO;
+import com.icoder.problem.management.dto.*;
 import com.icoder.problem.management.enums.FormatType;
 import com.icoder.problem.management.enums.OJudgeType;
 import org.jsoup.Jsoup;
@@ -53,23 +50,22 @@ public class CSESScraperServiceImpl implements CSESScraperService {
                     .timeout(10_000)
                     .get();
 
-            // ================= PROPERTIES (TIME / MEMORY / SOURCE) =================
+            // ================= PROPERTIES =================
             List<PropertyScrapeDTO> properties = new ArrayList<>();
 
             Element limits = doc.selectFirst("ul.task-constraints");
             if (limits != null) {
                 int index = 1;
-
                 for (Element li : limits.select("li")) {
                     String[] parts = li.text().split(":");
                     if (parts.length == 2) {
-                        PropertyScrapeDTO property = new PropertyScrapeDTO();
-                        property.setTitle(parts[0].trim());
-                        property.setContent(parts[1].trim());
-                        property.setContentType(FormatType.PLAIN_TEXT.name());
-                        property.setSpoiler(false);
-                        property.setOrderIndex(index++);
-                        properties.add(property);
+                        properties.add(PropertyScrapeDTO.builder()
+                                .title(parts[0].trim())
+                                .content(parts[1].trim())
+                                .contentType(FormatType.PLAIN_TEXT.name())
+                                .orderIndex(index++)
+                                .spoiler(false)
+                                .build());
                     }
                 }
 
@@ -77,51 +73,67 @@ public class CSESScraperServiceImpl implements CSESScraperService {
                 properties.add(PropertyScrapeDTO.builder()
                         .title("Source")
                         .content(contestTitle)
-                        .orderIndex(index)
                         .contentType(FormatType.PLAIN_TEXT.name())
+                        .orderIndex(index)
                         .spoiler(true)
                         .build());
             }
-
 
             // ================= SECTIONS =================
             List<SectionScrapeDTO> sections = new ArrayList<>();
 
             Element content = doc.selectFirst(".content .md");
 
-            // Fix relative image URLs
+            // fix relative images
             for (Element img : content.select("img")) {
                 img.attr("src", img.absUrl("src"));
             }
 
-            String currentTitle = "Problem Statement";
-            StringBuilder buffer = new StringBuilder();
+            int sectionIndex = 1;
+            int contentIndex = 1;
 
-            int index = 1;
+            String currentTitle = null;
+            List<ContentScrapeDTO> currentContents = new ArrayList<>();
 
             for (Node node : content.childNodes()) {
 
-                if (node instanceof Element el) {
+                if (node instanceof Element el && el.tagName().equals("h1")) {
 
-                    if (el.tagName().equals("h1")) {
-                        if (!buffer.isEmpty()) {
-                            sections.add(createSection(currentTitle, buffer.toString(), index++));
-                            buffer.setLength(0);
-                        }
-                        currentTitle = el.text();
-                    } else {
-                        buffer.append(el.outerHtml());
+                    // close a previous section
+                    if (!currentContents.isEmpty()) {
+                        sections.add(createSection(
+                                currentTitle,
+                                sectionIndex++,
+                                currentContents
+                        ));
+                        currentContents = new ArrayList<>();
+                        contentIndex = 1;
                     }
-                } else if (node instanceof TextNode) {
-                    String text = ((TextNode) node).getWholeText().trim();
+
+                    currentTitle = el.text();
+                    continue;
+                }
+
+                if (node instanceof Element el) {
+                    currentContents.add(createContent(el.outerHtml(), contentIndex++));
+                } else if (node instanceof TextNode tn) {
+                    String text = tn.getWholeText().trim();
                     if (!text.isEmpty()) {
-                        buffer.append("<p>").append(text).append("</p>");
+                        currentContents.add(createContent(
+                                "<p>" + text + "</p>",
+                                contentIndex++
+                        ));
                     }
                 }
             }
 
-            if (!buffer.isEmpty()) {
-                sections.add(createSection(currentTitle, buffer.toString(), index));
+            // last section
+            if (!currentContents.isEmpty()) {
+                sections.add(createSection(
+                        currentTitle,
+                        sectionIndex,
+                        currentContents
+                ));
             }
 
             return ProblemStatementResponse.builder()
@@ -134,12 +146,25 @@ public class CSESScraperServiceImpl implements CSESScraperService {
         }
     }
 
-    private SectionScrapeDTO createSection(String title, String html, int index) {
+
+    private SectionScrapeDTO createSection(
+            String title,
+            int orderIndex,
+            List<ContentScrapeDTO> contents
+    ) {
         return SectionScrapeDTO.builder()
                 .title(title)
-                .content(html)
-                .orderIndex(index)
-                .contentType(FormatType.HTML.name())
+                .orderIndex(orderIndex)
+                .contentScrapeDTOS(contents)
                 .build();
     }
+
+    private ContentScrapeDTO createContent(String html, int index) {
+        return ContentScrapeDTO.builder()
+                .content(html)
+                .formatType(FormatType.HTML)
+                .orderIndex(index)
+                .build();
+    }
+
 }

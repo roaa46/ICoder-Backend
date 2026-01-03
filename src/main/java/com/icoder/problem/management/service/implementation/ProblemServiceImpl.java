@@ -95,33 +95,54 @@ public class ProblemServiceImpl implements ProblemService {
     @Override
     @Transactional
     public ProblemStatementResponse scrapFullStatement(String source, String code) {
-        ProblemStatementResponse scrapedResponse = scrapingService.scrapFullStatement(source, code);
 
-        Problem problemToUpdate = problemRepository.findByProblemCodeAndOnlineJudge(code, OJudgeType.valueOf(source.toUpperCase()))
-                .orElseThrow(() -> new ProblemNotFoundException("Metadata not found for problem " + source + "-" + code));
+        ProblemStatementResponse scrapedResponse =
+                scrapingService.scrapFullStatement(source, code);
 
-        List<ProblemProperty> newProperty = propertyMapper.toListEntity(scrapedResponse.getProperties());
+        Problem problemToUpdate = problemRepository
+                .findByProblemCodeAndOnlineJudge(
+                        code,
+                        OJudgeType.valueOf(source.toUpperCase())
+                )
+                .orElseThrow(() ->
+                        new ProblemNotFoundException(
+                                "Metadata not found for problem " + source + "-" + code
+                        )
+                );
+
+        // ================= PROPERTIES =================
+        List<ProblemProperty> newProperties =
+                propertyMapper.toListEntity(scrapedResponse.getProperties());
+
         problemToUpdate.getProperties().clear();
-        for (ProblemProperty property : newProperty) {
+        for (ProblemProperty property : newProperties) {
             property.setProblem(problemToUpdate);
             property.setContentType(FormatType.PLAIN_TEXT);
             problemToUpdate.getProperties().add(property);
         }
 
-        List<ProblemSection> newSections = sectionMapper.toListEntity(scrapedResponse.getSections());
+        // ================= SECTIONS =================
+        List<ProblemSection> newSections =
+                sectionMapper.toListEntity(scrapedResponse.getSections());
+
         problemToUpdate.getSections().clear();
+
         for (ProblemSection section : newSections) {
             section.setProblem(problemToUpdate);
-            section.setContent(section.getContent());
-            section.setContentType(FormatType.HTML);
+
+            section.getContents().forEach(content ->
+                    content.setSection(section)
+            );
+
             problemToUpdate.getSections().add(section);
         }
 
         problemToUpdate.setFetchedAt(Instant.now());
-        Problem savedProblem = problemRepository.save(problemToUpdate);
 
+        Problem savedProblem = problemRepository.save(problemToUpdate);
         return problemMapper.toStatementDTO(savedProblem);
     }
+
 
     /// update favorite status of a problem
     @Override

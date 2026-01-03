@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Entity
 @Getter
 @Setter
@@ -32,4 +34,10 @@ public class ProblemSection {
 
     @Enumerated(EnumType.STRING)
     private FormatType contentType;
+
+    @OneToMany(mappedBy = "section",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    private List<SectionContent> contents;
 }
