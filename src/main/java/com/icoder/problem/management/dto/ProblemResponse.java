@@ -20,7 +20,7 @@ import java.time.Instant;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class ProblemResponse {
     @JsonSerialize(using = ToStringSerializer.class)
-    private String problemId;
+    private Long problemId;
     private String problemCode;
     private String problemLink;
     private String onlineJudge;  // use .toString()..toLowerCase() while scrapping

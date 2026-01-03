@@ -18,13 +18,13 @@ public class SectionContent {
     @GeneratedValue
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     @Lob
     private String content;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private FormatType formatType;  // I think we don't need it, as the type will be Markdown
+    private FormatType formatType;
 
     @Column(nullable = false)
     private Integer orderIndex;

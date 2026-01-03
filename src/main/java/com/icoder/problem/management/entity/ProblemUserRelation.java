@@ -19,15 +19,18 @@ public class ProblemUserRelation {
     @GeneratedValue
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "problem_id")
     private Problem problem;
 
-    private boolean isFavorite;
-    private boolean isSolved;
-    private boolean isAttempted;
+    @Column(name = "is_favorite")
+    private boolean favorite;
+    @Column(name = "is_solved")
+    private boolean solved;
+    @Column(name = "is_attempted")
+    private boolean attempted;
 }
