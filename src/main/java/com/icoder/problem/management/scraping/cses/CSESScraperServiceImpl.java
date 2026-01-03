@@ -155,7 +155,7 @@ public class CSESScraperServiceImpl implements CSESScraperService {
         return SectionScrapeDTO.builder()
                 .title(title)
                 .orderIndex(orderIndex)
-                .contentScrapeDTOS(contents)
+                .contents(contents)
                 .build();
     }
 

@@ -1,6 +1,5 @@
 package com.icoder.problem.management.service.implementation;
 
-import com.icoder.core.exception.ApiException;
 import com.icoder.core.exception.ProblemNotFoundException;
 import com.icoder.problem.management.dto.FavoriteRequest;
 import com.icoder.problem.management.dto.ProblemResponse;
@@ -19,7 +18,6 @@ import com.icoder.problem.management.repository.ProblemUserRelationRepository;
 import com.icoder.problem.management.scraping.service.ScrapingServiceImpl;
 import com.icoder.problem.management.service.interfaces.ProblemService;
 import com.icoder.problem.management.service.specification.ProblemSpecificationsBuilder;
-import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
 import com.icoder.user.management.service.implementation.AuthenticationServiceImpl;
 import org.springframework.transaction.annotation.Transactional;
@@ -144,19 +142,20 @@ public class ProblemServiceImpl implements ProblemService {
     }
 
 
-    /// update favorite status of a problem
     @Override
     @Transactional
     public void setFavorite(FavoriteRequest request) {
-        User user = userRepository.findById(authenticationService.getCurrentUserId())
-                .orElseThrow(() -> new ApiException("User not found"));
-        Problem problem = problemRepository.findById(request.getProblemId())
-                .orElseThrow(() -> new ProblemNotFoundException("Problem not found"));
-        ProblemUserRelation relation = relationRepository
-                .findByUserIdAndProblemId(user.getId(), problem.getId())
-                .orElse(new ProblemUserRelation());
-        relation.setUser(user);
-        relation.setProblem(problem);
+        Long userId = authenticationService.getCurrentUserId();
+        Long problemId = request.getProblemId();
+
+        ProblemUserRelation relation = relationRepository.findByUserIdAndProblemId(userId, problemId)
+                .orElseGet(() -> {
+                    ProblemUserRelation newRel = new ProblemUserRelation();
+                    newRel.setUser(userRepository.getReferenceById(userId));
+                    newRel.setProblem(problemRepository.getReferenceById(problemId));
+                    return newRel;
+                });
+
         relation.setFavorite(request.isFavorite());
         relationRepository.save(relation);
     }
@@ -212,7 +211,7 @@ public class ProblemServiceImpl implements ProblemService {
     @Transactional(readOnly = true)
     public Page<ProblemResponse> getAttempted(Pageable pageable) {
         Long userId = authenticationService.getCurrentUserId();
-        Page<ProblemUserRelation> relations = relationRepository.findByUserIdAndIsAttemptedTrue(userId, pageable);
+        Page<ProblemUserRelation> relations = relationRepository.findByUserIdAndAttemptedTrue(userId, pageable);
         return relations.map(rel -> problemMapper.toResponseDTO(rel.getProblem()));
     }
 
@@ -221,7 +220,7 @@ public class ProblemServiceImpl implements ProblemService {
     @Transactional(readOnly = true)
     public Page<ProblemResponse> getSolved(Pageable pageable) {
         Long userId = authenticationService.getCurrentUserId();
-        Page<ProblemUserRelation> relations = relationRepository.findByUserIdAndIsSolvedTrue(userId, pageable);
+        Page<ProblemUserRelation> relations = relationRepository.findByUserIdAndSolvedTrue(userId, pageable);
         return relations.map(rel -> problemMapper.toResponseDTO(rel.getProblem()));
     }
 
@@ -230,7 +229,7 @@ public class ProblemServiceImpl implements ProblemService {
     @Transactional(readOnly = true)
     public Page<ProblemResponse> getFavorites(Pageable pageable) {
         Long userId = authenticationService.getCurrentUserId();
-        Page<ProblemUserRelation> relations = relationRepository.findByUserIdAndIsFavoriteTrue(userId, pageable);
+        Page<ProblemUserRelation> relations = relationRepository.findByUserIdAndFavoriteTrue(userId, pageable);
         return relations.map(rel -> problemMapper.toResponseDTO(rel.getProblem()));
     }
 }

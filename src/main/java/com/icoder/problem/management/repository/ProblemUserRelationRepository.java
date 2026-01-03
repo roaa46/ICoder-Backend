@@ -15,11 +15,11 @@ public interface ProblemUserRelationRepository extends JpaRepository<ProblemUser
     
     Optional<ProblemUserRelation> findByUserIdAndProblemId(Long userId, Long problemId);
 
-    Page<ProblemUserRelation> findByUserIdAndIsSolvedTrue(Long userId, Pageable pageable);
+    Page<ProblemUserRelation> findByUserIdAndSolvedTrue(Long userId, Pageable pageable);
 
-    Page<ProblemUserRelation> findByUserIdAndIsAttemptedTrue(Long userId, Pageable pageable);
+    Page<ProblemUserRelation> findByUserIdAndAttemptedTrue(Long userId, Pageable pageable);
 
-    Page<ProblemUserRelation> findByUserIdAndIsFavoriteTrue(Long userId, Pageable pageable);
+    Page<ProblemUserRelation> findByUserIdAndFavoriteTrue(Long userId, Pageable pageable);
 
     List<ProblemUserRelation> findByUserIdAndProblemIn(Long userId, List<Problem> problems);
 }

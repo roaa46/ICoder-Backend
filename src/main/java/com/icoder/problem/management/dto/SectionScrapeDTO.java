@@ -23,5 +23,5 @@ public class SectionScrapeDTO {
     @JsonInclude(JsonInclude.Include.NON_NULL) // title is null in the problem statement section in CF & CSES
     private String title;
     private int orderIndex;
-    private List<ContentScrapeDTO> contentScrapeDTOS;
+    private List<ContentScrapeDTO> contents;
 }
