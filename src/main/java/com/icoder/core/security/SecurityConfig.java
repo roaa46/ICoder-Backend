@@ -65,9 +65,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/delete/request").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/users/update").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/email/request-update").authenticated()
-                        .requestMatchers(HttpMethod.PATCH, "/api/v1/users/profile-picture").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/users/profile-picture").authenticated()
-
+                        .requestMatchers("/api/v1/users/profile-picture/**").authenticated()
 
                         ///  --------- problems ---------
                         .requestMatchers(HttpMethod.GET, "/api/v1/problems/*/*/metadata").authenticated()
