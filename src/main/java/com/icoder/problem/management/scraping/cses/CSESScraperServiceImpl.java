@@ -27,7 +27,15 @@ public class CSESScraperServiceImpl implements CSESScraperService {
             String problemCode = problemUrl.replaceAll(".*/", "");
             String problemTitle = doc.selectFirst(".navigation h1").text();
 
-            String contestTitle = doc.select("div.nav.sidebar h4").text();
+            Element sidebar = doc.selectFirst("div.nav.sidebar");
+            String contestTitle = "";
+
+            if (sidebar != null) {
+                Element firstH4 = sidebar.selectFirst("h4");
+                if (firstH4 != null) {
+                    contestTitle = firstH4.text();
+                }
+            }
 
             return ProblemResponse.builder()
                     .problemCode(problemCode)
@@ -50,91 +58,9 @@ public class CSESScraperServiceImpl implements CSESScraperService {
                     .timeout(10_000)
                     .get();
 
-            // ================= PROPERTIES =================
-            List<PropertyScrapeDTO> properties = new ArrayList<>();
+            List<PropertyScrapeDTO> properties = extractProperties(doc);
+            List<SectionScrapeDTO> sections = extractSections(doc);
 
-            Element limits = doc.selectFirst("ul.task-constraints");
-            if (limits != null) {
-                int index = 1;
-                for (Element li : limits.select("li")) {
-                    String[] parts = li.text().split(":");
-                    if (parts.length == 2) {
-                        properties.add(PropertyScrapeDTO.builder()
-                                .title(parts[0].trim())
-                                .content(parts[1].trim())
-                                .contentType(FormatType.PLAIN_TEXT.name())
-                                .orderIndex(index++)
-                                .spoiler(false)
-                                .build());
-                    }
-                }
-
-                String contestTitle = doc.select("div.nav.sidebar h4").text();
-                properties.add(PropertyScrapeDTO.builder()
-                        .title("Source")
-                        .content(contestTitle)
-                        .contentType(FormatType.PLAIN_TEXT.name())
-                        .orderIndex(index)
-                        .spoiler(true)
-                        .build());
-            }
-
-            // ================= SECTIONS =================
-            List<SectionScrapeDTO> sections = new ArrayList<>();
-
-            Element content = doc.selectFirst(".content .md");
-
-            // fix relative images
-            for (Element img : content.select("img")) {
-                img.attr("src", img.absUrl("src"));
-            }
-
-            int sectionIndex = 1;
-            int contentIndex = 1;
-
-            String currentTitle = null;
-            List<ContentScrapeDTO> currentContents = new ArrayList<>();
-
-            for (Node node : content.childNodes()) {
-
-                if (node instanceof Element el && el.tagName().equals("h1")) {
-
-                    // close a previous section
-                    if (!currentContents.isEmpty()) {
-                        sections.add(createSection(
-                                currentTitle,
-                                sectionIndex++,
-                                currentContents
-                        ));
-                        currentContents = new ArrayList<>();
-                        contentIndex = 1;
-                    }
-
-                    currentTitle = el.text();
-                    continue;
-                }
-
-                if (node instanceof Element el) {
-                    currentContents.add(createContent(el.outerHtml(), contentIndex++));
-                } else if (node instanceof TextNode tn) {
-                    String text = tn.getWholeText().trim();
-                    if (!text.isEmpty()) {
-                        currentContents.add(createContent(
-                                "<p>" + text + "</p>",
-                                contentIndex++
-                        ));
-                    }
-                }
-            }
-
-            // last section
-            if (!currentContents.isEmpty()) {
-                sections.add(createSection(
-                        currentTitle,
-                        sectionIndex,
-                        currentContents
-                ));
-            }
 
             return ProblemStatementResponse.builder()
                     .sections(sections)
@@ -146,6 +72,107 @@ public class CSESScraperServiceImpl implements CSESScraperService {
         }
     }
 
+    // ================= PROPERTIES =================
+    private List<PropertyScrapeDTO> extractProperties(Document doc) {
+        List<PropertyScrapeDTO> properties = new ArrayList<>();
+
+        Element limits = doc.selectFirst("ul.task-constraints");
+        if (limits != null) {
+            int index = 1;
+            for (Element li : limits.select("li")) {
+                String[] parts = li.text().split(":");
+                if (parts.length == 2) {
+                    properties.add(PropertyScrapeDTO.builder()
+                            .title(parts[0].trim())
+                            .content(parts[1].trim())
+                            .contentType(FormatType.PLAIN_TEXT.name())
+                            .orderIndex(index++)
+                            .spoiler(false)
+                            .build());
+                }
+            }
+
+            Element sidebar = doc.selectFirst("div.nav.sidebar");
+            String contestTitle = "";
+
+            if (sidebar != null) {
+                Element firstH4 = sidebar.selectFirst("h4");
+                if (firstH4 != null) {
+                    contestTitle = firstH4.text();
+                }
+            }
+
+            properties.add(PropertyScrapeDTO.builder()
+                    .title("Source")
+                    .content(contestTitle)
+                    .contentType(FormatType.PLAIN_TEXT.name())
+                    .orderIndex(index)
+                    .spoiler(true)
+                    .build());
+        }
+        return properties;
+    }
+
+    // ================= SECTIONS =================
+    private List<SectionScrapeDTO> extractSections(Document doc) {
+        List<SectionScrapeDTO> sections = new ArrayList<>();
+
+        Element content = doc.selectFirst(".content .md");
+
+        // fix relative images
+        for (Element img : content.select("img")) {
+            img.attr("src", img.absUrl("src"));
+        }
+
+        int sectionIndex = 1;
+        int contentIndex = 1;
+
+        String currentTitle = null;
+        List<ContentScrapeDTO> currentContents = new ArrayList<>();
+
+        for (Node node : content.childNodes()) {
+
+            if (node instanceof Element el && el.tagName().equals("h1")) {
+
+                // close a previous section
+                if (!currentContents.isEmpty()) {
+                    sections.add(createSection(
+                            currentTitle,
+                            sectionIndex++,
+                            currentContents
+                    ));
+                    currentContents = new ArrayList<>();
+                    contentIndex = 1;
+                }
+
+                currentTitle = el.text();
+                continue;
+            }
+
+            if (node instanceof Element el) {
+                currentContents.add(createContent(el.outerHtml(), contentIndex++));
+            } else if (node instanceof TextNode tn) {
+                String text = tn.getWholeText().trim();
+                if (!text.isEmpty()) {
+                    currentContents.add(createContent(
+                            "<p>" + text + "</p>",
+                            contentIndex++
+                    ));
+                }
+            }
+        }
+
+        // last section
+        if (!currentContents.isEmpty()) {
+            sections.add(createSection(
+                    currentTitle,
+                    sectionIndex,
+                    currentContents
+            ));
+        }
+
+        return sections;
+    }
 
     private SectionScrapeDTO createSection(
             String title,

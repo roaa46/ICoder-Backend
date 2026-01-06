@@ -51,7 +51,8 @@ public class ProblemServiceImpl implements ProblemService {
     @Override
     @Transactional
     public ProblemResponse getProblemMetadata(String source, String code) {
-        Optional<Problem> existingProblem = problemRepository.findByProblemCodeAndOnlineJudge(code, OJudgeType.valueOf(source.toUpperCase()));
+        OJudgeType judgeType = OJudgeType.fromString(source);
+        Optional<Problem> existingProblem = problemRepository.findByProblemCodeAndOnlineJudge(code, judgeType);
 
         if (existingProblem.isPresent() && existingProblem.get().getProblemTitle() != null) {
             log.info("problem metadata is found in DB");
@@ -62,7 +63,7 @@ public class ProblemServiceImpl implements ProblemService {
         ProblemResponse response = scrapingService.scrapMetaData(source, code);
         Problem newProblem = new Problem(
                 response.getProblemCode(),
-                OJudgeType.valueOf(source.toUpperCase()),
+                judgeType,
                 response.getContestTitle(),
                 response.getContestLink(),
                 response.getProblemTitle(),
@@ -70,7 +71,7 @@ public class ProblemServiceImpl implements ProblemService {
         );
         problemRepository.save(newProblem);
         ProblemResponse problemResponse = problemMapper.toResponseDTO(newProblem);
-        problemResponse.setOnlineJudge(source.toUpperCase());
+        problemResponse.setOnlineJudge(judgeType.name());
 
         return problemMapper.toResponseDTO(newProblem);
     }
@@ -79,7 +80,9 @@ public class ProblemServiceImpl implements ProblemService {
     @Override
     @Transactional
     public ProblemStatementResponse getProblemStatement(String source, String code) {
-        Optional<Problem> existingProblem = problemRepository.findByProblemCodeAndOnlineJudge(code, OJudgeType.valueOf(source.toUpperCase()));
+        log.info("getProblemStatement()");
+        OJudgeType judgeType = OJudgeType.fromString(source);
+        Optional<Problem> existingProblem = problemRepository.findByProblemCodeAndOnlineJudge(code, judgeType);
 
         if (existingProblem.isPresent() && existingProblem.get().getFetchedAt() != null) {
             log.info("problem is found in DB");
@@ -100,7 +103,7 @@ public class ProblemServiceImpl implements ProblemService {
         Problem problemToUpdate = problemRepository
                 .findByProblemCodeAndOnlineJudge(
                         code,
-                        OJudgeType.valueOf(source.toUpperCase())
+                        OJudgeType.fromString(source)
                 )
                 .orElseThrow(() ->
                         new ProblemNotFoundException(
@@ -167,7 +170,7 @@ public class ProblemServiceImpl implements ProblemService {
         Long currentUserId = authenticationService.getCurrentUserId();
         ProblemSpecificationsBuilder builder = new ProblemSpecificationsBuilder();
 
-        if (oj != null) builder.with("onlineJudge", ":", OJudgeType.valueOf(oj.toUpperCase()));
+        if (oj != null) builder.with("onlineJudge", ":", OJudgeType.fromString(oj));
         if (code != null) builder.with("problemCode", ":", code);
         if (title != null) builder.with("problemTitle", ":", title);
         if (title != null) builder.with("problemTitle", ":", title);
