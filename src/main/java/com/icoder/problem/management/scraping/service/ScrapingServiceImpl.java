@@ -5,6 +5,7 @@ import com.icoder.problem.management.dto.ProblemResponse;
 import com.icoder.problem.management.dto.ProblemStatementResponse;
 import com.icoder.problem.management.enums.OJudgeType;
 import com.icoder.problem.management.scraping.atcoder.AtCoderScraperService;
+import com.icoder.problem.management.scraping.codeforces.CodeforcesScraperService;
 import com.icoder.problem.management.scraping.cses.CSESScraperService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 public class ScrapingServiceImpl implements ScrapingService {
     private final CSESScraperService cses;
     private final AtCoderScraperService atcoder;
+    private final CodeforcesScraperService codeforces;
 
     public ProblemStatementResponse scrapFullStatement(String source, String code) {
         try {
@@ -28,7 +30,7 @@ public class ScrapingServiceImpl implements ScrapingService {
             } else if (judge == OJudgeType.CODEFORCES) {
                 problemUrl = toCodeforcesUrl(code);
                 log.info(problemUrl);
-//                return codeforces.scrapProblemStatement(problemUrl);
+                return codeforces.scrapProblemStatement(problemUrl);
             } else if (judge == OJudgeType.AT_CODER) {
                 problemUrl = toAtCoderUrl(code);
                 log.info(problemUrl);
@@ -51,8 +53,8 @@ public class ScrapingServiceImpl implements ScrapingService {
 
             } else if (judge == OJudgeType.CODEFORCES) {
                 problemUrl = toCodeforcesUrl(code);
-//                return codeforces.scrapMetadata(problemUrl);
-
+                log.info(problemUrl);
+                return codeforces.scrapMetadata(problemUrl);
             } else if (judge == OJudgeType.AT_CODER) {
                 problemUrl = toAtCoderUrl(code);
                 log.info(problemUrl);

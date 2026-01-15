@@ -3,6 +3,7 @@ package com.icoder.problem.management.scraping.atcoder;
 import com.icoder.core.exception.ScrapingException;
 import com.icoder.problem.management.dto.*;
 import com.icoder.problem.management.enums.FormatType;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
 import org.jsoup.select.Elements;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+@Slf4j
 @Service
 public class AtCoderScraperServiceImpl implements AtCoderScraperService{
 
@@ -19,6 +21,7 @@ public class AtCoderScraperServiceImpl implements AtCoderScraperService{
                     .userAgent("Mozilla/5.0")
                     .timeout(10_000)
                     .get();
+            log.info("test extraction");
 
             String problemCode = url.substring(url.lastIndexOf("/") + 1);
 
