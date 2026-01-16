@@ -3,30 +3,32 @@ package com.icoder.problem.management.scraping.codeforces;
 import com.icoder.core.exception.ScrapingException;
 import com.icoder.problem.management.dto.*;
 import com.icoder.problem.management.enums.FormatType;
+import com.icoder.problem.management.scraping.service.JsoupConnect;
 import lombok.extern.slf4j.Slf4j;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.*;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
 public class CodeforcesScraperServiceImpl implements CodeforcesScraperService {
+    private final JsoupConnect jsoupConnect;
+
+    public CodeforcesScraperServiceImpl(JsoupConnect jsoupConnect) {
+        this.jsoupConnect = jsoupConnect;
+    }
 
     @Override
     public ProblemResponse scrapMetadata(String url) {
         try {
-            log.info("extract metadata");
-            Document doc = Jsoup.connect(url)
-                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-                    .header("Accept-Language", "en-US,en;q=0.9")
-                    .header("Accept", "text/html")
-                    .header("Connection", "keep-alive")
-                    .referrer("https://www.google.com")
-                    .timeout(10_000)
-                    .get();
-            log.info("test extraction");
+            log.info("extract metadata of: [{}]", url);
+            Document doc = jsoupConnect.connect(url);
+            log.info("connection successful");
 
             Element titleEl = doc.selectFirst(".problem-statement .title");
             String fullTitle = titleEl != null ? titleEl.text() : "";
@@ -53,14 +55,9 @@ public class CodeforcesScraperServiceImpl implements CodeforcesScraperService {
     @Override
     public ProblemStatementResponse scrapProblemStatement(String url) {
         try {
-            Document doc = Jsoup.connect(url)
-                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-                    .header("Accept-Language", "en-US,en;q=0.9")
-                    .header("Accept", "text/html")
-                    .header("Connection", "keep-alive")
-                    .referrer("https://www.google.com")
-                    .timeout(10_000)
-                    .get();
+            log.info("extract statement of: [{}]", url);
+            Document doc = jsoupConnect.connect(url);
+            log.info("connection successful");
 
             Element root = doc.selectFirst(".problem-statement");
             if (root == null) throw new ScrapingException("Problem statement not found");
@@ -176,7 +173,6 @@ public class CodeforcesScraperServiceImpl implements CodeforcesScraperService {
     }
 
     private String extractProblemCodeFromTitle(String title) {
-        // defensive
         if (title == null || !title.contains("Problem -")) {
             return null;
         }

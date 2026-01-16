@@ -3,25 +3,30 @@ package com.icoder.problem.management.scraping.atcoder;
 import com.icoder.core.exception.ScrapingException;
 import com.icoder.problem.management.dto.*;
 import com.icoder.problem.management.enums.FormatType;
+import com.icoder.problem.management.scraping.service.JsoupConnect;
 import lombok.extern.slf4j.Slf4j;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.*;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
-public class AtCoderScraperServiceImpl implements AtCoderScraperService{
+public class AtCoderScraperServiceImpl implements AtCoderScraperService {
+    private final JsoupConnect jsoupConnect;
+
+    public AtCoderScraperServiceImpl(JsoupConnect jsoupConnect) {
+        this.jsoupConnect = jsoupConnect;
+    }
 
     public ProblemResponse scrapMetadata(String url) {
         try {
-            Document doc = Jsoup.connect(url)
-                    .userAgent("Mozilla/5.0")
-                    .timeout(10_000)
-                    .get();
-            log.info("test extraction");
+            log.info("extract metadata of: [{}]", url);
+            Document doc = jsoupConnect.connect(url);
+            log.info("connection successful");
 
             String problemCode = url.substring(url.lastIndexOf("/") + 1);
 
@@ -52,10 +57,9 @@ public class AtCoderScraperServiceImpl implements AtCoderScraperService{
     @Override
     public ProblemStatementResponse scrapProblemStatement(String url) {
         try {
-            Document doc = Jsoup.connect(url)
-                    .userAgent("Mozilla/5.0")
-                    .timeout(10_000)
-                    .get();
+            log.info("extract statement of: [{}]", url);
+            Document doc = jsoupConnect.connect(url);
+            log.info("connection successful");
 
             List<PropertyScrapeDTO> properties = extractProperties(doc);
             List<SectionScrapeDTO> sections = extractSections(doc);

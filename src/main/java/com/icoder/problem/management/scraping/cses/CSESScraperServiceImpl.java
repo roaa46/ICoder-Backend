@@ -4,7 +4,8 @@ import com.icoder.core.exception.ScrapingException;
 import com.icoder.problem.management.dto.*;
 import com.icoder.problem.management.enums.FormatType;
 import com.icoder.problem.management.enums.OJudgeType;
-import org.jsoup.Jsoup;
+import com.icoder.problem.management.scraping.service.JsoupConnect;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
@@ -15,16 +16,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Slf4j
 public class CSESScraperServiceImpl implements CSESScraperService {
-    @Override
-    public ProblemResponse scrapMetadata(String problemUrl) {
-        try {
-            Document doc = Jsoup.connect(problemUrl)
-                    .userAgent("Mozilla/5.0")
-                    .timeout(10_000)
-                    .get();
+    private final JsoupConnect jsoupConnect;
 
-            String problemCode = problemUrl.replaceAll(".*/", "");
+    public CSESScraperServiceImpl(JsoupConnect jsoupConnect) {
+        this.jsoupConnect = jsoupConnect;
+    }
+
+    @Override
+    public ProblemResponse scrapMetadata(String url) {
+        try {
+            log.info("extract metadata of: [{}]", url);
+            Document doc = jsoupConnect.connect(url);
+            log.info("connection successful");
+
+            String problemCode = url.replaceAll(".*/", "");
             String problemTitle = doc.selectFirst(".navigation h1").text();
 
             Element sidebar = doc.selectFirst("div.nav.sidebar");
@@ -39,7 +46,7 @@ public class CSESScraperServiceImpl implements CSESScraperService {
 
             return ProblemResponse.builder()
                     .problemCode(problemCode)
-                    .problemLink(problemUrl)
+                    .problemLink(url)
                     .onlineJudge(OJudgeType.CSES.name())
                     .problemTitle(problemTitle)
                     .contestTitle(contestTitle)
@@ -51,12 +58,11 @@ public class CSESScraperServiceImpl implements CSESScraperService {
     }
 
     @Override
-    public ProblemStatementResponse scrapProblemStatement(String problemUrl) {
+    public ProblemStatementResponse scrapProblemStatement(String url) {
         try {
-            Document doc = Jsoup.connect(problemUrl)
-                    .userAgent("Mozilla/5.0")
-                    .timeout(10_000)
-                    .get();
+            log.info("extract statement of: [{}]", url);
+            Document doc = jsoupConnect.connect(url);
+            log.info("connection successful");
 
             List<PropertyScrapeDTO> properties = extractProperties(doc);
             List<SectionScrapeDTO> sections = extractSections(doc);

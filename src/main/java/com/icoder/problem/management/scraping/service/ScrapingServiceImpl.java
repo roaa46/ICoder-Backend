@@ -46,7 +46,6 @@ public class ScrapingServiceImpl implements ScrapingService {
         try {
             OJudgeType judge = OJudgeType.fromString(source);
             String problemUrl;
-            log.info("try");
             if (judge == OJudgeType.CSES) {
                 problemUrl = toCsesUrl(code);
                 return cses.scrapMetadata(problemUrl);
@@ -82,7 +81,6 @@ public class ScrapingServiceImpl implements ScrapingService {
 
     private String toAtCoderUrl(String code) {
         String contest = code.replaceAll("_.*$", "");
-        log.info(contest);
         return "https://atcoder.jp/contests/" + contest + "/tasks/" + code;
     }
 
