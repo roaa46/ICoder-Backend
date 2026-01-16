@@ -1,0 +1,10 @@
+services:
+  icoder:
+    build: .
+    container_name: icoder-backend-container
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    volumes:
+      - ./uploads:/app/uploads
+      - ./env.properties:/app/env.properties
