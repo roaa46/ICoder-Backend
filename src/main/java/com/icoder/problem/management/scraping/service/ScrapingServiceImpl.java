@@ -42,7 +42,10 @@ public class ScrapingServiceImpl implements ScrapingService {
                 }
                 default -> throw new ScrapingException("Unsupported judge: " + source);
             }
-        } catch (Exception e) {
+        } catch (ScrapingException e) {
+            throw e;
+        }
+        catch (Exception e) {
             throw new ScrapingException("Failed to scrape full statement for source=" + source + ", code=" + code, e);
         }
     }
@@ -70,7 +73,10 @@ public class ScrapingServiceImpl implements ScrapingService {
                 }
                 default -> throw new ScrapingException("Unsupported judge: " + source);
             }
-        } catch (Exception e) {
+        } catch (ScrapingException e) {
+            throw e;
+        }
+        catch (Exception e) {
             throw new ScrapingException("Failed to scrape metadata for source=" + source + ", code=" + code, e);
         }
     }

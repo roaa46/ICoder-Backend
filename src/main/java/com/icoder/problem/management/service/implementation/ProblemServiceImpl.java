@@ -116,7 +116,8 @@ public class ProblemServiceImpl implements ProblemService {
     public ProblemStatementResponse scrapFullStatement(String source, String code) {
         ProblemStatementResponse scrapedResponse = scrapingService.scrapFullStatement(source, code);
 
-        Problem problemToUpdate = problemRepository
+        Problem problemToUpdate;
+        problemToUpdate = problemRepository
                 .findByProblemCodeAndOnlineJudge(code, OJudgeType.fromString(source))
                 .orElseThrow(() -> new ProblemNotFoundException("Metadata not found for problem " + source + "-" + code));
 
