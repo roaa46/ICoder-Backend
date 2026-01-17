@@ -1,13 +1,12 @@
 package com.icoder.problem.management.scraping.service;
 
-import com.microsoft.playwright.Browser;
-import com.microsoft.playwright.BrowserContext;
-import com.microsoft.playwright.Page;
-import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.*;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @Slf4j
@@ -18,7 +17,7 @@ public class BrowserService {
     @PostConstruct
     public void init() {
         playwright = Playwright.create();
-        browser = playwright.chromium().launch();
+        browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
     }
 
     public String fetchHtml(String url) {
@@ -27,12 +26,21 @@ public class BrowserService {
 
             Page page = context.newPage();
 
+            page.route("**/*", route -> {
+                String type = route.request().resourceType();
+                if (List.of("image", "stylesheet", "font", "media").contains(type)) {
+                    route.abort();
+                } else {
+                    route.resume();
+                }
+            });
+
             page.navigate(url, new Page.NavigateOptions().setTimeout(30000));
 
             try {
                 page.waitForSelector(".problem-statement", new Page.WaitForSelectorOptions().setTimeout(5000));
             } catch (Exception e) {
-                log.warn("Selector .problem-statement not found, returning raw content anyway.");
+                log.warn("Selector .problem-statement not found or timed out, returning content state as is.");
             }
 
             return page.content();
