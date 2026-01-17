@@ -1,7 +1,6 @@
 package com.icoder.core.exception;
 
 import lombok.*;
-import org.springframework.http.HttpStatus;
 
 import java.util.Map;
 
@@ -19,8 +18,4 @@ public class ApiException extends RuntimeException {
         this.details = null;
     }
 
-    public ApiException(String message, HttpStatus status, Map<String, Object> details) {
-        super(message);
-        this.details = details;
-    }
 }

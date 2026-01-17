@@ -18,14 +18,5 @@ public class ScrapingException extends RuntimeException {
         this.details = null;
     }
 
-    public ScrapingException(String message, Map<String, Object> details) {
-        super(message);
-        this.details = details;
-    }
-
-//    public ScrapingException(String message, HttpStatus status, Map<String, Object> details) {
-//        super(message);
-//        this.details = details;
-//    }
 }
 
