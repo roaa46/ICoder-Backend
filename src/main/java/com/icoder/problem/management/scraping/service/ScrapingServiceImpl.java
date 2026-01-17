@@ -23,48 +23,56 @@ public class ScrapingServiceImpl implements ScrapingService {
         try {
             OJudgeType judge = OJudgeType.fromString(source);
             String problemUrl;
-            if (judge == OJudgeType.CSES) {
-                problemUrl = toCsesUrl(code);
-                log.info(problemUrl);
-                return cses.scrapProblemStatement(problemUrl);
-            } else if (judge == OJudgeType.CODEFORCES) {
-                problemUrl = toCodeforcesUrl(code);
-                log.info(problemUrl);
-                return codeforces.scrapProblemStatement(problemUrl);
-            } else if (judge == OJudgeType.AT_CODER) {
-                problemUrl = toAtCoderUrl(code);
-                log.info(problemUrl);
-                return atcoder.scrapProblemStatement(problemUrl);
+
+            switch (judge) {
+                case CSES -> {
+                    problemUrl = toCsesUrl(code);
+                    log.info(problemUrl);
+                    return cses.scrapProblemStatement(problemUrl);
+                }
+                case CODEFORCES -> {
+                    problemUrl = toCodeforcesUrl(code);
+                    log.info(problemUrl);
+                    return codeforces.scrapProblemStatement(problemUrl);
+                }
+                case AT_CODER -> {
+                    problemUrl = toAtCoderUrl(code);
+                    log.info(problemUrl);
+                    return atcoder.scrapProblemStatement(problemUrl);
+                }
+                default -> throw new ScrapingException("Unsupported judge: " + source);
             }
-        } catch (ScrapingException e) {
-            throw new ScrapingException("Failed to scrape full statement of the problem");
+        } catch (Exception e) {
+            throw new ScrapingException("Failed to scrape full statement for source=" + source + ", code=" + code, e);
         }
-        throw new ScrapingException("Failed to scrape full statement of the problem");
     }
 
     public ProblemResponse scrapMetaData(String source, String code) {
         try {
             OJudgeType judge = OJudgeType.fromString(source);
             String problemUrl;
-            if (judge == OJudgeType.CSES) {
-                problemUrl = toCsesUrl(code);
-                return cses.scrapMetadata(problemUrl);
 
-            } else if (judge == OJudgeType.CODEFORCES) {
-                problemUrl = toCodeforcesUrl(code);
-                log.info(problemUrl);
-                return codeforces.scrapMetadata(problemUrl);
-            } else if (judge == OJudgeType.AT_CODER) {
-                problemUrl = toAtCoderUrl(code);
-                log.info(problemUrl);
-                return atcoder.scrapMetadata(problemUrl);
+            switch (judge) {
+                case CSES -> {
+                    problemUrl = toCsesUrl(code);
+                    log.info(problemUrl);
+                    return cses.scrapMetadata(problemUrl);
+                }
+                case CODEFORCES -> {
+                    problemUrl = toCodeforcesUrl(code);
+                    log.info(problemUrl);
+                    return codeforces.scrapMetadata(problemUrl);
+                }
+                case AT_CODER -> {
+                    problemUrl = toAtCoderUrl(code);
+                    log.info(problemUrl);
+                    return atcoder.scrapMetadata(problemUrl);
+                }
+                default -> throw new ScrapingException("Unsupported judge: " + source);
             }
-
-        } catch (ScrapingException e) {
-            throw new ScrapingException("Failed to scrape metadata of the problem");
+        } catch (Exception e) {
+            throw new ScrapingException("Failed to scrape metadata for source=" + source + ", code=" + code, e);
         }
-
-        throw new ScrapingException("Failed to scrape metadata of the problem");
     }
 
     private String toCsesUrl(String code) {
@@ -76,7 +84,7 @@ public class ScrapingServiceImpl implements ScrapingService {
         while (i < code.length() && Character.isDigit(code.charAt(i))) i++;
         int id = Integer.parseInt(code.substring(0, i));
         String order = code.substring(i);
-        return "https://codeforces.com/problemset/problem/" + id + "/" + order;
+        return "https://codeforces.com/contest/" + id + "/problem/" + order;
     }
 
     private String toAtCoderUrl(String code) {

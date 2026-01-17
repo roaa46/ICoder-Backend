@@ -4,6 +4,7 @@ import com.icoder.core.exception.ScrapingException;
 import com.icoder.problem.management.dto.*;
 import com.icoder.problem.management.enums.FormatType;
 import com.icoder.problem.management.enums.OJudgeType;
+import com.icoder.problem.management.scraping.service.CleanWithJsoup;
 import com.icoder.problem.management.scraping.service.JsoupConnect;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.nodes.Document;
@@ -19,30 +20,26 @@ import java.util.List;
 @Slf4j
 public class CSESScraperServiceImpl implements CSESScraperService {
     private final JsoupConnect jsoupConnect;
+    private final CleanWithJsoup cleanWithJsoup;
 
-    public CSESScraperServiceImpl(JsoupConnect jsoupConnect) {
+    public CSESScraperServiceImpl(JsoupConnect jsoupConnect, CleanWithJsoup cleanWithJsoup) {
         this.jsoupConnect = jsoupConnect;
+        this.cleanWithJsoup = cleanWithJsoup;
     }
 
     @Override
     public ProblemResponse scrapMetadata(String url) {
         try {
-            log.info("extract metadata of: [{}]", url);
+            log.info("Extract metadata of: [{}]", url);
             Document doc = jsoupConnect.connect(url);
-            log.info("connection successful");
 
             String problemCode = url.replaceAll(".*/", "");
-            String problemTitle = doc.selectFirst(".navigation h1").text();
+            Element titleEl = doc.selectFirst(".navigation h1");
+            String problemTitle = titleEl != null ? titleEl.text() : problemCode;
 
             Element sidebar = doc.selectFirst("div.nav.sidebar");
-            String contestTitle = "";
-
-            if (sidebar != null) {
-                Element firstH4 = sidebar.selectFirst("h4");
-                if (firstH4 != null) {
-                    contestTitle = firstH4.text();
-                }
-            }
+            String contestTitle = (sidebar != null && sidebar.selectFirst("h4") != null)
+                    ? sidebar.selectFirst("h4").text() : "CSES Problem Set";
 
             return ProblemResponse.builder()
                     .problemCode(problemCode)
@@ -53,20 +50,19 @@ public class CSESScraperServiceImpl implements CSESScraperService {
                     .build();
 
         } catch (Exception e) {
-            throw new ScrapingException("Failed to scrape CSES problem");
+            log.error("CSES metadata scraping failed", e);
+            throw new ScrapingException("Failed to scrape CSES problem metadata");
         }
     }
 
     @Override
     public ProblemStatementResponse scrapProblemStatement(String url) {
         try {
-            log.info("extract statement of: [{}]", url);
+            log.info("Extract statement of: [{}]", url);
             Document doc = jsoupConnect.connect(url);
-            log.info("connection successful");
 
             List<PropertyScrapeDTO> properties = extractProperties(doc);
             List<SectionScrapeDTO> sections = extractSections(doc);
-
 
             return ProblemStatementResponse.builder()
                     .sections(sections)
@@ -74,130 +70,107 @@ public class CSESScraperServiceImpl implements CSESScraperService {
                     .build();
 
         } catch (Exception e) {
-            throw new ScrapingException("Failed to scrape CSES problem");
+            log.error("CSES statement scraping failed", e);
+            throw new ScrapingException("Failed to scrape CSES problem statement");
         }
     }
 
     // ================= PROPERTIES =================
     private List<PropertyScrapeDTO> extractProperties(Document doc) {
         List<PropertyScrapeDTO> properties = new ArrayList<>();
+        int index = 1;
 
         Element limits = doc.selectFirst("ul.task-constraints");
         if (limits != null) {
-            int index = 1;
             for (Element li : limits.select("li")) {
-                String[] parts = li.text().split(":");
-                if (parts.length == 2) {
-                    properties.add(PropertyScrapeDTO.builder()
-                            .title(parts[0].trim())
-                            .content(parts[1].trim())
-                            .contentType(FormatType.PLAIN_TEXT.name())
-                            .orderIndex(index++)
-                            .spoiler(false)
-                            .build());
+                String text = li.text();
+                if (text.contains(":")) {
+                    String[] parts = text.split(":", 2);
+                    properties.add(buildProperty(parts[0].trim(), parts[1].trim(), index++, false));
                 }
             }
-
-            Element sidebar = doc.selectFirst("div.nav.sidebar");
-            String contestTitle = "";
-
-            if (sidebar != null) {
-                Element firstH4 = sidebar.selectFirst("h4");
-                if (firstH4 != null) {
-                    contestTitle = firstH4.text();
-                }
-            }
-
-            properties.add(PropertyScrapeDTO.builder()
-                    .title("Source")
-                    .content(contestTitle)
-                    .contentType(FormatType.PLAIN_TEXT.name())
-                    .orderIndex(index)
-                    .spoiler(true)
-                    .build());
         }
+
+        Element sidebar = doc.selectFirst("div.nav.sidebar");
+        if (sidebar != null && sidebar.selectFirst("h4") != null) {
+            properties.add(buildProperty("Source", sidebar.selectFirst("h4").text(), index, true));
+        }
+
         return properties;
     }
 
     // ================= SECTIONS =================
     private List<SectionScrapeDTO> extractSections(Document doc) {
         List<SectionScrapeDTO> sections = new ArrayList<>();
+        Element root = doc.selectFirst(".content .md");
+        if (root == null) return sections;
 
-        Element content = doc.selectFirst(".content .md");
-
-        // fix relative images
-        for (Element img : content.select("img")) {
-            img.attr("src", img.absUrl("src"));
-        }
+        // Fix images
+        root.select("img").forEach(img -> img.attr("src", img.absUrl("src")));
 
         int sectionIndex = 1;
         int contentIndex = 1;
 
-        String currentTitle = null;
+        String currentTitle = "Description";
         List<ContentScrapeDTO> currentContents = new ArrayList<>();
 
-        for (Node node : content.childNodes()) {
-
+        for (Node node : root.childNodes()) {
             if (node instanceof Element el && el.tagName().equals("h1")) {
 
-                // close a previous section
                 if (!currentContents.isEmpty()) {
-                    sections.add(createSection(
-                            currentTitle,
-                            sectionIndex++,
-                            currentContents
-                    ));
+                    sections.add(buildSection(currentTitle, sectionIndex++, currentContents));
                     currentContents = new ArrayList<>();
                     contentIndex = 1;
                 }
 
-                currentTitle = el.text();
+                currentTitle = el.text().trim();
                 continue;
             }
 
             if (node instanceof Element el) {
-                currentContents.add(createContent(el.outerHtml(), contentIndex++));
+                String cleanedHtml = cleanWithJsoup.clean(el.outerHtml());
+                if (!cleanedHtml.isEmpty()) {
+                    currentContents.add(buildContent(cleanedHtml, contentIndex++));
+                }
             } else if (node instanceof TextNode tn) {
                 String text = tn.getWholeText().trim();
                 if (!text.isEmpty()) {
-                    currentContents.add(createContent(
-                            "<p>" + text + "</p>",
-                            contentIndex++
-                    ));
+                    currentContents.add(buildContent("<p>" + text + "</p>", contentIndex++));
                 }
             }
         }
 
-        // last section
         if (!currentContents.isEmpty()) {
-            sections.add(createSection(
-                    currentTitle,
-                    sectionIndex,
-                    currentContents
-            ));
+            sections.add(buildSection(currentTitle, sectionIndex, currentContents));
         }
 
         return sections;
     }
 
-    private SectionScrapeDTO createSection(
-            String title,
-            int orderIndex,
-            List<ContentScrapeDTO> contents
-    ) {
+    // ================= HELPERS =================
+    private PropertyScrapeDTO buildProperty(String title, String content, int order, boolean spoiler) {
+        return PropertyScrapeDTO.builder()
+                .title(title)
+                .content(content)
+                .contentType(FormatType.PLAIN_TEXT.name())
+                .orderIndex(order)
+                .spoiler(spoiler)
+                .build();
+    }
+
+    private SectionScrapeDTO buildSection(String title, int order, List<ContentScrapeDTO> contents) {
         return SectionScrapeDTO.builder()
                 .title(title)
-                .orderIndex(orderIndex)
+                .orderIndex(order)
                 .contents(contents)
                 .build();
     }
 
-    private ContentScrapeDTO createContent(String html, int index) {
+    private ContentScrapeDTO buildContent(String html, int order) {
         return ContentScrapeDTO.builder()
                 .content(html)
                 .formatType(FormatType.HTML)
-                .orderIndex(index)
+                .orderIndex(order)
                 .build();
     }
-
 }
