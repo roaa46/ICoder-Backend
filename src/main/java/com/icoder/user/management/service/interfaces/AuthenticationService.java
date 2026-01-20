@@ -25,4 +25,5 @@ public interface AuthenticationService {
     MessageResponse changePassword(ChangePasswordRequest request);
 
     Long getCurrentUserId();
+    String getCurrentUserUsername();
 }
