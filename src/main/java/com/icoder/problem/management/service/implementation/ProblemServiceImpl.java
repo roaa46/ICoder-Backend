@@ -1,9 +1,8 @@
 package com.icoder.problem.management.service.implementation;
 
 import com.icoder.core.exception.ProblemNotFoundException;
-import com.icoder.problem.management.dto.FavoriteRequest;
-import com.icoder.problem.management.dto.ProblemResponse;
-import com.icoder.problem.management.dto.ProblemStatementResponse;
+import com.icoder.core.exception.ScrapingException;
+import com.icoder.problem.management.dto.*;
 import com.icoder.problem.management.entity.Problem;
 import com.icoder.problem.management.entity.ProblemProperty;
 import com.icoder.problem.management.entity.ProblemSection;
@@ -20,13 +19,13 @@ import com.icoder.problem.management.service.interfaces.ProblemService;
 import com.icoder.problem.management.service.specification.ProblemSpecificationsBuilder;
 import com.icoder.user.management.repository.UserRepository;
 import com.icoder.user.management.service.implementation.AuthenticationServiceImpl;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -52,96 +51,112 @@ public class ProblemServiceImpl implements ProblemService {
     @Transactional
     public ProblemResponse getProblemMetadata(String source, String code) {
         OJudgeType judgeType = OJudgeType.fromString(source);
+
         Optional<Problem> existingProblem = problemRepository.findByProblemCodeAndOnlineJudge(code, judgeType);
 
         if (existingProblem.isPresent() && existingProblem.get().getProblemTitle() != null) {
-            log.info("problem metadata is found in DB");
+            log.info("Problem metadata is found in DB: {} - {}", source, code);
             return problemMapper.toResponseDTO(existingProblem.get());
         }
 
-        log.info("problem metadata will be scrapped");
+        log.info("Problem metadata will be scrapped for: {} - {}", source, code);
         ProblemResponse response = scrapingService.scrapMetaData(source, code);
-        Problem newProblem = new Problem(
-                response.getProblemCode(),
-                judgeType,
-                response.getContestTitle(),
-                response.getContestLink(),
-                response.getProblemTitle(),
-                response.getProblemLink()
-        );
-        problemRepository.save(newProblem);
-        ProblemResponse problemResponse = problemMapper.toResponseDTO(newProblem);
-        problemResponse.setOnlineJudge(judgeType.name());
 
-        return problemMapper.toResponseDTO(newProblem);
+        Problem problemToSave;
+
+        if (existingProblem.isPresent()) {
+            problemToSave = existingProblem.get();
+            log.info("Updating existing problem entity with scrapped data");
+        } else {
+            problemToSave = new Problem();
+            problemToSave.setProblemCode(response.getProblemCode());
+            problemToSave.setOnlineJudge(judgeType);
+            log.info("Creating new problem entity");
+        }
+
+        problemToSave.setContestTitle(response.getContestTitle());
+        problemToSave.setContestLink(response.getContestLink());
+        problemToSave.setProblemTitle(response.getProblemTitle());
+        problemToSave.setProblemLink(response.getProblemLink());
+
+        Problem savedProblem = problemRepository.save(problemToSave);
+
+        return problemMapper.toResponseDTO(savedProblem);
     }
 
     ///  get a problem statement
     @Override
     @Transactional
     public ProblemStatementResponse getProblemStatement(String source, String code) {
-        log.info("getProblemStatement()");
-        OJudgeType judgeType = OJudgeType.fromString(source);
-        Optional<Problem> existingProblem = problemRepository.findByProblemCodeAndOnlineJudge(code, judgeType);
+        try {
+            log.info("getProblemStatement()");
+            OJudgeType judgeType = OJudgeType.fromString(source);
+            Optional<Problem> existingProblem = problemRepository.findByProblemCodeAndOnlineJudge(code, judgeType);
 
-        if (existingProblem.isPresent() && existingProblem.get().getFetchedAt() != null) {
-            log.info("problem is found in DB");
-            return problemMapper.toStatementDTO(existingProblem.get());
+            if (existingProblem.isPresent()) {
+                if (existingProblem.get().getFetchedAt() != null) {
+                    log.info("problem is found in DB");
+                    return problemMapper.toStatementDTO(existingProblem.get());
+                }
+                log.info("problem will be scrapped");
+
+                return scrapFullStatement(source, code);
+            } else {
+                log.info("no metadata is found for this problem");
+                throw new ScrapingException("No metadata found for this problem");
+            }
+        } catch (ScrapingException e) {
+            log.error("Failed to fetch problem statement: {}", e.getMessage());
+            throw e;
         }
-        log.info("problem will be scrapped");
-
-        return scrapFullStatement(source, code);
     }
 
     @Override
     @Transactional
     public ProblemStatementResponse scrapFullStatement(String source, String code) {
+        ProblemStatementResponse scrapedResponse = scrapingService.scrapFullStatement(source, code);
 
-        ProblemStatementResponse scrapedResponse =
-                scrapingService.scrapFullStatement(source, code);
+        Problem problemToUpdate;
+        problemToUpdate = problemRepository
+                .findByProblemCodeAndOnlineJudge(code, OJudgeType.fromString(source))
+                .orElseThrow(() -> new ProblemNotFoundException("Metadata not found for problem " + source + "-" + code));
 
-        Problem problemToUpdate = problemRepository
-                .findByProblemCodeAndOnlineJudge(
-                        code,
-                        OJudgeType.fromString(source)
-                )
-                .orElseThrow(() ->
-                        new ProblemNotFoundException(
-                                "Metadata not found for problem " + source + "-" + code
-                        )
-                );
+        updateProperties(problemToUpdate, scrapedResponse.getProperties());
 
-        // ================= PROPERTIES =================
-        List<ProblemProperty> newProperties =
-                propertyMapper.toListEntity(scrapedResponse.getProperties());
-
-        problemToUpdate.getProperties().clear();
-        for (ProblemProperty property : newProperties) {
-            property.setProblem(problemToUpdate);
-            property.setContentType(FormatType.PLAIN_TEXT);
-            problemToUpdate.getProperties().add(property);
-        }
-
-        // ================= SECTIONS =================
-        List<ProblemSection> newSections =
-                sectionMapper.toListEntity(scrapedResponse.getSections());
-
-        problemToUpdate.getSections().clear();
-
-        for (ProblemSection section : newSections) {
-            section.setProblem(problemToUpdate);
-
-            section.getContents().forEach(content ->
-                    content.setSection(section)
-            );
-
-            problemToUpdate.getSections().add(section);
-        }
+        updateSections(problemToUpdate, scrapedResponse.getSections());
 
         problemToUpdate.setFetchedAt(Instant.now());
 
         Problem savedProblem = problemRepository.save(problemToUpdate);
         return problemMapper.toStatementDTO(savedProblem);
+    }
+
+    private void updateProperties(Problem problem, List<PropertyScrapeDTO> dtos) {
+        List<ProblemProperty> newProperties = propertyMapper.toListEntity(dtos);
+
+        problem.getProperties().clear();
+        if (newProperties != null) {
+            newProperties.forEach(prop -> {
+                prop.setProblem(problem);
+                prop.setContentType(FormatType.PLAIN_TEXT);
+                problem.getProperties().add(prop);
+            });
+        }
+    }
+
+    private void updateSections(Problem problem, List<SectionScrapeDTO> dtos) {
+        List<ProblemSection> newSections = sectionMapper.toListEntity(dtos);
+
+        problem.getSections().clear();
+        if (newSections != null) {
+            newSections.forEach(section -> {
+                section.setProblem(problem);
+                if (section.getContents() != null) {
+                    section.getContents().forEach(content -> content.setSection(section));
+                }
+                problem.getSections().add(section);
+            });
+        }
     }
 
 

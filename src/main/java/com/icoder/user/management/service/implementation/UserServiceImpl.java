@@ -96,20 +96,37 @@ public class UserServiceImpl implements UserService {
     public MessageResponse updateProfile(UpdateUserProfileRequest request) {
         User user = userRepository.findById(authenticationService.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
         validateCurrentPassword(request.getCurrentPassword(), user.getPassword());
-        if (
-                (request.getNickname() != null && request.getNickname().equals(user.getNickname()))
-                        ||
-                        (request.getSchool() != null && request.getSchool().equals(user.getSchool()))
-        ) {
+
+        boolean isUpdated = applyProfileChanges(user, request);
+
+        if (!isUpdated) {
             throw new ApiException("You must change at least one field");
         }
-        if (request.getNickname() != null && !request.getNickname().equals(user.getNickname()))
-            user.setNickname(request.getNickname());
-        if (request.getSchool() != null && !request.getSchool().equals(user.getSchool()))
-            user.setSchool(request.getSchool());
+
         userRepository.save(user);
         return new MessageResponse("Your data has been successfully changed");
+    }
+
+    private boolean applyProfileChanges(User user, UpdateUserProfileRequest request) {
+        boolean changed = false;
+
+        if (isNewValue(request.getNickname(), user.getNickname())) {
+            user.setNickname(request.getNickname());
+            changed = true;
+        }
+
+        if (isNewValue(request.getSchool(), user.getSchool())) {
+            user.setSchool(request.getSchool());
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    private boolean isNewValue(String newValue, String currentValue) {
+        return newValue != null && !newValue.equals(currentValue);
     }
 
     @Transactional
@@ -233,7 +250,7 @@ public class UserServiceImpl implements UserService {
     private void deleteImageFromCloudinary(String imageUrl) throws IOException {
         String publicId = extractPublicId(imageUrl);
 
-        Map result = cloudinary.uploader().destroy(
+        Map<String, Object> result = cloudinary.uploader().destroy(
                 publicId,
                 ObjectUtils.asMap("invalidate", true)
         );

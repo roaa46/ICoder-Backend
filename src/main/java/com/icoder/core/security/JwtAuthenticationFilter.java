@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 @Component
 @RequiredArgsConstructor
@@ -32,50 +33,68 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-        final String path = request.getServletPath();
-        if (path.startsWith("/api/v1/auth/login")
-                || path.startsWith("/api/v1/auth/register")
-                || path.startsWith("/api/v1/auth/verify")
-                || path.startsWith("/api/v1/auth/refresh-token")
-                || path.startsWith("/api/v1/auth/forget-password")
-                || path.startsWith("/api/v1/auth/reset-password")) {
+
+        if (shouldSkipFilter(request)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String jwtToken = null;
-        final String authHeader = request.getHeader("Authorization");
-
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            jwtToken = authHeader.substring(7);
-        } else if (request.getCookies() != null && jwtToken == null) {
-            for (Cookie cookie : request.getCookies()) {
-                if ("access_token".equals(cookie.getName())) {
-                    jwtToken = cookie.getValue();
-                }
-            }
-        }
+        String jwtToken = resolveToken(request);
 
         if (jwtToken != null) {
-            String username = jwtService.extractUserHandle(jwtToken);
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-                boolean isTokenValid = tokenRepository.findByToken(jwtToken)
-                        .map(t -> !t.isExpired() && !t.isRevoked())
-                        .orElse(false);
-
-                if (jwtService.isTokenValid(jwtToken, userDetails) && isTokenValid) {
-                    UsernamePasswordAuthenticationToken authenticationToken =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails, null, userDetails.getAuthorities()
-                            );
-                    authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-                }
-            }
+            processAuthentication(jwtToken, request);
         }
 
         filterChain.doFilter(request, response);
+    }
+
+/* ----- Helpers ----- */
+
+    private boolean shouldSkipFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.startsWith("/api/v1/auth/");
+    }
+
+    private String resolveToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+
+        if (request.getCookies() != null) {
+            return Arrays.stream(request.getCookies())
+                    .filter(cookie -> "access_token".equals(cookie.getName()))
+                    .map(Cookie::getValue)
+                    .findFirst()
+                    .orElse(null);
+        }
+        return null;
+    }
+
+    private void processAuthentication(String jwtToken, HttpServletRequest request) {
+        String username = jwtService.extractUserHandle(jwtToken);
+
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+
+            if (isTokenValidInSystem(jwtToken, userDetails)) {
+                setSecurityContext(userDetails, request);
+            }
+        }
+    }
+
+    private boolean isTokenValidInSystem(String token, UserDetails userDetails) {
+        return tokenRepository.findByToken(token)
+                .map(t -> !t.isExpired() && !t.isRevoked())
+                .orElse(false)
+                && jwtService.isTokenValid(token, userDetails);
+    }
+
+    private void setSecurityContext(UserDetails userDetails, HttpServletRequest request) {
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                userDetails, null, userDetails.getAuthorities());
+        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        SecurityContextHolder.getContext().setAuthentication(authToken);
     }
 
 }
