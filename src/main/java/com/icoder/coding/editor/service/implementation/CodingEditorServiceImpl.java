@@ -69,7 +69,7 @@ public class CodingEditorServiceImpl implements CodingEditorService {
 
     private String encodeToBase64(String input) {
         if (input == null || input.isEmpty()) {
-            return Base64.getEncoder().encodeToString(input.getBytes());
+            return "";
         }
         return Base64.getEncoder().encodeToString(input.getBytes());
     }
@@ -99,13 +99,50 @@ public class CodingEditorServiceImpl implements CodingEditorService {
         ParameterizedTypeReference<List<LanguageResponse>> typeRef =
                 new ParameterizedTypeReference<>() {
                 };
-        return webClient.get()
-                .uri(uriBuilder -> uriBuilder.path("/languages")
-                        .build())
+        List<LanguageResponse> languages = webClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/languages").build())
                 .retrieve()
                 .bodyToMono(typeRef)
                 .block();
+        if (languages != null) {
+            languages.forEach(lang -> {
+                String monacoLang = JUDGE0_TO_MONACO_MAP.getOrDefault(lang.getId(), "plaintext");
+                lang.setMonacoName(monacoLang);
+            });
+        }
+        return languages;
     }
+
+    private static final Map<Integer, String> JUDGE0_TO_MONACO_MAP = Map.ofEntries(
+            // Python
+            Map.entry(70, "python"),
+            Map.entry(71, "python"),
+
+            // C / C++
+            Map.entry(48, "c"), Map.entry(49, "c"), Map.entry(50, "c"),
+            Map.entry(52, "cpp"), Map.entry(53, "cpp"), Map.entry(54, "cpp"),
+
+            // Java & C#
+            Map.entry(62, "java"),
+            Map.entry(51, "csharp"),
+
+            // JavaScript & TypeScript
+            Map.entry(63, "javascript"),
+            Map.entry(74, "typescript"),
+
+            // Others
+            Map.entry(46, "shell"),
+            Map.entry(60, "go"),
+            Map.entry(73, "rust"),
+            Map.entry(68, "php"),
+            Map.entry(72, "ruby"),
+            Map.entry(64, "lua"),
+            Map.entry(67, "pascal"),
+            Map.entry(57, "elixir"),
+            Map.entry(58, "erlang"),
+            Map.entry(61, "haskell"),
+            Map.entry(69, "prolog")
+    );
 
     @Override
     public TokenResponse submitCode(SubmissionRequest request) {
@@ -234,7 +271,7 @@ public class CodingEditorServiceImpl implements CodingEditorService {
 
         CodeTemplate template = new CodeTemplate();
         template.setTemplateName(request.getTemplateName());
-        template.setLanguage(request.getLanguage());
+        template.setLanguageId(request.getLanguageId());
         template.setCode(request.getCode());
         template.setEnabled(request.isEnabled());
         template.setUser(user);
@@ -242,50 +279,65 @@ public class CodingEditorServiceImpl implements CodingEditorService {
 
         templateRepository.save(template);
 
-        return mapper.toDTO(template);
+        CodeTemplateResponse response = mapper.toDTO(template);
+        enhanceTemplateResponse(response, template.getLanguageId());
+
+        return response;
     }
 
     @Override
     @Transactional(readOnly = true)
     public CodeTemplateResponse getTemplate(String  templateId) {
         Long userId = service.getCurrentUserId();
-
         Long id = Long.parseLong(templateId);
+
         CodeTemplate template = templateRepository
                 .findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new TemplateException("Template not found"));
+        CodeTemplateResponse response = mapper.toDTO(template);
 
-        return mapper.toDTO(template);
+        response.setLanguageId(template.getLanguageId());
+        enhanceTemplateResponse(response, template.getLanguageId());
+
+        return response;
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<CodeTemplateResponse> getTemplates(int page) {
         Long userId = service.getCurrentUserId();
-
         Pageable pageable = PageRequest.of(page, 5, Sort.by("createdAndUpdatedAt").descending()); // 5 templates per page
 
         return templateRepository.findAllByUserId(userId, pageable)
-                .map(mapper::toDTO);
+                .map(template -> {
+                    CodeTemplateResponse dto = mapper.toDTO(template);
+                    enhanceTemplateResponse(dto, template.getLanguageId());
+                    return dto;
+                });
     }
 
     @Override
     @Transactional
     public CodeTemplateResponse editTemplate(String templateId, CodeTemplateRequest request) {
         Long userId = service.getCurrentUserId();
-
         Long id = Long.parseLong(templateId);
+
         CodeTemplate template = templateRepository
                 .findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new TemplateException("Template not found"));
 
         template.setTemplateName(request.getTemplateName());
         template.setCode(request.getCode());
-        template.setLanguage(request.getLanguage());
+        template.setLanguageId(request.getLanguageId());
         template.setEnabled(request.isEnabled());
         template.setCreatedAndUpdatedAt(Instant.now());
 
-        return mapper.toDTO(templateRepository.save(template));
+        templateRepository.save(template);
+
+        CodeTemplateResponse response = mapper.toDTO(template);
+        enhanceTemplateResponse(response, template.getLanguageId());
+
+        return response;
     }
 
     @Override
@@ -310,6 +362,15 @@ public class CodingEditorServiceImpl implements CodingEditorService {
         }
         if (result.getCompile_output() != null) {
             result.setCompile_output(decodeFromBase64(result.getCompile_output()));
+        }
+    }
+
+    private void enhanceTemplateResponse(CodeTemplateResponse response, Integer languageId) {
+        if (languageId != null) {
+            String monacoName = JUDGE0_TO_MONACO_MAP.getOrDefault(languageId, "plaintext");
+            response.setMonacoName(monacoName);
+        } else {
+            response.setMonacoName("plaintext");
         }
     }
 }

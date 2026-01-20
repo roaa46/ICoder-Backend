@@ -20,7 +20,7 @@ public class CodeTemplateRequest {
     @NotBlank
     private String templateName;
     @NotBlank
-    private String language;
+    private Integer languageId;
     @NotBlank
     private String code;
     private boolean enabled;

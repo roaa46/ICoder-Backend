@@ -20,8 +20,10 @@ public class CodeTemplateResponse {
     @JsonSerialize(using = ToStringSerializer.class)
     private Long templateId;
     private String templateName;
-    private String language;
+    @JsonSerialize(using = ToStringSerializer.class)
+    private Integer languageId;
     private String code;
     private boolean enabled;
     private Instant createdAndUpdatedAt;
+    private String monacoName;
 }

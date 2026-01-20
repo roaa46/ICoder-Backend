@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class  LanguageResponse {
+public class LanguageResponse {
     @JsonSerialize(using = ToStringSerializer.class)
     private Integer id;
     private String name;
@@ -22,4 +22,5 @@ public class  LanguageResponse {
     private String sourceFile;
     private String compileCmd;
     private String runCmd;
+    private String monacoName;
 }

@@ -29,7 +29,7 @@ public class CodeTemplate {
     private User user;
 
     @Column(nullable = false)
-    private String language;
+    private Integer languageId;
 
     @Lob
     @Column(columnDefinition = "TEXT", nullable = false)
