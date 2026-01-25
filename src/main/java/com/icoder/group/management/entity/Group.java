@@ -1,6 +1,7 @@
 package com.icoder.group.management.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.icoder.contest.management.entity.Contest;
 import com.icoder.group.management.enums.ContestCoordinatorType;
 import com.icoder.group.management.enums.Visibility;
 import jakarta.persistence.*;
@@ -46,4 +47,8 @@ public class Group {
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
     private Set<UserGroupRole> userRoles = new HashSet<>();
+
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<Contest> contests = new HashSet<>();
 }
