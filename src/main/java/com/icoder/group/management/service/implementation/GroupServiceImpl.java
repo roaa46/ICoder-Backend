@@ -7,10 +7,12 @@ import com.icoder.group.management.entity.UserGroupRole;
 import com.icoder.group.management.enums.GroupRole;
 import com.icoder.group.management.enums.Visibility;
 import com.icoder.group.management.mapper.GroupMapper;
+import com.icoder.group.management.mapper.UserGroupRoleMapper;
 import com.icoder.group.management.repository.GroupRepository;
 import com.icoder.group.management.repository.UserGroupRoleRepository;
 import com.icoder.group.management.service.interfaces.GroupService;
 import com.icoder.group.management.util.GroupUtil;
+import com.icoder.group.management.dto.GroupMemberResponse;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.service.interfaces.AuthenticationService;
 import jakarta.transaction.Transactional;
@@ -19,7 +21,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -31,6 +32,8 @@ public class GroupServiceImpl implements GroupService {
     private final AuthenticationService authenticationService;
     private final UserGroupRoleRepository userGroupRoleRepository;
     private final GroupUtil groupUtil;
+    private final UserGroupRoleMapper userGroupRoleMapper;
+
     @Override
     public Page<GroupResponse> GetMyGroups(Pageable pageable) {
         Page<Group> myGroups = groupRepository.getMyGroups(authenticationService.getCurrentUserUsername(), pageable);
@@ -41,6 +44,13 @@ public class GroupServiceImpl implements GroupService {
     public Page<GroupResponse> getAllGroups(Pageable pageable) {
         Page<Group> groups = groupRepository.getAllPublicGroups(Visibility.PUBLIC, pageable);
         return groups.map(groupMapper::toDTO);
+    }
+
+    @Override
+    public Page<GroupMemberResponse> getAllMembers(GroupIdRequest groupIdRequest, Pageable pageable) {
+        Page<UserGroupRole> userRoles = userGroupRoleRepository.
+                findAllByGroupId(groupIdRequest.getGroupId(), pageable);
+        return userRoles.map(userGroupRoleMapper::toMemberDTO);
     }
 
     @Override
@@ -166,7 +176,6 @@ public class GroupServiceImpl implements GroupService {
 
         updated |= groupUtil.updateField(updateGroupRequest.getName(), group::setName);
         updated |= groupUtil.updateField(updateGroupRequest.getDescription(), group::setDescription);
-        updated |= groupUtil.updateField(updateGroupRequest.getPictureUrl(), group::setPictureUrl);
 
         if(updateGroupRequest.getVisibility() != null) {
             group.setVisibility(updateGroupRequest.getVisibility());

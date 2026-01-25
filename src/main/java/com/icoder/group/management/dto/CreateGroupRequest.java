@@ -22,6 +22,5 @@ public class CreateGroupRequest {
     private ContestCoordinatorType contestCoordinatorType;
     @NotBlank
     private String description;
-    @NotBlank
     private String pictureUrl;
 }

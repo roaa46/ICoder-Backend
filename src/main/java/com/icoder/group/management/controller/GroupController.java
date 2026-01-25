@@ -3,6 +3,8 @@ package com.icoder.group.management.controller;
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.group.management.dto.*;
 import com.icoder.group.management.service.implementation.GroupServiceImpl;
+import com.icoder.group.management.dto.GroupMemberResponse;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -32,6 +34,13 @@ public class GroupController {
             @PageableDefault(size = 9, sort = "name") Pageable pageable){
         return ResponseEntity.ok(groupService.getAllGroups(pageable));
     }
+    @GetMapping("members/get")
+    @PreAuthorize(value = "isAuthenticated()")
+    public ResponseEntity<Page<GroupMemberResponse>> getAllMembers(
+            @Valid @RequestBody GroupIdRequest groupIdRequest,
+            Pageable pageable){
+            return ResponseEntity.ok(groupService.getAllMembers(groupIdRequest, pageable));
+    }
 
     @PostMapping("/create")
     @PreAuthorize("isAuthenticated()")
@@ -59,7 +68,7 @@ public class GroupController {
 
     @PutMapping("/members/demote")
     @PreAuthorize(value = "isAuthenticated()")
-    public ResponseEntity<MessageResponse> demoteManagerToMember(
+        public ResponseEntity<MessageResponse> demoteManagerToMember(
             @RequestBody GroupMemberActionRequest groupMemberActionRequest){
         return ResponseEntity.ok(groupService.demoteManagerToMember(groupMemberActionRequest));
     }
@@ -69,6 +78,11 @@ public class GroupController {
             @Valid @RequestBody UpdateGroupRequest updateGroupRequest){
         return ResponseEntity.ok(groupService.updateGroupDetails(updateGroupRequest));
     }
+    @PatchMapping("/group-picture")
+    @Operation(
+            summary = "Update group picture",
+            description = "Uploads and sets a new group picture. Only accepts image file types (PNG, JPEG, JPG, GIF)."
+    )
 
     @DeleteMapping("/members/remove")
     @PreAuthorize(value = "isAuthenticated()")

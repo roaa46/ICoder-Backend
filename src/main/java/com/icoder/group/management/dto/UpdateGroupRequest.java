@@ -22,5 +22,4 @@ public class UpdateGroupRequest {
     private Visibility visibility;
     private ContestCoordinatorType contestCoordinatorType;
     private String description;
-    private String pictureUrl;
 }
