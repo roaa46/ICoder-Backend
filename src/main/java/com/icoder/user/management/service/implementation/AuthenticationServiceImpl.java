@@ -225,11 +225,4 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         SecurityContextHolder.getContext().setAuthentication(newAuth);
     }
-
-    @Override
-    public Long getCurrentUserId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
-        return userDetails.getId();
-    }
 }
