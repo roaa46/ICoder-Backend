@@ -1,6 +1,6 @@
 package com.icoder.problem.management.service.implementation;
 
-import com.icoder.core.exception.ProblemNotFoundException;
+import com.icoder.core.exception.ResourceNotFoundException;
 import com.icoder.core.exception.ScrapingException;
 import com.icoder.problem.management.dto.*;
 import com.icoder.problem.management.entity.Problem;
@@ -119,7 +119,7 @@ public class ProblemServiceImpl implements ProblemService {
         Problem problemToUpdate;
         problemToUpdate = problemRepository
                 .findByProblemCodeAndOnlineJudge(code, OJudgeType.fromString(source))
-                .orElseThrow(() -> new ProblemNotFoundException("Metadata not found for problem " + source + "-" + code));
+                .orElseThrow(() -> new ResourceNotFoundException("Metadata not found for problem " + source + "-" + code));
 
         updateProperties(problemToUpdate, scrapedResponse.getProperties());
 
