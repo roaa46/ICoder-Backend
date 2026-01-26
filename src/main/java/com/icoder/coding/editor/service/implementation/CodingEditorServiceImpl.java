@@ -5,6 +5,8 @@ import com.icoder.coding.editor.entity.CodeTemplate;
 import com.icoder.coding.editor.mapper.TemplateMapper;
 import com.icoder.coding.editor.repository.CodeTemplateRepository;
 import com.icoder.coding.editor.service.interfaces.CodingEditorService;
+import com.icoder.core.exception.ActiveTemplateConflictException;
+import com.icoder.core.exception.ResourceNotFoundException;
 import com.icoder.core.exception.TemplateException;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
@@ -269,6 +271,10 @@ public class CodingEditorServiceImpl implements CodingEditorService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("user not found"));
 
+        if (request.isEnabled()) {
+            checkForActiveTemplate(userId, request.getLanguageId());
+        }
+
         CodeTemplate template = new CodeTemplate();
         template.setTemplateName(request.getTemplateName());
         template.setLanguageId(request.getLanguageId());
@@ -283,6 +289,36 @@ public class CodingEditorServiceImpl implements CodingEditorService {
         enhanceTemplateResponse(response, template.getLanguageId());
 
         return response;
+    }
+
+    private void checkForActiveTemplate(Long userId, Integer langId) {
+        boolean activeExists = templateRepository.existsByUserIdAndLanguageIdAndEnabledTrue(userId, langId);
+        if (activeExists) {
+            throw new ActiveTemplateConflictException("There is already an active template for this language.");
+        }
+    }
+
+    @Transactional
+    @Override
+    public CodeTemplateResponse toggleTemplate(Long templateId, boolean force) {
+        CodeTemplate template = templateRepository.findById(templateId)
+                .orElseThrow(() -> new ResourceNotFoundException("Template not found"));
+
+        Long userId = template.getUser().getId();
+        Integer langId = template.getLanguageId();
+
+        if (!template.isEnabled()) {
+            if (!force) {
+                checkForActiveTemplate(userId, langId);
+            }
+            templateRepository.disableTemplatesByLanguage(userId, langId);
+            template.setEnabled(true);
+        } else {
+            template.setEnabled(false);
+        }
+
+        templateRepository.save(template);
+        return mapper.toDTO(template);
     }
 
     @Override
