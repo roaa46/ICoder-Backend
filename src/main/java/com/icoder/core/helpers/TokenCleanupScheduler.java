@@ -1,4 +1,4 @@
-package com.icoder.core.util;
+package com.icoder.core.helpers;
 
 import com.icoder.user.management.repository.TokenRepository;
 import lombok.RequiredArgsConstructor;

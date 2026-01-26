@@ -3,10 +3,11 @@ package com.icoder.user.management.service.implementation;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.icoder.core.dto.MessageResponse;
+import com.icoder.core.helpers.UserHelper;
 import com.icoder.user.management.dto.user.PictureUrlResponse;
 import com.icoder.user.management.enums.TokenType;
 import com.icoder.core.exception.ApiException;
-import com.icoder.core.util.TokenHelper;
+import com.icoder.core.helpers.TokenHelper;
 import com.icoder.user.management.dto.auth.UpdateEmailRequest;
 import com.icoder.user.management.dto.user.UpdateUserProfileRequest;
 import com.icoder.user.management.dto.user.UserProfileRequest;
@@ -35,22 +36,22 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final JwtService jwtService;
     private final EmailVerificationService emailVerificationService;
-    private final AuthenticationService authenticationService;
     private final TokenService tokenService;
     private final PasswordEncoder passwordEncoder;
     private final TokenHelper tokenHelper;
     private final Cloudinary cloudinary;
+    private final UserHelper userHelper;
 
     @Override
     public UserProfileResponse getProfile(UserProfileRequest userProfileRequest) {
-        User user = userRepository.findByHandle(userProfileRequest.getHandle())
+        User user = userHelper.findByHandle(userProfileRequest.getHandle())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         return userMapper.toDTO(user);
     }
 
     @Override
     public MessageResponse requestAccountDeletion() {
-        User user = userRepository.findById(authenticationService.getCurrentUserId())
+        User user = userHelper.findById(userHelper.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         emailVerificationService.sendAccountDeletionEmail(user);
@@ -94,7 +95,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public MessageResponse updateProfile(UpdateUserProfileRequest request) {
-        User user = userRepository.findById(authenticationService.getCurrentUserId())
+        User user = userHelper.findById(userHelper.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         validateCurrentPassword(request.getCurrentPassword(), user.getPassword());
@@ -133,7 +134,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public MessageResponse uploadProfilePicture(MultipartFile file) {
 
-        User user = userRepository.findById(authenticationService.getCurrentUserId())
+        User user = userHelper.findById(userHelper.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         String contentType = file.getContentType();
@@ -184,7 +185,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public MessageResponse requestEmailUpdate(UpdateEmailRequest request) {
-        User user = userRepository.findById(authenticationService.getCurrentUserId())
+        User user = userHelper.findById(userHelper.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         validateCurrentPassword(request.getCurrentPassword(), user.getPassword());
         if (userRepository.existsByEmail(request.getNewEmail())) {
@@ -218,7 +219,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public MessageResponse deleteProfilePicture() {
 
-        User user = userRepository.findById(authenticationService.getCurrentUserId())
+        User user = userHelper.findById(userHelper.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         String pictureUrl = user.getPictureUrl();
@@ -240,7 +241,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public PictureUrlResponse viewProfilePicture(String handle) {
-        User user = userRepository.findByHandle(handle)
+        User user = userHelper.findByHandle(handle)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         return PictureUrlResponse.builder()
                 .pictureUrl(user.getPictureUrl())
