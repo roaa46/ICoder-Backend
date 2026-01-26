@@ -15,7 +15,7 @@ import lombok.Setter;
 @Table(name = "contents")
 public class SectionContent {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
     @Column(nullable = false, columnDefinition = "TEXT")

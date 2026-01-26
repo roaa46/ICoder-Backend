@@ -1,5 +1,6 @@
 package com.icoder.contest.management.entity;
 
+import com.icoder.contest.management.enums.ContestStatus;
 import com.icoder.contest.management.enums.ContestType;
 import com.icoder.contest.management.enums.ContestOpenness;
 import com.icoder.group.management.entity.Group;
@@ -21,11 +22,13 @@ import java.time.Instant;
 @Table(name = "contests")
 public class Contest {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
     @Column(nullable = false)
     private String title;
+
+    private String description;
 
     @Column(nullable = false, updatable = false)
     private Instant beginTime;
@@ -40,13 +43,14 @@ public class Contest {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private ContestOpenness contestOpenness;
+    private ContestOpenness contestOpenness; // private for group type, public & protected for classical type
 
-    private String description;
+    @Enumerated(EnumType.STRING)
+    private ContestStatus contestStatus;
 
-    private boolean historyRank;
+    private boolean historyRank; // display -> true, hide until the contest ends -> false
 
-    private String password;
+    private String password; // it will be set if openness is protected
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id")

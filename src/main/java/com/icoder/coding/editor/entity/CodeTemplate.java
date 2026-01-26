@@ -18,7 +18,7 @@ import java.time.Instant;
 @Table(name = "code_templates")
 public class CodeTemplate {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
     @Column(nullable = false)

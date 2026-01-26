@@ -16,7 +16,7 @@ import lombok.*;
 public class ProblemUserRelation {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)

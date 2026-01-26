@@ -22,7 +22,7 @@ import java.util.Set;
 )
 public class Problem {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
     @Column(nullable = false)

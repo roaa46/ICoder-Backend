@@ -17,7 +17,7 @@ import java.time.Instant;
 @Table(name = "tokens")
 public class Token {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
     @Column(nullable = false)

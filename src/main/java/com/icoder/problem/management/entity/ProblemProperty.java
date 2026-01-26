@@ -15,7 +15,7 @@ import lombok.Setter;
 @Table(name = "properties")
 public class ProblemProperty {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
     @Column(nullable = false)

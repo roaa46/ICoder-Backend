@@ -1,6 +1,7 @@
 package com.icoder.contest.management.entity;
 
-import com.icoder.problem.management.entity.Problem;
+import com.icoder.contest.management.enums.ContestRole;
+import com.icoder.user.management.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,8 +13,8 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "contest_problem_relations")
-public class ContestProblemRelation {
+@Table(name = "contest_user_relations")
+public class ContestUserRelation {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
@@ -23,10 +24,10 @@ public class ContestProblemRelation {
     private Contest contest;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "problem_id")
-    private Problem problem;
+    @JoinColumn(name = "user_id")
+    private User user;
 
-    private int problemWeight;
-
-    private String problemAlias; // if blank, use problem title
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private ContestRole role;
 }
