@@ -105,6 +105,17 @@ public class CodingEditorController {
         return ResponseEntity.created(location).body(response);
     }
 
+    @PatchMapping("/templates/{id}/toggle")
+    @Operation(
+            summary = "Toggle Template Status",
+            description = "Toggles the 'enabled' state of a template. " +
+                    "If 'force' is false and another template for the same language is already active, it returns a 409 Conflict. " +
+                    "If 'force' is true, it deactivates the existing template and activates this one."
+    )
+    public ResponseEntity<CodeTemplateResponse> toggleTemplate(@PathVariable Long id, @RequestParam boolean force){
+        return ResponseEntity.ok(codingEditorService.toggleTemplate(id, force));
+    }
+
     @GetMapping("/templates/{id}")
     @Operation(
             summary = "Retrieve a code template by ID",

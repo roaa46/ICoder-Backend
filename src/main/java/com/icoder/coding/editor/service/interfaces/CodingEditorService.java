@@ -20,6 +20,8 @@ public interface CodingEditorService {
 
     CodeTemplateResponse addTemplate(CodeTemplateRequest request);
 
+    CodeTemplateResponse toggleTemplate(Long templateId, boolean force);
+
     CodeTemplateResponse getTemplate(String  templateId);
 
     Page<CodeTemplateResponse> getTemplates(int page);
