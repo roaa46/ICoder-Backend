@@ -8,6 +8,7 @@ import com.icoder.coding.editor.service.interfaces.CodingEditorService;
 import com.icoder.core.exception.ActiveTemplateConflictException;
 import com.icoder.core.exception.ResourceNotFoundException;
 import com.icoder.core.exception.TemplateException;
+import com.icoder.core.helpers.UserHelper;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
 import com.icoder.user.management.service.interfaces.AuthenticationService;
@@ -40,8 +41,8 @@ public class CodingEditorServiceImpl implements CodingEditorService {
     private final WebClient webClient;
     private final CodeTemplateRepository templateRepository;
     private final UserRepository userRepository;
-    private final AuthenticationService service;
     private final TemplateMapper mapper;
+    private final UserHelper userHelper;
 
     public CodingEditorServiceImpl(
             WebClient.Builder webClientBuilder,
@@ -49,14 +50,15 @@ public class CodingEditorServiceImpl implements CodingEditorService {
             AuthenticationService service,
             UserRepository userRepository,
             TemplateMapper mapper,
+            UserHelper userHelper,
             @Value("${judge0.api-url}") String apiUrl,
             @Value("${judge0.auth-key}") String authKey,
             @Value("${judge0.host}") String host) {
 
         this.templateRepository = templateRepository;
-        this.service = service;
         this.userRepository = userRepository;
         this.mapper = mapper;
+        this.userHelper = userHelper;
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-RapidAPI-Key", authKey);
@@ -267,7 +269,7 @@ public class CodingEditorServiceImpl implements CodingEditorService {
     @Transactional
     @Override
     public CodeTemplateResponse addTemplate(CodeTemplateRequest request) {
-        Long userId = service.getCurrentUserId();
+        Long userId = userHelper.getCurrentUserId();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("user not found"));
 
@@ -324,7 +326,7 @@ public class CodingEditorServiceImpl implements CodingEditorService {
     @Override
     @Transactional(readOnly = true)
     public CodeTemplateResponse getTemplate(String  templateId) {
-        Long userId = service.getCurrentUserId();
+        Long userId = userHelper.getCurrentUserId();
         Long id = Long.parseLong(templateId);
 
         CodeTemplate template = templateRepository
@@ -341,7 +343,7 @@ public class CodingEditorServiceImpl implements CodingEditorService {
     @Override
     @Transactional(readOnly = true)
     public Page<CodeTemplateResponse> getTemplates(int page) {
-        Long userId = service.getCurrentUserId();
+        Long userId = userHelper.getCurrentUserId();
         Pageable pageable = PageRequest.of(page, 5, Sort.by("createdAndUpdatedAt").descending()); // 5 templates per page
 
         return templateRepository.findAllByUserId(userId, pageable)
@@ -355,7 +357,7 @@ public class CodingEditorServiceImpl implements CodingEditorService {
     @Override
     @Transactional
     public CodeTemplateResponse editTemplate(String templateId, CodeTemplateRequest request) {
-        Long userId = service.getCurrentUserId();
+        Long userId = userHelper.getCurrentUserId();
         Long id = Long.parseLong(templateId);
 
         CodeTemplate template = templateRepository
@@ -379,7 +381,7 @@ public class CodingEditorServiceImpl implements CodingEditorService {
     @Override
     @Transactional
     public void deleteTemplate(String templateId) {
-        Long userId = service.getCurrentUserId();
+        Long userId = userHelper.getCurrentUserId();
 
         Long id = Long.parseLong(templateId);
         CodeTemplate template = templateRepository
