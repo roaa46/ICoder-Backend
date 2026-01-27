@@ -2,6 +2,7 @@ package com.icoder.problem.management.service.implementation;
 
 import com.icoder.core.exception.ResourceNotFoundException;
 import com.icoder.core.exception.ScrapingException;
+import com.icoder.core.helpers.UserHelper;
 import com.icoder.problem.management.dto.*;
 import com.icoder.problem.management.entity.Problem;
 import com.icoder.problem.management.entity.ProblemProperty;
@@ -18,7 +19,6 @@ import com.icoder.problem.management.scraping.service.ScrapingServiceImpl;
 import com.icoder.problem.management.service.interfaces.ProblemService;
 import com.icoder.problem.management.service.specification.ProblemSpecificationsBuilder;
 import com.icoder.user.management.repository.UserRepository;
-import com.icoder.user.management.service.implementation.AuthenticationServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -44,7 +44,7 @@ public class ProblemServiceImpl implements ProblemService {
     private final ScrapingServiceImpl scrapingService;
     private final UserRepository userRepository;
     private final ProblemUserRelationRepository relationRepository;
-    private final AuthenticationServiceImpl authenticationService;
+    private final UserHelper userHelper;
 
     ///  get problem metadata
     @Override
@@ -163,7 +163,7 @@ public class ProblemServiceImpl implements ProblemService {
     @Override
     @Transactional
     public void setFavorite(FavoriteRequest request) {
-        Long userId = authenticationService.getCurrentUserId();
+        Long userId = userHelper.getCurrentUserId();
         Long problemId = request.getProblemId();
 
         ProblemUserRelation relation = relationRepository.findByUserIdAndProblemId(userId, problemId)
@@ -182,7 +182,7 @@ public class ProblemServiceImpl implements ProblemService {
     @Override
     @Transactional(readOnly = true)
     public Page<ProblemResponse> getAllProblems(String oj, String code, String title, Pageable pageable) {
-        Long currentUserId = authenticationService.getCurrentUserId();
+        Long currentUserId = userHelper.getCurrentUserId();
         ProblemSpecificationsBuilder builder = new ProblemSpecificationsBuilder();
 
         if (oj != null) builder.with("onlineJudge", ":", OJudgeType.fromString(oj));
@@ -228,7 +228,7 @@ public class ProblemServiceImpl implements ProblemService {
     @Override
     @Transactional(readOnly = true)
     public Page<ProblemResponse> getAttempted(Pageable pageable) {
-        Long userId = authenticationService.getCurrentUserId();
+        Long userId = userHelper.getCurrentUserId();
         Page<ProblemUserRelation> relations = relationRepository.findByUserIdAndAttemptedTrue(userId, pageable);
         return relations.map(rel -> problemMapper.toResponseDTO(rel.getProblem()));
     }
@@ -237,7 +237,7 @@ public class ProblemServiceImpl implements ProblemService {
     @Override
     @Transactional(readOnly = true)
     public Page<ProblemResponse> getSolved(Pageable pageable) {
-        Long userId = authenticationService.getCurrentUserId();
+        Long userId = userHelper.getCurrentUserId();
         Page<ProblemUserRelation> relations = relationRepository.findByUserIdAndSolvedTrue(userId, pageable);
         return relations.map(rel -> problemMapper.toResponseDTO(rel.getProblem()));
     }
@@ -246,7 +246,7 @@ public class ProblemServiceImpl implements ProblemService {
     @Override
     @Transactional(readOnly = true)
     public Page<ProblemResponse> getFavorites(Pageable pageable) {
-        Long userId = authenticationService.getCurrentUserId();
+        Long userId = userHelper.getCurrentUserId();
         Page<ProblemUserRelation> relations = relationRepository.findByUserIdAndFavoriteTrue(userId, pageable);
         return relations.map(rel -> problemMapper.toResponseDTO(rel.getProblem()));
     }

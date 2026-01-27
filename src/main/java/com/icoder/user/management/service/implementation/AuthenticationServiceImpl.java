@@ -3,9 +3,10 @@ package com.icoder.user.management.service.implementation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.core.exception.ApiException;
+import com.icoder.core.helpers.UserHelper;
 import com.icoder.core.security.CustomUserDetails;
-import com.icoder.core.util.TokenHelper;
-import com.icoder.core.util.ValidatePasswordChange;
+import com.icoder.core.helpers.TokenHelper;
+import com.icoder.core.helpers.ValidatePasswordChange;
 import com.icoder.user.management.dto.auth.*;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.mapper.AuthMapper;
@@ -43,6 +44,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final ValidatePasswordChange validatePasswordChange;
     private final TokenHelper tokenHelper;
     private final AuthMapper authMapper;
+    private final UserHelper userHelper;
 
     @Transactional
     @Override
@@ -78,7 +80,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getHandle(), request.getPassword())
         );
-        User user = userRepository.findByHandle(request.getHandle())
+        User user = userHelper.findByHandle(request.getHandle())
                 .orElseThrow(() -> new UsernameNotFoundException("user not found"));
         String jwtToken = jwtService.generateToken(new CustomUserDetails(
                 user.getId(),
@@ -115,7 +117,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String refreshToken = authHeader.substring(7);
         String userEmail = jwtService.extractUserHandle(refreshToken);
         if (userEmail != null) {
-            User user = this.userRepository.findByHandle(userEmail)
+            User user = this.userHelper.findByHandle(userEmail)
                     .orElseThrow();
             if (jwtService.isTokenValid(refreshToken, new CustomUserDetails(
                     user.getId(),
@@ -150,7 +152,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new ApiException("Verification link has expired");
         }
         String handle = jwtService.extractUserHandle(token);
-        User user = userRepository.findByHandle(handle)
+        User user = userHelper.findByHandle(handle)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid token"));
         user.setVerified(true);
         userRepository.save(user);
@@ -159,7 +161,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public MessageResponse sendEmailVerification(SendVerificationEmailRequest request) {
-        User user = userRepository.findByHandle(request.getHandle())
+        User user = userHelper.findByHandle(request.getHandle())
                 .orElseThrow(() -> new ApiException("User not found"));
 
         if (user.isVerified()) {
@@ -197,7 +199,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Transactional
     @Override
     public MessageResponse changePassword(ChangePasswordRequest request) {
-        User user = userRepository.findById(getCurrentUserId())
+        User user = userHelper.findById(userHelper.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         validatePasswordChange.validatePasswordChange(request, user);
         String encodedNewPassword = passwordEncoder.encode(request.getNewPassword());
@@ -222,12 +224,5 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         );
 
         SecurityContextHolder.getContext().setAuthentication(newAuth);
-    }
-
-    @Override
-    public Long getCurrentUserId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
-        return userDetails.getId();
     }
 }
