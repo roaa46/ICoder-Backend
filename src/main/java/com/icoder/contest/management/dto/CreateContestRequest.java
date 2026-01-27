@@ -10,6 +10,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -43,4 +45,5 @@ public class CreateContestRequest {
     )
     private String password;
     private boolean historyRank;
+    private List<ContestProblemRequest> problemSet;
 }
