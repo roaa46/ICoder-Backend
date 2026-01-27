@@ -8,10 +8,9 @@ import com.icoder.coding.editor.service.interfaces.CodingEditorService;
 import com.icoder.core.exception.ActiveTemplateConflictException;
 import com.icoder.core.exception.ResourceNotFoundException;
 import com.icoder.core.exception.TemplateException;
-import com.icoder.core.helpers.UserHelper;
+import com.icoder.core.utils.SecurityUtils;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
-import com.icoder.user.management.service.interfaces.AuthenticationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -42,15 +41,14 @@ public class CodingEditorServiceImpl implements CodingEditorService {
     private final CodeTemplateRepository templateRepository;
     private final UserRepository userRepository;
     private final TemplateMapper mapper;
-    private final UserHelper userHelper;
+    private final SecurityUtils securityUtils;
 
     public CodingEditorServiceImpl(
             WebClient.Builder webClientBuilder,
             CodeTemplateRepository templateRepository,
-            AuthenticationService service,
             UserRepository userRepository,
             TemplateMapper mapper,
-            UserHelper userHelper,
+            SecurityUtils securityUtils,
             @Value("${judge0.api-url}") String apiUrl,
             @Value("${judge0.auth-key}") String authKey,
             @Value("${judge0.host}") String host) {
@@ -58,7 +56,7 @@ public class CodingEditorServiceImpl implements CodingEditorService {
         this.templateRepository = templateRepository;
         this.userRepository = userRepository;
         this.mapper = mapper;
-        this.userHelper = userHelper;
+        this.securityUtils = securityUtils;
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-RapidAPI-Key", authKey);
@@ -269,7 +267,7 @@ public class CodingEditorServiceImpl implements CodingEditorService {
     @Transactional
     @Override
     public CodeTemplateResponse addTemplate(CodeTemplateRequest request) {
-        Long userId = userHelper.getCurrentUserId();
+        Long userId = securityUtils.getCurrentUserId();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("user not found"));
 
@@ -326,7 +324,7 @@ public class CodingEditorServiceImpl implements CodingEditorService {
     @Override
     @Transactional(readOnly = true)
     public CodeTemplateResponse getTemplate(String  templateId) {
-        Long userId = userHelper.getCurrentUserId();
+        Long userId = securityUtils.getCurrentUserId();
         Long id = Long.parseLong(templateId);
 
         CodeTemplate template = templateRepository
@@ -343,7 +341,7 @@ public class CodingEditorServiceImpl implements CodingEditorService {
     @Override
     @Transactional(readOnly = true)
     public Page<CodeTemplateResponse> getTemplates(int page) {
-        Long userId = userHelper.getCurrentUserId();
+        Long userId = securityUtils.getCurrentUserId();
         Pageable pageable = PageRequest.of(page, 5, Sort.by("createdAndUpdatedAt").descending()); // 5 templates per page
 
         return templateRepository.findAllByUserId(userId, pageable)
@@ -357,7 +355,7 @@ public class CodingEditorServiceImpl implements CodingEditorService {
     @Override
     @Transactional
     public CodeTemplateResponse editTemplate(String templateId, CodeTemplateRequest request) {
-        Long userId = userHelper.getCurrentUserId();
+        Long userId = securityUtils.getCurrentUserId();
         Long id = Long.parseLong(templateId);
 
         CodeTemplate template = templateRepository
@@ -381,7 +379,7 @@ public class CodingEditorServiceImpl implements CodingEditorService {
     @Override
     @Transactional
     public void deleteTemplate(String templateId) {
-        Long userId = userHelper.getCurrentUserId();
+        Long userId = securityUtils.getCurrentUserId();
 
         Long id = Long.parseLong(templateId);
         CodeTemplate template = templateRepository
