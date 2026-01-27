@@ -1,4 +1,4 @@
-package com.icoder.core.helpers;
+package com.icoder.core.utils;
 
 import com.icoder.core.security.CustomUserDetails;
 import com.icoder.user.management.entity.User;

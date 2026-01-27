@@ -1,13 +1,13 @@
 package com.icoder.user.management.service.implementation;
 
 import com.cloudinary.Cloudinary;
-import com.cloudinary.utils.ObjectUtils;
 import com.icoder.core.dto.MessageResponse;
-import com.icoder.core.helpers.UserHelper;
+import com.icoder.core.utils.ImageService;
+import com.icoder.core.utils.SecurityUtils;
 import com.icoder.user.management.dto.user.PictureUrlResponse;
 import com.icoder.user.management.enums.TokenType;
 import com.icoder.core.exception.ApiException;
-import com.icoder.core.helpers.TokenHelper;
+import com.icoder.core.utils.TokenHelper;
 import com.icoder.user.management.dto.auth.UpdateEmailRequest;
 import com.icoder.user.management.dto.user.UpdateUserProfileRequest;
 import com.icoder.user.management.dto.user.UserProfileRequest;
@@ -19,6 +19,7 @@ import com.icoder.user.management.service.interfaces.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -40,18 +41,21 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final TokenHelper tokenHelper;
     private final Cloudinary cloudinary;
-    private final UserHelper userHelper;
+    private final SecurityUtils securityUtils;
+    private final ImageService imageService;
+    @Value("${profile.picture.folder}")
+    private String profilePictureFolder;
 
     @Override
     public UserProfileResponse getProfile(UserProfileRequest userProfileRequest) {
-        User user = userHelper.findByHandle(userProfileRequest.getHandle())
+        User user = userRepository.findByHandle(userProfileRequest.getHandle())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         return userMapper.toDTO(user);
     }
 
     @Override
     public MessageResponse requestAccountDeletion() {
-        User user = userHelper.findById(userHelper.getCurrentUserId())
+        User user = userRepository.findById(securityUtils.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         emailVerificationService.sendAccountDeletionEmail(user);
@@ -82,7 +86,7 @@ public class UserServiceImpl implements UserService {
 
         if (pictureUrl != null && !pictureUrl.isBlank()) {
             try {
-                deleteImageFromCloudinary(pictureUrl);
+                imageService.deleteImageFromCloudinary(pictureUrl, profilePictureFolder);
             } catch (Exception e) {
                 log.warn("Failed to delete user image from Cloudinary during account deletion", e);
             }
@@ -95,7 +99,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public MessageResponse updateProfile(UpdateUserProfileRequest request) {
-        User user = userHelper.findById(userHelper.getCurrentUserId())
+        User user = userRepository.findById(securityUtils.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         validateCurrentPassword(request.getCurrentPassword(), user.getPassword());
@@ -134,23 +138,19 @@ public class UserServiceImpl implements UserService {
     @Override
     public MessageResponse uploadProfilePicture(MultipartFile file) {
 
-        User user = userHelper.findById(userHelper.getCurrentUserId())
+        User user = userRepository.findById(securityUtils.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         String contentType = file.getContentType();
-        if (contentType == null ||
-                !(contentType.equals("image/png") ||
-                        contentType.equals("image/jpeg") ||
-                        contentType.equals("image/jpg") ||
-                        contentType.equals("image/gif"))) {
-            throw new IllegalStateException(
-                    "Invalid file type. Only PNG, JPEG, JPG, and GIF are allowed."
-            );
+        try {
+            imageService.checkPictureType(file);
+        } catch (IllegalStateException ex) {
+            throw new ApiException(ex.getMessage());
         }
 
         try {
             if (user.getPictureUrl() != null) {
-                deleteImageFromCloudinary(user.getPictureUrl());
+                imageService.deleteImageFromCloudinary(user.getPictureUrl(), profilePictureFolder);
             }
 
             Map uploadResult = cloudinary.uploader().upload(
@@ -185,7 +185,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public MessageResponse requestEmailUpdate(UpdateEmailRequest request) {
-        User user = userHelper.findById(userHelper.getCurrentUserId())
+        User user = userRepository.findById(securityUtils.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         validateCurrentPassword(request.getCurrentPassword(), user.getPassword());
         if (userRepository.existsByEmail(request.getNewEmail())) {
@@ -219,7 +219,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public MessageResponse deleteProfilePicture() {
 
-        User user = userHelper.findById(userHelper.getCurrentUserId())
+        User user = userRepository.findById(securityUtils.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         String pictureUrl = user.getPictureUrl();
@@ -231,7 +231,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         try {
-            deleteImageFromCloudinary(pictureUrl);
+            imageService.deleteImageFromCloudinary(pictureUrl, profilePictureFolder);
         } catch (Exception e) {
             log.warn("Failed to delete profile image from Cloudinary", e);
         }
@@ -241,31 +241,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public PictureUrlResponse viewProfilePicture(String handle) {
-        User user = userHelper.findByHandle(handle)
+        User user = userRepository.findByHandle(handle)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         return PictureUrlResponse.builder()
                 .pictureUrl(user.getPictureUrl())
                 .build();
-    }
-
-    private void deleteImageFromCloudinary(String imageUrl) throws IOException {
-        String publicId = extractPublicId(imageUrl);
-
-        Map<String, Object> result = cloudinary.uploader().destroy(
-                publicId,
-                ObjectUtils.asMap("invalidate", true)
-        );
-
-        if (!"ok".equals(result.get("result"))) {
-            throw new IOException("Cloudinary deletion failed: " + result);
-        }
-    }
-
-    private String extractPublicId(String imageUrl) {
-        // https://res.cloudinary.com/demo/image/upload/v123/users/profile-pictures/abc.png
-        String[] parts = imageUrl.split("/");
-        String filename = parts[parts.length - 1];
-        String folder = "users/profile-pictures";
-        return folder + "/" + filename.substring(0, filename.lastIndexOf('.'));
     }
 }
