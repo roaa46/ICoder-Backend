@@ -6,31 +6,49 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+
 @Slf4j
 @Service
 public class JsoupConnect {
 
     private final BrowserService browserService;
+    private final HttpClient httpClient;
 
-    public JsoupConnect(BrowserService browserService) {
+    public JsoupConnect(BrowserService browserService, HttpClient httpClient) {
         this.browserService = browserService;
+        this.httpClient = httpClient;
     }
 
     public Document connect(String url) {
         try {
-            log.debug("Attempting direct Jsoup connection for: {}", url);
-            Document doc = Jsoup.connect(url)
-                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-                    .timeout(5000)
-                    .get();
-            if (isValidContent(doc)) {
-                log.info("Successfully fetched via Jsoup (Direct): {}", url);
-                return doc;
-            } else {
-                log.warn("Jsoup content likely incomplete (JS required). Falling back to Playwright.");
+            log.debug("Fetching HTML via HttpClient: {}", url);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("User-Agent", "Mozilla/5.0 ...")
+                    .timeout(Duration.ofSeconds(5))
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                Document doc = Jsoup.parse(response.body(), url);
+                if (isValidContent(doc)) {
+                    log.info("Successfully fetched via HttpClient: {}", url);
+                    return doc;
+                }
             }
+
+            log.warn("HttpClient returned status {} or invalid content. Falling back to Playwright.", response.statusCode());
+
         } catch (Exception e) {
-            log.warn("Jsoup direct connection failed or timed out. Falling back to Playwright. Error: {}", e.getMessage());
+            log.warn("HttpClient failed for {}. Error: {}", url, e.getMessage());
         }
 
         return connectWithBrowser(url);
