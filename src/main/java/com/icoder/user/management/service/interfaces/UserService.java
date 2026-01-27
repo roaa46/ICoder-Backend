@@ -2,7 +2,7 @@ package com.icoder.user.management.service.interfaces;
 
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.user.management.dto.auth.UpdateEmailRequest;
-import com.icoder.user.management.dto.user.PictureUrlResponse;
+import com.icoder.core.dto.PictureUrlResponse;
 import com.icoder.user.management.dto.user.UpdateUserProfileRequest;
 import com.icoder.user.management.dto.user.UserProfileRequest;
 import com.icoder.user.management.dto.user.UserProfileResponse;

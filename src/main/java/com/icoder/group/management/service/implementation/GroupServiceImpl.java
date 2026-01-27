@@ -1,6 +1,9 @@
 package com.icoder.group.management.service.implementation;
 
+import com.cloudinary.Cloudinary;
 import com.icoder.core.dto.MessageResponse;
+import com.icoder.core.exception.ApiException;
+import com.icoder.core.helpers.PublicHelpers;
 import com.icoder.group.management.dto.*;
 import com.icoder.group.management.entity.Group;
 import com.icoder.group.management.entity.UserGroupRole;
@@ -13,26 +16,34 @@ import com.icoder.group.management.repository.UserGroupRoleRepository;
 import com.icoder.group.management.service.interfaces.GroupService;
 import com.icoder.group.management.util.GroupUtil;
 import com.icoder.group.management.dto.GroupMemberResponse;
+import com.icoder.core.dto.PictureUrlResponse;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.service.interfaces.AuthenticationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class GroupServiceImpl implements GroupService {
     private final GroupRepository groupRepository;
     private final GroupMapper groupMapper;
     private final AuthenticationService authenticationService;
     private final UserGroupRoleRepository userGroupRoleRepository;
     private final GroupUtil groupUtil;
+    private final PublicHelpers publicHelpers;
     private final UserGroupRoleMapper userGroupRoleMapper;
+    private final Cloudinary cloudinary;
 
     @Override
     public Page<GroupResponse> GetMyGroups(Pageable pageable) {
@@ -47,9 +58,9 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public Page<GroupMemberResponse> getAllMembers(GroupIdRequest groupIdRequest, Pageable pageable) {
+    public Page<GroupMemberResponse> getAllMembers(Long groupId, Pageable pageable) {
         Page<UserGroupRole> userRoles = userGroupRoleRepository.
-                findAllByGroupId(groupIdRequest.getGroupId(), pageable);
+                findAllByGroupId(groupId, pageable);
         return userRoles.map(userGroupRoleMapper::toMemberDTO);
     }
 
@@ -75,10 +86,10 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     @Transactional
-    public MessageResponse joinGroup(GroupIdRequest groupIdRequest) {
+    public MessageResponse joinGroup(Long groupId) {
         User user = groupUtil.findCurrentUser();
 
-        Group group = groupUtil.findGroup(groupIdRequest.getGroupId());
+        Group group = groupUtil.findGroup(groupId);
 
         if (group.getVisibility() == Visibility.PRIVATE) {
             throw new AccessDeniedException("Cannot join a private group without an invitation");
@@ -149,10 +160,10 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     @Transactional
-    public MessageResponse removeMemberFromGroup(GroupMemberActionRequest groupMemberActionRequest) {
-        User member = groupUtil.findUser(groupMemberActionRequest.getUserHandle());
+    public MessageResponse removeMemberFromGroup(Long groupId, String userHandle) {
+        User member = groupUtil.findUser(userHandle);
 
-        Group group = groupUtil.findGroup(groupMemberActionRequest.getGroupId());
+        Group group = groupUtil.findGroup(groupId);
 
         groupUtil.checkLeaderPermission(group);
 
@@ -191,5 +202,66 @@ public class GroupServiceImpl implements GroupService {
         groupRepository.save(group);
         return new MessageResponse("Group details updated successfully");
 
+    }
+
+    @Override
+    @Transactional
+    public MessageResponse updateGroupPicture(UpdateGroupPictureRequest pictureRequest) {
+        String folderPath = "groups/profile-pictures";
+        Group group = groupUtil.findGroup(pictureRequest.getGroupId());
+
+        groupUtil.checkLeaderPermission(group);
+
+        publicHelpers.checkpictureType(pictureRequest.getPicture());
+
+        try {
+            if (group.getPictureUrl() != null) {
+                publicHelpers.deleteImageFromCloudinary(group.getPictureUrl(), folderPath);
+            }
+            Map uploadResult = cloudinary.uploader().upload(pictureRequest.getPicture().getBytes(),
+                    Map.of("folder", folderPath));
+
+            String imageUrl = uploadResult.get("secure_url").toString();
+            group.setPictureUrl(imageUrl);
+            groupRepository.save(group);
+
+            return new MessageResponse("Group picture updated successfully");
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload group picture", e);
+        }
+    }
+
+    @Override
+    public PictureUrlResponse viewGroupPicture(Long groupId) {
+        Group group = groupUtil.findGroup(groupId);
+        return PictureUrlResponse.builder()
+                .pictureUrl(group.getPictureUrl())
+                .build();
+    }
+    @Override
+    @Transactional
+    public MessageResponse deleteGroupPicture(Long groupId) {
+        String folderPath = "groups/profile-pictures";
+        Group group = groupUtil.findGroup(groupId);
+
+        groupUtil.checkLeaderPermission(group);
+
+        String pictureUrl = group.getPictureUrl();
+
+        if (pictureUrl == null || pictureUrl.isBlank()) {
+            throw new ApiException("User does not have a profile picture");
+        }
+
+        group.setPictureUrl(null);
+        groupRepository.save(group);
+
+        try {
+            publicHelpers.deleteImageFromCloudinary(pictureUrl, folderPath);
+        } catch (Exception e) {
+            log.warn("Failed to delete profile image from Cloudinary", e);
+        }
+
+        return new MessageResponse("Your profile picture has been successfully deleted");
     }
 }

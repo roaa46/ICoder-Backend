@@ -1,16 +1,17 @@
 package com.icoder.group.management.controller;
 
 import com.icoder.core.dto.MessageResponse;
+import com.icoder.core.dto.PictureUrlResponse;
 import com.icoder.group.management.dto.*;
 import com.icoder.group.management.service.implementation.GroupServiceImpl;
 import com.icoder.group.management.dto.GroupMemberResponse;
-import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -34,12 +35,12 @@ public class GroupController {
             @PageableDefault(size = 9, sort = "name") Pageable pageable){
         return ResponseEntity.ok(groupService.getAllGroups(pageable));
     }
-    @GetMapping("members/get")
+    @GetMapping("/{groupId}/members")
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<Page<GroupMemberResponse>> getAllMembers(
-            @Valid @RequestBody GroupIdRequest groupIdRequest,
+            @PathVariable Long groupId,
             Pageable pageable){
-            return ResponseEntity.ok(groupService.getAllMembers(groupIdRequest, pageable));
+            return ResponseEntity.ok(groupService.getAllMembers(groupId, pageable));
     }
 
     @PostMapping("/create")
@@ -48,18 +49,19 @@ public class GroupController {
         return ResponseEntity.status(HttpStatus.CREATED).body(groupService.createGroup(groupDetails));
     }
 
-    @PutMapping("/join")
+    @PutMapping("/{groupId}/join")
     @PreAuthorize(value = "isAuthenticated()")
-    public ResponseEntity<MessageResponse> joinGroup(@RequestBody GroupIdRequest groupIdRequest){
-        return ResponseEntity.ok(groupService.joinGroup(groupIdRequest));
+    public ResponseEntity<MessageResponse> joinGroup(@PathVariable Long groupId){
+        return ResponseEntity.ok(groupService.joinGroup(groupId));
     }
     @PutMapping("/members/add")
     @PreAuthorize(value = "isAuthenticated()")
-    public ResponseEntity<MessageResponse> addMemberToGroup(@RequestBody GroupMemberActionRequest groupMemberActionRequest){
+    public ResponseEntity<MessageResponse> addMemberToGroup(
+            @RequestBody GroupMemberActionRequest groupMemberActionRequest){
         return ResponseEntity.ok(groupService.addMemberToGroup(groupMemberActionRequest));
     }
 
-    @PutMapping("members/promote")
+    @PutMapping("/members/promote")
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<MessageResponse> promoteMemberToManager(
             @RequestBody GroupMemberActionRequest groupMemberActionRequest){
@@ -72,21 +74,34 @@ public class GroupController {
             @RequestBody GroupMemberActionRequest groupMemberActionRequest){
         return ResponseEntity.ok(groupService.demoteManagerToMember(groupMemberActionRequest));
     }
-    @PutMapping()
+    @PutMapping("")
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<MessageResponse> updateGroupDetails(
             @Valid @RequestBody UpdateGroupRequest updateGroupRequest){
         return ResponseEntity.ok(groupService.updateGroupDetails(updateGroupRequest));
     }
-    @PatchMapping("/group-picture")
-    @Operation(
-            summary = "Update group picture",
-            description = "Uploads and sets a new group picture. Only accepts image file types (PNG, JPEG, JPG, GIF)."
-    )
-
-    @DeleteMapping("/members/remove")
+    @DeleteMapping("/{groupId}/members")
     @PreAuthorize(value = "isAuthenticated()")
-    public ResponseEntity<MessageResponse> removeMemberFromGroup(@RequestBody GroupMemberActionRequest group){
-        return ResponseEntity.ok(groupService.removeMemberFromGroup(group));
+    public ResponseEntity<MessageResponse> removeMemberFromGroup(Long groupId, @RequestParam String userHandle){
+        return ResponseEntity.ok(groupService.removeMemberFromGroup(groupId, userHandle));
+    }
+
+    @PutMapping(value = "/group-picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse> updateGroupPicture(
+            @Valid @ModelAttribute UpdateGroupPictureRequest updateGroupPictureRequest) {
+
+        return ResponseEntity.ok(groupService.updateGroupPicture(updateGroupPictureRequest));
+    }
+    @GetMapping("/{groupId}/group-picture")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<PictureUrlResponse> viewGroupPicture(@PathVariable Long groupId) {
+        return ResponseEntity.ok(groupService.viewGroupPicture(groupId));
+    }
+
+    @DeleteMapping("/{groupId}/group-picture")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse> deleteGroupPicture(@PathVariable Long groupId) {
+        return ResponseEntity.ok(groupService.deleteGroupPicture(groupId));
     }
 }

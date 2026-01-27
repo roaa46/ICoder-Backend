@@ -1,8 +1,7 @@
-package com.icoder.core.util;
+package com.icoder.core.helpers;
 
 import com.icoder.core.exception.ApiException;
 import com.icoder.user.management.dto.auth.ChangePasswordRequest;
-import com.icoder.user.management.dto.auth.RegisterRequest;
 import com.icoder.user.management.dto.auth.ResetPasswordRequest;
 import com.icoder.user.management.entity.User;
 import lombok.RequiredArgsConstructor;
