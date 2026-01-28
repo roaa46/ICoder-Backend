@@ -1,25 +1,38 @@
 package com.icoder.contest.management.util;
 
+import com.icoder.contest.management.dto.CreateContestRequest;
+import com.icoder.contest.management.dto.ProblemSetRequest;
 import com.icoder.contest.management.entity.Contest;
+import com.icoder.contest.management.entity.ContestProblemRelation;
 import com.icoder.contest.management.enums.ContestOpenness;
 import com.icoder.contest.management.enums.ContestStatus;
 import com.icoder.contest.management.enums.ContestType;
+import com.icoder.core.exception.ResourceNotFoundException;
 import com.icoder.group.management.entity.Group;
 import com.icoder.group.management.enums.GroupRole;
 import com.icoder.group.management.enums.Visibility;
 import com.icoder.group.management.repository.UserGroupRoleRepository;
+import com.icoder.problem.management.entity.Problem;
+import com.icoder.problem.management.repository.ProblemRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ContestUtils {
     private final UserGroupRoleRepository userGroupRoleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ProblemRepository problemRepository;
 
     public boolean isUserContestCoordinator(Long userId, Group group) {
         return userGroupRoleRepository.findRoleByUserIdAndGroupId(userId, group.getId())
@@ -30,7 +43,7 @@ public class ContestUtils {
                     default -> false;
                 }).orElse(false);
     }
-    
+
     public Instant parseInstant(String beginTime) {
         if (beginTime == null || beginTime.isBlank()) {
             return null;
@@ -77,6 +90,20 @@ public class ContestUtils {
         }
     }
 
+    public void checkGroupVisibility(Group group, CreateContestRequest request) {
+        if (group.getVisibility() == Visibility.PRIVATE && (request.getContestOpenness() == ContestOpenness.PROTECTED
+                || request.getContestOpenness() == ContestOpenness.PUBLIC)) {
+            throw new IllegalArgumentException("Private groups cannot have PROTECTED or PUBLIC contests.");
+        } else if (group.getVisibility() == Visibility.PUBLIC && (request.getContestOpenness() == ContestOpenness.PRIVATE)) {
+            throw new IllegalArgumentException("Public groups cannot have PRIVATE contests.");
+        }
+
+        if (group.getVisibility() == Visibility.PRIVATE && request.getContestType() == ContestType.CLASSICAL)
+            throw new IllegalArgumentException("Private groups cannot have CLASSICAL contests.");
+        else if (group.getVisibility() == Visibility.PUBLIC && request.getContestType() == ContestType.GROUP)
+            throw new IllegalArgumentException("Public groups cannot have GROUP contests.");
+    }
+
     public ContestStatus calculateStatus(Instant beginTime, Duration length) {
         Instant now = Instant.now();
 
@@ -97,4 +124,38 @@ public class ContestUtils {
         return ContestStatus.ENDED;
     }
 
+    public List<ContestProblemRelation> mapProblemSetToRelations(List<ProblemSetRequest> problemSet, Contest contest) {
+        List<Long> problemIds = problemSet.stream()
+                .map(p -> Long.parseLong(p.getProblemId()))
+                .toList();
+
+        Map<Long, Problem> problemMap = problemRepository.findAllById(problemIds).stream()
+                .collect(Collectors.toMap(Problem::getId, p -> p));
+
+        return problemSet.stream()
+                .map(pReq -> {
+                    Long pId = Long.parseLong(pReq.getProblemId());
+                    Problem problem = Optional.ofNullable(problemMap.get(pId))
+                            .orElseThrow(() -> new ResourceNotFoundException("Problem not found: " + pId));
+
+                    int weight = parseWeight(pReq.getProblemWeight());
+
+                    return ContestProblemRelation.builder()
+                            .contest(contest)
+                            .problem(problem)
+                            .problemWeight(weight)
+                            .problemAlias(pReq.getProblemAlias())
+                            .build();
+                }).toList();
+    }
+
+    private int parseWeight(String weightStr) {
+        if (weightStr == null || weightStr.isBlank()) return 1;
+        try {
+            int w = Integer.parseInt(weightStr);
+            return Math.max(w, 1);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid weight format");
+        }
+    }
 }

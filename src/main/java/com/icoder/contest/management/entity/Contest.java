@@ -5,18 +5,17 @@ import com.icoder.contest.management.enums.ContestType;
 import com.icoder.contest.management.enums.ContestOpenness;
 import com.icoder.group.management.entity.Group;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.validator.constraints.time.DurationMax;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 
 @Entity
 @Getter
 @Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "contests")
@@ -55,4 +54,10 @@ public class Contest {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id")
     private Group group;
+
+    @OneToMany(mappedBy = "contest",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    private List<ContestProblemRelation> problemRelation;
 }

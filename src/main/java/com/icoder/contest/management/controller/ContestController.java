@@ -23,4 +23,6 @@ public class ContestController {
     public ResponseEntity<MessageResponse> updateContest(@PathVariable Long contestId, @Valid @RequestBody CreateContestRequest request) {
         return ResponseEntity.ok( contestService.updateContest(contestId, request));
     }
+
+
 }

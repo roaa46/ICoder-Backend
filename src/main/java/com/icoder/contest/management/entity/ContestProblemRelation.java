@@ -2,14 +2,12 @@ package com.icoder.contest.management.entity;
 
 import com.icoder.problem.management.entity.Problem;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Getter
 @Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "contest_problem_relations")
