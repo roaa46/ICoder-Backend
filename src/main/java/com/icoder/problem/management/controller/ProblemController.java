@@ -39,7 +39,7 @@ public class ProblemController {
     @Operation(summary = "Fetch a specific problem", description = "Fetches a specific problem statement by its online judge and problem code (requires login)")
     public ResponseEntity<ProblemStatementResponse> fetchProblem(@PathVariable("judge_type") String source,
                                                                @PathVariable("problem_code") String code) {
-        return ResponseEntity.ok(problemService.scrapFullStatement(source, code));
+        return ResponseEntity.ok(problemService.getProblemStatement(source, code));
     }
 
     @GetMapping

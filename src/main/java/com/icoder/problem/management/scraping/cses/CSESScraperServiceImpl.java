@@ -44,7 +44,7 @@ public class CSESScraperServiceImpl implements CSESScraperService {
             return ProblemResponse.builder()
                     .problemCode(problemCode)
                     .problemLink(url)
-                    .onlineJudge(OJudgeType.CSES.name())
+                    .onlineJudge(OJudgeType.CSES)
                     .problemTitle(problemTitle)
                     .contestTitle(contestTitle)
                     .build();

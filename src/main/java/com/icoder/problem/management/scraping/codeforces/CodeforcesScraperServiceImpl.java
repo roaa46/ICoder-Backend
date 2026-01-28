@@ -51,7 +51,7 @@ public class CodeforcesScraperServiceImpl implements CodeforcesScraperService {
                     .problemCode(problemCode)
                     .problemTitle(fullTitle)
                     .problemLink(url)
-                    .onlineJudge(OJudgeType.CODEFORCES.name())
+                    .onlineJudge(OJudgeType.CODEFORCES)
                     .contestTitle(contestLink != null ? contestLink.text() : "Problemset")
                     .contestLink(contestLink != null ? contestLink.absUrl("href") : "")
                     .build();
