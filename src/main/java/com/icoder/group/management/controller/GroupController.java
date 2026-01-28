@@ -14,6 +14,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Set;
+
 @Controller
 @RequestMapping("/api/v1/groups")
 @RequiredArgsConstructor
@@ -74,5 +76,11 @@ public class GroupController {
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<MessageResponse> removeMemberFromGroup(@RequestBody GroupMemberActionRequest group){
         return ResponseEntity.ok(groupService.removeMemberFromGroup(group));
+    }
+
+    @GetMapping("managed")
+    @PreAuthorize(value = "isAuthenticated()")
+    public ResponseEntity<Set<ManagedGroupsResponse>> getManagedGroups() {
+        return ResponseEntity.ok(groupService.getManagedGroups());
     }
 }

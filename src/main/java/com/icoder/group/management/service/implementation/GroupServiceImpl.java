@@ -1,6 +1,7 @@
 package com.icoder.group.management.service.implementation;
 
 import com.icoder.core.dto.MessageResponse;
+import com.icoder.core.utils.SecurityUtils;
 import com.icoder.group.management.dto.*;
 import com.icoder.group.management.entity.Group;
 import com.icoder.group.management.entity.UserGroupRole;
@@ -15,14 +16,18 @@ import com.icoder.user.management.entity.User;
 import com.icoder.user.management.service.interfaces.AuthenticationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GroupServiceImpl implements GroupService {
@@ -31,6 +36,8 @@ public class GroupServiceImpl implements GroupService {
     private final AuthenticationService authenticationService;
     private final UserGroupRoleRepository userGroupRoleRepository;
     private final GroupUtil groupUtil;
+    private final SecurityUtils securityUtils;
+
     @Override
     public Page<GroupResponse> GetMyGroups(Pageable pageable) {
         Page<Group> myGroups = groupRepository.getMyGroups(authenticationService.getCurrentUserUsername(), pageable);
@@ -182,5 +189,21 @@ public class GroupServiceImpl implements GroupService {
         groupRepository.save(group);
         return new MessageResponse("Group details updated successfully");
 
+    }
+
+    @Override
+    public Set<ManagedGroupsResponse> getManagedGroups() {
+        Long userId = securityUtils.getCurrentUserId();
+
+        Set<Group> groups = groupRepository.findManagedGroupsByUserId(userId);
+
+        log.info("User {} has {} managed groups", userId, groups.size());
+
+        return groups.stream()
+                .map(group -> new ManagedGroupsResponse(
+                        String.valueOf(group.getId()),
+                        group.getName()
+                ))
+                .collect(Collectors.toSet());
     }
 }

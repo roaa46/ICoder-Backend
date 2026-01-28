@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Set;
+
 
 public interface GroupRepository extends JpaRepository<Group, Long> {
 
@@ -16,4 +18,10 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
 
     @Query("SELECT g FROM Group g WHERE g.visibility = :visibility")
     Page<Group> getAllPublicGroups(@Param("visibility") Visibility visibility, Pageable pageable);
+
+    @Query("SELECT g FROM Group g JOIN g.userRoles ur WHERE ur.user.id = :userId AND (" +
+            "(g.contestCoordinatorType = 'ALL_MEMBERS') OR " +
+            "(g.contestCoordinatorType = 'LEADER_MANAGER' AND ur.role IN ('OWNER', 'MANAGER')) OR " +
+            "(g.contestCoordinatorType = 'LEADER' AND ur.role = 'OWNER'))")
+    Set<Group> findManagedGroupsByUserId(@Param("userId") Long userId);
 }
