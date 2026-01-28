@@ -51,17 +51,17 @@ public class ContestUtils {
     }
 
     public void applyContestRulesBasedOnGroupVisibility(Contest contest, Group group, String rawPassword) {
-        if (group.getVisibility().name().toUpperCase().matches(Visibility.PUBLIC.name())) {
+        if (group.getVisibility() == Visibility.PUBLIC) {
             // Rule: Public Group -> Contest Type MUST be CLASSICAL
             contest.setContestType(ContestType.CLASSICAL);
 
             // Rule: Openness must be PUBLIC or PROTECTED
-            if (contest.getContestOpenness().name().toUpperCase().matches(ContestOpenness.PRIVATE.name())) {
+            if (contest.getContestOpenness() == ContestOpenness.PRIVATE) {
                 throw new IllegalArgumentException("Public groups cannot have PRIVATE contests. Use PROTECTED or PUBLIC.");
             }
 
             // Rule: If PROTECTED, must have a password (encrypted)
-            if (contest.getContestOpenness().name().toUpperCase().matches(ContestOpenness.PROTECTED.name())) {
+            if (contest.getContestOpenness() == ContestOpenness.PROTECTED) {
                 if (rawPassword == null || rawPassword.isBlank()) {
                     throw new IllegalArgumentException("Password is required for PROTECTED contests.");
                 }
