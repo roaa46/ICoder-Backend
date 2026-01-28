@@ -1,14 +1,14 @@
 package com.icoder.problem.management.service.implementation;
 
 import com.icoder.core.exception.ScrapingException;
-import com.icoder.core.helpers.UserHelper;
-import com.icoder.problem.management.dto.*;
+import com.icoder.core.utils.SecurityUtils;
+import com.icoder.problem.management.dto.FavoriteRequest;
+import com.icoder.problem.management.dto.ProblemResponse;
+import com.icoder.problem.management.dto.ProblemStatementResponse;
 import com.icoder.problem.management.entity.Problem;
 import com.icoder.problem.management.entity.ProblemUserRelation;
 import com.icoder.problem.management.enums.OJudgeType;
 import com.icoder.problem.management.mapper.ProblemMapper;
-import com.icoder.problem.management.mapper.PropertyMapper;
-import com.icoder.problem.management.mapper.SectionMapper;
 import com.icoder.problem.management.repository.ProblemRepository;
 import com.icoder.problem.management.repository.ProblemUserRelationRepository;
 import com.icoder.problem.management.scraping.service.ScrapingServiceImpl;
@@ -35,12 +35,10 @@ import java.util.stream.Collectors;
 public class ProblemServiceImpl implements ProblemService {
     private final ProblemRepository problemRepository;
     private final ProblemMapper problemMapper;
-    private final PropertyMapper propertyMapper;
-    private final SectionMapper sectionMapper;
+    private final SecurityUtils securityUtils;
     private final ScrapingServiceImpl scrapingService;
     private final UserRepository userRepository;
     private final ProblemUserRelationRepository relationRepository;
-    private final UserHelper userHelper;
     private final ProblemPersistenceService persistenceService;
 
     ///  get problem metadata
@@ -78,6 +76,13 @@ public class ProblemServiceImpl implements ProblemService {
             log.info("problem will be scrapped");
             ProblemStatementResponse scraped =
                     scrapingService.scrapFullStatement(source, code);
+            log.info("problem statement scrapped");
+
+//            scraped.setProblemId(existingProblem.get().getId());
+            scraped.setProblemCode(existingProblem.get().getProblemCode());
+//            scraped.setProblemLink(existingProblem.get().getProblemLink());
+//            scraped.setProblemTitle(existingProblem.get().getProblemTitle());
+            scraped.setOnlineJudge(existingProblem.get().getOnlineJudge().name());
 
             return persistenceService.saveFullStatement(scraped, judgeType);
         } catch (ScrapingException e) {
@@ -89,7 +94,7 @@ public class ProblemServiceImpl implements ProblemService {
     @Override
     @Transactional
     public void setFavorite(FavoriteRequest request) {
-        Long userId = userHelper.getCurrentUserId();
+        Long userId = securityUtils.getCurrentUserId();
         Long problemId = request.getProblemId();
 
         ProblemUserRelation relation = relationRepository.findByUserIdAndProblemId(userId, problemId)
@@ -108,7 +113,7 @@ public class ProblemServiceImpl implements ProblemService {
     @Override
     @Transactional(readOnly = true)
     public Page<ProblemResponse> getAllProblems(String oj, String code, String title, Pageable pageable) {
-        Long currentUserId = userHelper.getCurrentUserId();
+        Long currentUserId = securityUtils.getCurrentUserId();
         ProblemSpecificationsBuilder builder = new ProblemSpecificationsBuilder();
 
         if (oj != null) builder.with("onlineJudge", ":", OJudgeType.fromString(oj));
@@ -154,7 +159,7 @@ public class ProblemServiceImpl implements ProblemService {
     @Override
     @Transactional(readOnly = true)
     public Page<ProblemResponse> getAttempted(Pageable pageable) {
-        Long userId = userHelper.getCurrentUserId();
+        Long userId = securityUtils.getCurrentUserId();
         Page<ProblemUserRelation> relations = relationRepository.findByUserIdAndAttemptedTrue(userId, pageable);
         return relations.map(rel -> problemMapper.toResponseDTO(rel.getProblem()));
     }
@@ -163,7 +168,7 @@ public class ProblemServiceImpl implements ProblemService {
     @Override
     @Transactional(readOnly = true)
     public Page<ProblemResponse> getSolved(Pageable pageable) {
-        Long userId = userHelper.getCurrentUserId();
+        Long userId = securityUtils.getCurrentUserId();
         Page<ProblemUserRelation> relations = relationRepository.findByUserIdAndSolvedTrue(userId, pageable);
         return relations.map(rel -> problemMapper.toResponseDTO(rel.getProblem()));
     }
@@ -172,7 +177,7 @@ public class ProblemServiceImpl implements ProblemService {
     @Override
     @Transactional(readOnly = true)
     public Page<ProblemResponse> getFavorites(Pageable pageable) {
-        Long userId = userHelper.getCurrentUserId();
+        Long userId = securityUtils.getCurrentUserId();
         Page<ProblemUserRelation> relations = relationRepository.findByUserIdAndFavoriteTrue(userId, pageable);
         return relations.map(rel -> problemMapper.toResponseDTO(rel.getProblem()));
     }

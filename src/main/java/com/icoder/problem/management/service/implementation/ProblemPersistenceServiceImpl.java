@@ -16,12 +16,14 @@ import com.icoder.problem.management.mapper.SectionMapper;
 import com.icoder.problem.management.repository.ProblemRepository;
 import com.icoder.problem.management.service.interfaces.ProblemPersistenceService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProblemPersistenceServiceImpl implements ProblemPersistenceService {
@@ -51,11 +53,12 @@ public class ProblemPersistenceServiceImpl implements ProblemPersistenceService 
     @Override
     @Transactional
     public ProblemStatementResponse saveFullStatement(ProblemStatementResponse scrapedResponse, OJudgeType judgeType) {
+        log.info("Saving full statement for: {} - {}", scrapedResponse.getProblemCode(), judgeType);
+        log.info("response data: {}", scrapedResponse);
         Problem problem = problemRepository
-                .findByProblemCodeAndOnlineJudge(
-                        scrapedResponse.getProblemCode(), judgeType)
+                .findByProblemCodeAndOnlineJudge(scrapedResponse.getProblemCode(), judgeType)
                 .orElseThrow(() -> new ResourceNotFoundException("Metadata not found"));
-
+        log.info("Problem found: {}", problem);
         updateProperties(problem, scrapedResponse.getProperties());
         updateSections(problem, scrapedResponse.getSections());
         problem.setFetchedAt(Instant.now());
