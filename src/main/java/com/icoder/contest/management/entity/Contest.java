@@ -30,7 +30,7 @@ public class Contest {
 
     private String description;
 
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false)
     private Instant beginTime;
 
     @Column(nullable = false)

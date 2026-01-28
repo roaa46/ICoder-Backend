@@ -86,6 +86,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/coding/editor/submissions", "/api/v1/coding/editor/submissions/batch").authenticated()
                         .requestMatchers("/api/v1/coding/editor/templates/**").authenticated()
 
+
+                        ///    --------- contests ---------
+                        .requestMatchers("/api/v1/contests").authenticated()
+
+
+
                         /// --------- swagger ---------
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 

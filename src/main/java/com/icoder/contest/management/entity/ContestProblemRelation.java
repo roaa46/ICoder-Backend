@@ -26,7 +26,7 @@ public class ContestProblemRelation {
     @JoinColumn(name = "problem_id")
     private Problem problem;
 
-    private int problemWeight;
+    private Integer problemWeight; // default is 1
 
     private String problemAlias; // if blank, use problem title
 }

@@ -48,7 +48,7 @@ public class GroupServiceImpl implements GroupService {
     public MessageResponse createGroup(CreateGroupRequest groupDetails) {
         Group group = groupMapper.toEntity(groupDetails);
         group.setCreatedAt(Instant.now());
-
+        group.setContestCoordinatorType(groupDetails.getContestCoordinatorType());
         group.setCode(UUID.randomUUID().toString().substring(0, 8).toUpperCase());
 
         User owner = groupUtil.findCurrentUser();
