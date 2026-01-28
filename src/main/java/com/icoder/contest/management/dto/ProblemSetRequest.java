@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class ContestProblemRequest {
+public class ProblemSetRequest {
     @NotBlank
     private String problemId;
     @NotBlank

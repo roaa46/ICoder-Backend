@@ -51,5 +51,5 @@ public class CreateContestRequest {
 
     private Boolean historyRank;
 
-    private List<ContestProblemRequest> problemSet;
+    private List<ProblemSetRequest> problemSet;
 }

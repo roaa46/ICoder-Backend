@@ -5,4 +5,5 @@ import com.icoder.core.dto.MessageResponse;
 
 public interface ContestService {
     MessageResponse createContest(CreateContestRequest request);
+    MessageResponse updateContest(Long contestId, CreateContestRequest request);
 }

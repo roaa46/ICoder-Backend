@@ -1,6 +1,6 @@
 package com.icoder.contest.management.service.implementation;
 
-import com.icoder.contest.management.dto.ContestProblemRequest;
+import com.icoder.contest.management.dto.ProblemSetRequest;
 import com.icoder.contest.management.dto.CreateContestRequest;
 import com.icoder.contest.management.entity.Contest;
 import com.icoder.contest.management.entity.ContestProblemRelation;
@@ -69,17 +69,51 @@ public class ContestServiceImpl implements ContestService {
         contestUtils.applyContestRulesBasedOnGroupVisibility(contest, group, request.getPassword());
 
         Contest savedContest = contestRepository.save(contest);
-        // 4. Handling Problems Relations
-        if (request.getProblemSet() != null && !request.getProblemSet().isEmpty()) {
-            saveContestProblems(request.getProblemSet(), savedContest);
-        }
+        saveContestProblems(request.getProblemSet(), savedContest);
 
         log.info("Contest '{}' created successfully with {} problems.", savedContest.getTitle(), request.getProblemSet() != null ? request.getProblemSet().size() : 0);
         return new MessageResponse("Contest created successfully with " +
                 (request.getProblemSet() != null ? request.getProblemSet().size() : 0) + " problems.");
     }
 
-    private void saveContestProblems(List<ContestProblemRequest> problemSet, Contest contest) {
+    @Override
+    @Transactional
+    public MessageResponse updateContest(Long contestId, CreateContestRequest request) {
+
+        Long userId = securityUtils.getCurrentUserId();
+
+        Contest existingContest = contestRepository.findById(contestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Contest not found with id: " + contestId));
+
+        Long groupId = Long.parseLong(request.getGroupId());
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found with id: " + groupId));
+
+        if (!contestUtils.isUserContestCoordinator(userId, group)) {
+            throw new org.springframework.security.access.AccessDeniedException("User is not a contest coordinator");
+        }
+        if (request.getProblemSet() == null || request.getProblemSet().isEmpty()) {
+            throw new IllegalArgumentException("A contest must have at least one problem.");
+        }
+        validateContestRules(request, group);
+
+        contestMapper.updateContestFromDto(request, existingContest);
+        existingContest.setBeginTime(contestUtils.parseInstant(request.getBeginTime()));
+        existingContest.setLength(contestUtils.parseDuration(request.getLength()));
+        existingContest.setGroup(group);
+        existingContest.setContestStatus(contestUtils.calculateStatus(existingContest.getBeginTime(), existingContest.getLength()));
+        existingContest.setHistoryRank(request.getHistoryRank() == null || request.getHistoryRank());
+        contestUtils.applyContestRulesBasedOnGroupVisibility(existingContest, group, request.getPassword());
+
+        contestProblemRelationRepository.deleteByContestId(contestId);
+        saveContestProblems(request.getProblemSet(), existingContest);
+
+        contestRepository.save(existingContest);
+
+        return new MessageResponse("Contest updated successfully.");
+    }
+
+    private void saveContestProblems(List<ProblemSetRequest> problemSet, Contest contest) {
         log.info("Saving contest problems for contest: {}", contest.getTitle());
         List<ContestProblemRelation> relations = problemSet.stream()
                 .map(pReq -> {
@@ -108,7 +142,7 @@ public class ContestServiceImpl implements ContestService {
     }
 
     private void validateContestRules(CreateContestRequest request, Group group) {
-        ContestOpenness contestOpenness = ContestOpenness.valueOf(request.getContestOpenness());
+        ContestOpenness contestOpenness = ContestOpenness.valueOf(request.getContestOpenness().name());
 
         if (group.getVisibility() == Visibility.PRIVATE && contestOpenness != ContestOpenness.PRIVATE) {
             throw new IllegalArgumentException("Private groups can only have private contests.");
