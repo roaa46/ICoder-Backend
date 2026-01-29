@@ -5,6 +5,7 @@ import com.icoder.coding.editor.entity.CodeTemplate;
 import com.icoder.coding.editor.mapper.TemplateMapper;
 import com.icoder.coding.editor.repository.CodeTemplateRepository;
 import com.icoder.coding.editor.service.interfaces.CodingEditorService;
+import com.icoder.coding.editor.utils.LanguageMatcher;
 import com.icoder.core.exception.ActiveTemplateConflictException;
 import com.icoder.core.exception.ResourceNotFoundException;
 import com.icoder.core.exception.TemplateException;
@@ -106,45 +107,21 @@ public class CodingEditorServiceImpl implements CodingEditorService {
                 .retrieve()
                 .bodyToMono(typeRef)
                 .block();
-        if (languages != null) {
-            languages.forEach(lang -> {
-                String monacoLang = JUDGE0_TO_MONACO_MAP.getOrDefault(lang.getId(), "plaintext");
-                lang.setMonacoName(monacoLang);
-            });
-        }
-        return languages;
+        if (languages == null)
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to get languages from Judge0.");
+
+        return languages.stream()
+                .filter(lang -> LanguageMatcher.JUDGE0_TO_MONACO_MAP.containsKey(lang.getId()))
+                .peek(lang -> {
+                    String monacoLang = LanguageMatcher.JUDGE0_TO_MONACO_MAP.get(lang.getId());
+                    // لو لسبب ما الـ ID مش موجود (وده مش هيحصل بسبب الفلتر)، بنحاول بالاسم
+                    if (monacoLang == null) {
+                        monacoLang = LanguageMatcher.resolveMonacoName(lang.getName());
+                    }
+                    lang.setMonacoName(monacoLang);
+                })
+                .collect(Collectors.toList());
     }
-
-    private static final Map<Integer, String> JUDGE0_TO_MONACO_MAP = Map.ofEntries(
-            // Python
-            Map.entry(70, "python"),
-            Map.entry(71, "python"),
-
-            // C / C++
-            Map.entry(48, "c"), Map.entry(49, "c"), Map.entry(50, "c"),
-            Map.entry(52, "cpp"), Map.entry(53, "cpp"), Map.entry(54, "cpp"),
-
-            // Java & C#
-            Map.entry(62, "java"),
-            Map.entry(51, "csharp"),
-
-            // JavaScript & TypeScript
-            Map.entry(63, "javascript"),
-            Map.entry(74, "typescript"),
-
-            // Others
-            Map.entry(46, "shell"),
-            Map.entry(60, "go"),
-            Map.entry(73, "rust"),
-            Map.entry(68, "php"),
-            Map.entry(72, "ruby"),
-            Map.entry(64, "lua"),
-            Map.entry(67, "pascal"),
-            Map.entry(57, "elixir"),
-            Map.entry(58, "erlang"),
-            Map.entry(61, "haskell"),
-            Map.entry(69, "prolog")
-    );
 
     @Override
     public TokenResponse submitCode(SubmissionRequest request) {
@@ -403,7 +380,7 @@ public class CodingEditorServiceImpl implements CodingEditorService {
 
     private void enhanceTemplateResponse(CodeTemplateResponse response, Integer languageId) {
         if (languageId != null) {
-            String monacoName = JUDGE0_TO_MONACO_MAP.getOrDefault(languageId, "plaintext");
+            String monacoName = LanguageMatcher.JUDGE0_TO_MONACO_MAP.getOrDefault(languageId, "plaintext");
             response.setMonacoName(monacoName);
         } else {
             response.setMonacoName("plaintext");
