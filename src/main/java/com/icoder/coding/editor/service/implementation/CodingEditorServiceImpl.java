@@ -9,6 +9,7 @@ import com.icoder.coding.editor.utils.LanguageMatcher;
 import com.icoder.core.exception.ActiveTemplateConflictException;
 import com.icoder.core.exception.ResourceNotFoundException;
 import com.icoder.core.exception.TemplateException;
+import com.icoder.core.utils.ConvertFromString;
 import com.icoder.core.utils.SecurityUtils;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
@@ -43,6 +44,7 @@ public class CodingEditorServiceImpl implements CodingEditorService {
     private final UserRepository userRepository;
     private final TemplateMapper mapper;
     private final SecurityUtils securityUtils;
+    private final ConvertFromString convertFromString;
 
     public CodingEditorServiceImpl(
             WebClient.Builder webClientBuilder,
@@ -50,6 +52,7 @@ public class CodingEditorServiceImpl implements CodingEditorService {
             UserRepository userRepository,
             TemplateMapper mapper,
             SecurityUtils securityUtils,
+            ConvertFromString convertFromString,
             @Value("${judge0.api-url}") String apiUrl,
             @Value("${judge0.auth-key}") String authKey,
             @Value("${judge0.host}") String host) {
@@ -58,6 +61,7 @@ public class CodingEditorServiceImpl implements CodingEditorService {
         this.userRepository = userRepository;
         this.mapper = mapper;
         this.securityUtils = securityUtils;
+        this.convertFromString = convertFromString;
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-RapidAPI-Key", authKey);
@@ -85,11 +89,13 @@ public class CodingEditorServiceImpl implements CodingEditorService {
     }
 
     @Override
-    public LanguageResponse getLanguage(int id) {
+    public LanguageResponse getLanguage(String id) {
+        Integer idInteger = convertFromString.toInteger(id);
+
         List<LanguageResponse> allLanguages = getLanguages();
 
         return allLanguages.stream()
-                .filter(lang -> lang.getId() != null && lang.getId() == id)
+                .filter(lang -> lang.getId() != null && lang.getId().equals(idInteger))
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
@@ -114,7 +120,6 @@ public class CodingEditorServiceImpl implements CodingEditorService {
                 .filter(lang -> LanguageMatcher.JUDGE0_TO_MONACO_MAP.containsKey(lang.getId()))
                 .peek(lang -> {
                     String monacoLang = LanguageMatcher.JUDGE0_TO_MONACO_MAP.get(lang.getId());
-                    // لو لسبب ما الـ ID مش موجود (وده مش هيحصل بسبب الفلتر)، بنحاول بالاسم
                     if (monacoLang == null) {
                         monacoLang = LanguageMatcher.resolveMonacoName(lang.getName());
                     }
@@ -277,8 +282,9 @@ public class CodingEditorServiceImpl implements CodingEditorService {
 
     @Transactional
     @Override
-    public CodeTemplateResponse toggleTemplate(Long templateId, boolean force) {
-        CodeTemplate template = templateRepository.findById(templateId)
+    public CodeTemplateResponse toggleTemplate(String templateId, boolean force) {
+        Long id = Long.parseLong(templateId);
+        CodeTemplate template = templateRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Template not found"));
 
         Long userId = template.getUser().getId();

@@ -24,7 +24,7 @@ public class CodingEditorController {
             description = "Fetches detailed information (name, version) for a specific coding language " +
                     "supported by Judge0 using its unique ID (doesn't require login)"
     )
-    public ResponseEntity<LanguageResponse> getLanguage(@RequestParam Integer id) {
+    public ResponseEntity<LanguageResponse> getLanguage(@RequestParam String id) {
         return ResponseEntity.ok(codingEditorService.getLanguage(id));
     }
 
@@ -112,7 +112,7 @@ public class CodingEditorController {
                     "If 'force' is false and another template for the same language is already active, it returns a 409 Conflict. " +
                     "If 'force' is true, it deactivates the existing template and activates this one."
     )
-    public ResponseEntity<CodeTemplateResponse> toggleTemplate(@PathVariable Long id, @RequestParam boolean force){
+    public ResponseEntity<CodeTemplateResponse> toggleTemplate(@PathVariable String id, @RequestParam boolean force){
         return ResponseEntity.ok(codingEditorService.toggleTemplate(id, force));
     }
 
