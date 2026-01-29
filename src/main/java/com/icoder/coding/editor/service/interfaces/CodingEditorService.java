@@ -2,15 +2,17 @@ package com.icoder.coding.editor.service.interfaces;
 
 import com.icoder.coding.editor.dto.*;
 import org.springframework.data.domain.Page;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
 public interface CodingEditorService {
     TokenResponse submitCode(SubmissionRequest request);
 
-    LanguageResponse getLanguage(int id);
+    Mono<LanguageResponse> getLanguage(int id);
 
-    List<LanguageResponse> getLanguages();
+    Flux<LanguageResponse> getLanguages();
 
     SubmissionResult processAndGetResult(String token);
 

@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.util.List;
@@ -24,7 +26,7 @@ public class CodingEditorController {
             description = "Fetches detailed information (name, version) for a specific coding language " +
                     "supported by Judge0 using its unique ID (doesn't require login)"
     )
-    public ResponseEntity<LanguageResponse> getLanguage(@RequestParam Integer id) {
+    public ResponseEntity<Mono<LanguageResponse>> getLanguage(@RequestParam Integer id) {
         return ResponseEntity.ok(codingEditorService.getLanguage(id));
     }
 
@@ -34,7 +36,7 @@ public class CodingEditorController {
             description = "Returns a complete list of languages and their respective IDs available for code submission" +
                     " on the Judge0 platform (doesn't require login)"
     )
-    public ResponseEntity<List<LanguageResponse>> getLanguages() {
+    public ResponseEntity<Flux<LanguageResponse>> getLanguages() {
         return ResponseEntity.ok(codingEditorService.getLanguages());
     }
 

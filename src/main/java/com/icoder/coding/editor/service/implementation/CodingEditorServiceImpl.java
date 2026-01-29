@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
@@ -85,42 +86,40 @@ public class CodingEditorServiceImpl implements CodingEditorService {
     }
 
     @Override
-    public LanguageResponse getLanguage(int id) {
-        List<LanguageResponse> allLanguages = getLanguages();
+    public Mono<LanguageResponse> getLanguage(int id) {
+        Flux<LanguageResponse> allLanguages = getLanguages();
 
-        return allLanguages.stream()
+        return allLanguages
                 .filter(lang -> lang.getId() != null && lang.getId() == id)
-                .findFirst()
-                .orElseThrow(() -> new ResponseStatusException(
+                .next()
+                .switchIfEmpty(Mono.error(new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "Language with ID " + id + " not found.")
-                );
+                        "Language with ID " + id + " not found.")));
     }
 
     @Override
-    public List<LanguageResponse> getLanguages() {
+    public Flux<LanguageResponse> getLanguages() {
         ParameterizedTypeReference<List<LanguageResponse>> typeRef =
-                new ParameterizedTypeReference<>() {
-                };
-        List<LanguageResponse> languages = webClient.get()
+                new ParameterizedTypeReference<>() {};
+
+        return webClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/languages").build())
                 .retrieve()
                 .bodyToMono(typeRef)
-                .block();
-        if (languages == null)
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to get languages from Judge0.");
-
-        return languages.stream()
+                .flatMapMany(Flux::fromIterable)
                 .filter(lang -> LanguageMatcher.JUDGE0_TO_MONACO_MAP.containsKey(lang.getId()))
-                .peek(lang -> {
+                .map(lang -> {
                     String monacoLang = LanguageMatcher.JUDGE0_TO_MONACO_MAP.get(lang.getId());
-                    // لو لسبب ما الـ ID مش موجود (وده مش هيحصل بسبب الفلتر)، بنحاول بالاسم
                     if (monacoLang == null) {
                         monacoLang = LanguageMatcher.resolveMonacoName(lang.getName());
                     }
                     lang.setMonacoName(monacoLang);
+                    return lang;
                 })
-                .collect(Collectors.toList());
+                .onErrorResume(e -> {
+                    log.error("Error fetching languages: ", e);
+                    return Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Judge0 unreachable"));
+                });
     }
 
     @Override
