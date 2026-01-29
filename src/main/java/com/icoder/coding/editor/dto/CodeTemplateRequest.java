@@ -2,6 +2,8 @@ package com.icoder.coding.editor.dto;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -20,6 +22,7 @@ public class CodeTemplateRequest {
     @NotBlank
     private String templateName;
     @NotBlank
+    @JsonSerialize(using = ToStringSerializer.class)
     private Integer languageId;
     @NotBlank
     private String code;

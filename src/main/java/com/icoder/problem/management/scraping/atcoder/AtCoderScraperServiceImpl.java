@@ -3,6 +3,7 @@ package com.icoder.problem.management.scraping.atcoder;
 import com.icoder.core.exception.ScrapingException;
 import com.icoder.problem.management.dto.*;
 import com.icoder.problem.management.enums.FormatType;
+import com.icoder.problem.management.enums.OJudgeType;
 import com.icoder.problem.management.scraping.service.CleanWithJsoup;
 import com.icoder.problem.management.scraping.service.JsoupConnect;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +49,7 @@ public class AtCoderScraperServiceImpl implements AtCoderScraperService {
             return ProblemResponse.builder()
                     .problemCode(problemCode)
                     .problemLink(url)
-                    .onlineJudge("atcoder")
+                    .onlineJudge(OJudgeType.AT_CODER)
                     .problemTitle(problemTitle)
                     .contestTitle(contestTitle)
                     .contestLink(contestLink)

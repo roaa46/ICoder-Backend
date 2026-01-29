@@ -64,7 +64,6 @@ public class ProblemServiceImpl implements ProblemService {
     @Transactional
     public ProblemStatementResponse getProblemStatement(String source, String code) {
         try {
-            log.info("getProblemStatement()");
             OJudgeType judgeType = OJudgeType.fromString(source);
             Optional<Problem> existingProblem = problemRepository.findByProblemCodeAndOnlineJudge(code, judgeType);
 
@@ -78,11 +77,15 @@ public class ProblemServiceImpl implements ProblemService {
                     scrapingService.scrapFullStatement(source, code);
             log.info("problem statement scrapped");
 
+            if (scraped.getSections() == null || scraped.getSections().isEmpty()) {
+                throw new ScrapingException("Cannot get full statement of the problem.");
+            }
+
 //            scraped.setProblemId(existingProblem.get().getId());
             scraped.setProblemCode(existingProblem.get().getProblemCode());
 //            scraped.setProblemLink(existingProblem.get().getProblemLink());
 //            scraped.setProblemTitle(existingProblem.get().getProblemTitle());
-            scraped.setOnlineJudge(existingProblem.get().getOnlineJudge().name());
+            scraped.setOnlineJudge(existingProblem.get().getOnlineJudge());
 
             return persistenceService.saveFullStatement(scraped, judgeType);
         } catch (ScrapingException e) {
