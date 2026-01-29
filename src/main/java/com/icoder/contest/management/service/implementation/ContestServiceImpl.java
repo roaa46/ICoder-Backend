@@ -3,16 +3,15 @@ package com.icoder.contest.management.service.implementation;
 import com.icoder.contest.management.dto.CreateContestRequest;
 import com.icoder.contest.management.entity.Contest;
 import com.icoder.contest.management.entity.ContestProblemRelation;
-import com.icoder.contest.management.enums.ContestOpenness;
 import com.icoder.contest.management.mapper.ContestMapper;
 import com.icoder.contest.management.repository.ContestRepository;
 import com.icoder.contest.management.service.interfaces.ContestService;
 import com.icoder.contest.management.util.ContestUtils;
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.core.exception.ResourceNotFoundException;
+import com.icoder.core.utils.ConvertFromString;
 import com.icoder.core.utils.SecurityUtils;
 import com.icoder.group.management.entity.Group;
-import com.icoder.group.management.enums.Visibility;
 import com.icoder.group.management.repository.GroupRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,12 +29,13 @@ public class ContestServiceImpl implements ContestService {
     private final SecurityUtils securityUtils;
     private final GroupRepository groupRepository;
     private final ContestMapper contestMapper;
+    private final ConvertFromString convertFromString;
 
     @Override
     @Transactional
     public MessageResponse createContest(CreateContestRequest request) {
         Long userId = securityUtils.getCurrentUserId();
-        Long groupId = Long.parseLong(request.getGroupId());
+        Long groupId = convertFromString.toLong(request.getGroupId());
 
         if (request.getProblemSet() == null || request.getProblemSet().isEmpty()) {
             throw new IllegalArgumentException("A contest must have at least one problem.");
@@ -50,7 +50,8 @@ public class ContestServiceImpl implements ContestService {
             log.warn("Access denied: User {} is not coordinator for group {}", userId, groupId);
             throw new org.springframework.security.access.AccessDeniedException("User is not a contest coordinator");
         }
-        validateContestRules(request, group);
+
+        contestUtils.validateContestRules(request, group);
 
         Contest contest = Contest.builder()
                 .group(group)
@@ -76,13 +77,14 @@ public class ContestServiceImpl implements ContestService {
 
     @Override
     @Transactional
-    public MessageResponse updateContest(Long contestId, CreateContestRequest request) {
+    public MessageResponse updateContest(String contestId, CreateContestRequest request) {
         Long userId = securityUtils.getCurrentUserId();
 
-        Contest existingContest = contestRepository.findById(contestId)
+        Long contestIdLong = convertFromString.toLong(contestId);
+        Contest existingContest = contestRepository.findById(contestIdLong)
                 .orElseThrow(() -> new ResourceNotFoundException("Contest not found with id: " + contestId));
 
-        Long groupId = Long.parseLong(request.getGroupId());
+        Long groupId = convertFromString.toLong(request.getGroupId());
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new ResourceNotFoundException("Group not found with id: " + groupId));
 
@@ -113,17 +115,21 @@ public class ContestServiceImpl implements ContestService {
         return new MessageResponse("Contest updated successfully.");
     }
 
-    private void validateContestRules(CreateContestRequest request, Group group) {
-        ContestOpenness contestOpenness = ContestOpenness.valueOf(request.getContestOpenness().name());
+    @Override
+    @Transactional
+    public void deleteContest(String contestId, String groupId) {
+        Long userId = securityUtils.getCurrentUserId();
+        Long groupIdLong = convertFromString.toLong(groupId);
+        Long contestIdLong = convertFromString.toLong(contestId);
 
-        if (group.getVisibility() == Visibility.PRIVATE && contestOpenness != ContestOpenness.PRIVATE) {
-            throw new IllegalArgumentException("Private groups can only have private contests.");
+        Group group = groupRepository.findById(groupIdLong)
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found with id: " + groupId));
+        if (!contestUtils.isUserContestCoordinator(userId, group)) {
+            throw new org.springframework.security.access.AccessDeniedException("User is not a contest coordinator");
         }
 
-        if (contestOpenness == ContestOpenness.PROTECTED) {
-            if (request.getPassword() == null || request.getPassword().isBlank()) {
-                throw new IllegalArgumentException("Password is required for protected contests.");
-            }
-        }
+        contestUtils.isContestInGroup(contestIdLong, groupIdLong);
+
+        contestRepository.deleteById(contestIdLong);
     }
 }

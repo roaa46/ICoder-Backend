@@ -7,6 +7,7 @@ import com.icoder.contest.management.entity.ContestProblemRelation;
 import com.icoder.contest.management.enums.ContestOpenness;
 import com.icoder.contest.management.enums.ContestStatus;
 import com.icoder.contest.management.enums.ContestType;
+import com.icoder.contest.management.repository.ContestRepository;
 import com.icoder.core.exception.ResourceNotFoundException;
 import com.icoder.group.management.entity.Group;
 import com.icoder.group.management.enums.GroupRole;
@@ -33,6 +34,7 @@ public class ContestUtils {
     private final UserGroupRoleRepository userGroupRoleRepository;
     private final PasswordEncoder passwordEncoder;
     private final ProblemRepository problemRepository;
+    private final ContestRepository contestRepository;
 
     public boolean isUserContestCoordinator(Long userId, Group group) {
         return userGroupRoleRepository.findRoleByUserIdAndGroupId(userId, group.getId())
@@ -157,5 +159,25 @@ public class ContestUtils {
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid weight format");
         }
+    }
+
+    public void validateContestRules(CreateContestRequest request, Group group) {
+        ContestOpenness contestOpenness = ContestOpenness.valueOf(request.getContestOpenness().name());
+
+        if (group.getVisibility() == Visibility.PRIVATE && contestOpenness != ContestOpenness.PRIVATE) {
+            throw new IllegalArgumentException("Private groups can only have private contests.");
+        }
+
+        if (contestOpenness == ContestOpenness.PROTECTED) {
+            if (request.getPassword() == null || request.getPassword().isBlank()) {
+                throw new IllegalArgumentException("Password is required for protected contests.");
+            }
+        }
+    }
+
+    public boolean isContestInGroup(Long contestId, Long groupId) {
+        if (contestRepository.existsByIdAndGroupId(contestId, groupId))
+            return true;
+        throw new IllegalArgumentException("Contest not found in group");
     }
 }

@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ContestRepository extends JpaRepository<Contest, Long> {
-
+    boolean existsByIdAndGroupId(Long contestId, Long groupId);
 }
