@@ -76,9 +76,14 @@ public class CodingEditorController {
     }
 
     @GetMapping("/submissions/batch")
+
     @Operation(
-            summary = "Retrieve the execution results for a batch of submission tokens",
-            description = "Accepts a list of tokens. Checks the status of all submissions. Returns 202 Accepted if any submission is still running, or 200 OK if all submissions have finished processing (requires login)"
+            summary = "Retrieve execution results for multiple submissions (Batch Polling Endpoint)",
+            description = "Retrieves the current status and outputs for a batch of submission tokens. \n\n" +
+                    "**Frontend Workflow:** \n" +
+                    "1. If this endpoint returns **202 Accepted**, it means **at least one submission** is still in queue or processing. The frontend should wait (e.g., 1-2 seconds) and poll again. \n" +
+                    "2. If it returns **200 OK**, all submissions have finished execution (regardless of whether results are 'Accepted', 'Wrong Answer', or 'Error'). \n\n" +
+                    "**Note:** Use the `status.id` to distinguish between 'Processing' (< 3) and 'Final' states (>= 3)."
     )
     public ResponseEntity<BatchSubmissionResult> getBatchResults(@RequestParam List<String> tokens) {
 
