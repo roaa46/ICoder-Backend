@@ -39,7 +39,7 @@ public class ContestServiceImpl implements ContestService {
     @Transactional
     public MessageResponse createContest(CreateContestRequest request) {
         Long userId = securityUtils.getCurrentUserId();
-        Long groupId = convertFromString.toLong(request.getGroupId());
+        Long groupId = request.getGroupId();
 
         if (request.getProblemSet() == null || request.getProblemSet().isEmpty()) {
             throw new IllegalArgumentException("A contest must have at least one problem.");
@@ -61,7 +61,7 @@ public class ContestServiceImpl implements ContestService {
                 .group(group)
                 .title(request.getTitle())
                 .description(request.getDescription())
-                .beginTime(contestUtils.parseInstant(request.getBeginTime()))
+                .beginTime(request.getBeginTime())
                 .length(contestUtils.parseDuration(request.getLength()))
                 .historyRank(request.getHistoryRank() == null || request.getHistoryRank())
                 .createdAt(Instant.now())
@@ -82,14 +82,13 @@ public class ContestServiceImpl implements ContestService {
 
     @Override
     @Transactional
-    public MessageResponse updateContest(String contestId, CreateContestRequest request) {
+    public MessageResponse updateContest(Long contestId, CreateContestRequest request) {
         Long userId = securityUtils.getCurrentUserId();
 
-        Long contestIdLong = convertFromString.toLong(contestId);
-        Contest existingContest = contestRepository.findById(contestIdLong)
+        Contest existingContest = contestRepository.findById(contestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Contest not found with id: " + contestId));
 
-        Long groupId = convertFromString.toLong(request.getGroupId());
+        Long groupId = request.getGroupId();
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new ResourceNotFoundException("Group not found with id: " + groupId));
 
@@ -102,7 +101,7 @@ public class ContestServiceImpl implements ContestService {
         }
 
         contestMapper.updateContestFromDto(request, existingContest);
-        existingContest.setBeginTime(contestUtils.parseInstant(request.getBeginTime()));
+        existingContest.setBeginTime(request.getBeginTime());
         existingContest.setLength(contestUtils.parseDuration(request.getLength()));
         existingContest.setContestStatus(contestUtils.calculateStatus(existingContest.getBeginTime(), existingContest.getLength()));
         existingContest.setHistoryRank(request.getHistoryRank() == null || request.getHistoryRank());
@@ -122,26 +121,23 @@ public class ContestServiceImpl implements ContestService {
 
     @Override
     @Transactional
-    public void deleteContest(String contestId, String groupId) {
+    public void deleteContest(Long contestId, Long groupId) {
         Long userId = securityUtils.getCurrentUserId();
-        Long groupIdLong = convertFromString.toLong(groupId);
-        Long contestIdLong = convertFromString.toLong(contestId);
 
-        Group group = groupRepository.findById(groupIdLong)
+        Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new ResourceNotFoundException("Group not found with id: " + groupId));
         if (!contestUtils.isUserContestCoordinator(userId, group)) {
             throw new org.springframework.security.access.AccessDeniedException("User is not a contest coordinator");
         }
 
-        contestUtils.isContestInGroup(contestIdLong, groupIdLong);
+        contestUtils.isContestInGroup(contestId, groupId);
 
-        contestRepository.deleteById(contestIdLong);
+        contestRepository.deleteById(contestId);
     }
 
     @Override
-    public Page<GroupContestsResponse> viewContestsInGroup(String groupId, Pageable pageable) {
-        Long groupIdLong = convertFromString.toLong(groupId);
-        Page<Contest> contests = contestRepository.findByGroupId(groupIdLong, pageable);
+    public Page<GroupContestsResponse> viewContestsInGroup(Long groupId, Pageable pageable) {
+        Page<Contest> contests = contestRepository.findByGroupId(groupId, pageable);
 
         return contests.map(contestMapper::toDto);
     }

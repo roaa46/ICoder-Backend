@@ -22,7 +22,6 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -127,9 +126,9 @@ public class ContestUtils {
         return ContestStatus.ENDED;
     }
 
-    public Set<ContestProblemRelation> mapProblemSetToRelations(List<ProblemSetRequest> problemSet, Contest contest) {
+    public Set<ContestProblemRelation> mapProblemSetToRelations(Set<ProblemSetRequest> problemSet, Contest contest) {
         Set<Long> problemIds = problemSet.stream()
-                .map(p -> Long.parseLong(p.getProblemId()))
+                .map(p -> p.getProblemId())
                 .collect(Collectors.toSet());
 
         Map<Long, Problem> problemMap = problemRepository.findAllById(problemIds).stream()
@@ -137,7 +136,7 @@ public class ContestUtils {
 
         return problemSet.stream()
                 .map(pReq -> {
-                    Long pId = Long.parseLong(pReq.getProblemId());
+                    Long pId = pReq.getProblemId();
                     Problem problem = Optional.ofNullable(problemMap.get(pId))
                             .orElseThrow(() -> new ResourceNotFoundException("Problem not found: " + pId));
 

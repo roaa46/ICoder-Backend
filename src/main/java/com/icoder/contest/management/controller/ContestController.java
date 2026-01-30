@@ -25,18 +25,18 @@ public class ContestController {
     }
 
     @PutMapping("/{contestId}")
-    public ResponseEntity<MessageResponse> updateContest(@PathVariable String contestId, @Valid @RequestBody CreateContestRequest request) {
+    public ResponseEntity<MessageResponse> updateContest(@PathVariable Long contestId, @Valid @RequestBody CreateContestRequest request) {
         return ResponseEntity.ok(contestService.updateContest(contestId, request));
     }
 
     @DeleteMapping("/{contestId}")
-    public ResponseEntity deleteContest(@PathVariable String contestId, @RequestParam("group_id") String groupId) {
+    public ResponseEntity deleteContest(@PathVariable Long contestId, @RequestParam("group_id") Long groupId) {
         contestService.deleteContest(contestId, groupId);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{groupId}")
-    public ResponseEntity<Page<GroupContestsResponse>> getContestsInGroup(@PathVariable String groupId,
+    public ResponseEntity<Page<GroupContestsResponse>> getContestsInGroup(@PathVariable Long groupId,
                                                                           @SortDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(contestService.viewContestsInGroup(groupId, pageable));
     }

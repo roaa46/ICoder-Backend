@@ -1,5 +1,6 @@
 package com.icoder.contest.management.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -14,23 +15,23 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.time.Instant;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class CreateContestRequest {
-    @NotBlank
-    private String groupId;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    private Long groupId;
 
     @NotBlank
     private String title;
 
     private String description;
 
-    @NotBlank
-    private String beginTime;
+    private Instant beginTime;
 
     @NotBlank
     @Pattern(
@@ -51,5 +52,5 @@ public class CreateContestRequest {
 
     private Boolean historyRank;
 
-    private List<ProblemSetRequest> problemSet;
+    private Set<ProblemSetRequest> problemSet;
 }

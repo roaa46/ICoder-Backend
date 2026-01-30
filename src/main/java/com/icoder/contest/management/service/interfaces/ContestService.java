@@ -9,9 +9,9 @@ import org.springframework.data.domain.Pageable;
 public interface ContestService {
     MessageResponse createContest(CreateContestRequest request);
 
-    MessageResponse updateContest(String contestId, CreateContestRequest request);
+    MessageResponse updateContest(Long contestId, CreateContestRequest request);
 
-    void deleteContest(String contestId, String groupId);
+    void deleteContest(Long contestId, Long groupId);
 
-    Page<GroupContestsResponse> viewContestsInGroup(String groupId, Pageable pageable);
+    Page<GroupContestsResponse> viewContestsInGroup(Long groupId, Pageable pageable);
 }

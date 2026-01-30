@@ -30,7 +30,7 @@ public class DateTimeMapper {
                 duration.toSecondsPart());
     }
 
-    // it's used in request'
+    // it's used in request
     public Instant toInstant(String beginTime) {
         if (beginTime == null || beginTime.isBlank()) {
             return null;

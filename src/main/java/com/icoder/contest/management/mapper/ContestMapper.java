@@ -14,8 +14,6 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
         uses = {DateTimeMapper.class, ContestUserRelationMapper.class},
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface ContestMapper {
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "group", ignore = true)
     @Mapping(target = "beginTime", ignore = true)
     @Mapping(target = "length", ignore = true)
     @Mapping(target = "historyRank", ignore = true)
