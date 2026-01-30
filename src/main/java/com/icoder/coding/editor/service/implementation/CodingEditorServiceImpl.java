@@ -9,7 +9,6 @@ import com.icoder.coding.editor.utils.LanguageMatcher;
 import com.icoder.core.exception.ActiveTemplateConflictException;
 import com.icoder.core.exception.ResourceNotFoundException;
 import com.icoder.core.exception.TemplateException;
-import com.icoder.core.utils.ConvertFromString;
 import com.icoder.core.utils.SecurityUtils;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
@@ -44,7 +43,6 @@ public class CodingEditorServiceImpl implements CodingEditorService {
     private final UserRepository userRepository;
     private final TemplateMapper mapper;
     private final SecurityUtils securityUtils;
-    private final ConvertFromString convertFromString;
 
     public CodingEditorServiceImpl(
             WebClient.Builder webClientBuilder,
@@ -52,7 +50,6 @@ public class CodingEditorServiceImpl implements CodingEditorService {
             UserRepository userRepository,
             TemplateMapper mapper,
             SecurityUtils securityUtils,
-            ConvertFromString convertFromString,
             @Value("${judge0.api-url}") String apiUrl,
             @Value("${judge0.auth-key}") String authKey,
             @Value("${judge0.host}") String host) {
@@ -61,7 +58,6 @@ public class CodingEditorServiceImpl implements CodingEditorService {
         this.userRepository = userRepository;
         this.mapper = mapper;
         this.securityUtils = securityUtils;
-        this.convertFromString = convertFromString;
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-RapidAPI-Key", authKey);
@@ -89,13 +85,12 @@ public class CodingEditorServiceImpl implements CodingEditorService {
     }
 
     @Override
-    public LanguageResponse getLanguage(String id) {
-        Integer idInteger = convertFromString.toInteger(id);
+    public LanguageResponse getLanguage(Integer id) {
 
         List<LanguageResponse> allLanguages = getLanguages();
 
         return allLanguages.stream()
-                .filter(lang -> lang.getId() != null && lang.getId().equals(idInteger))
+                .filter(lang -> lang.getId() != null && lang.getId().equals(id))
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
@@ -196,7 +191,8 @@ public class CodingEditorServiceImpl implements CodingEditorService {
                 .build();
 
         ParameterizedTypeReference<List<TokenResponse>> typeRef =
-                new ParameterizedTypeReference<List<TokenResponse>>() {};
+                new ParameterizedTypeReference<List<TokenResponse>>() {
+                };
 
         List<TokenResponse> response = webClient.post()
                 .uri(uriBuilder -> uriBuilder.path("/submissions/batch")
@@ -282,9 +278,8 @@ public class CodingEditorServiceImpl implements CodingEditorService {
 
     @Transactional
     @Override
-    public CodeTemplateResponse toggleTemplate(String templateId, boolean force) {
-        Long id = Long.parseLong(templateId);
-        CodeTemplate template = templateRepository.findById(id)
+    public CodeTemplateResponse toggleTemplate(Long templateId, boolean force) {
+        CodeTemplate template = templateRepository.findById(templateId)
                 .orElseThrow(() -> new ResourceNotFoundException("Template not found"));
 
         Long userId = template.getUser().getId();
@@ -306,12 +301,11 @@ public class CodingEditorServiceImpl implements CodingEditorService {
 
     @Override
     @Transactional(readOnly = true)
-    public CodeTemplateResponse getTemplate(String  templateId) {
+    public CodeTemplateResponse getTemplate(Long templateId) {
         Long userId = securityUtils.getCurrentUserId();
-        Long id = Long.parseLong(templateId);
 
         CodeTemplate template = templateRepository
-                .findByIdAndUserId(id, userId)
+                .findByIdAndUserId(templateId, userId)
                 .orElseThrow(() -> new TemplateException("Template not found"));
         CodeTemplateResponse response = mapper.toDTO(template);
 
@@ -337,12 +331,11 @@ public class CodingEditorServiceImpl implements CodingEditorService {
 
     @Override
     @Transactional
-    public CodeTemplateResponse editTemplate(String templateId, CodeTemplateRequest request) {
+    public CodeTemplateResponse editTemplate(Long templateId, CodeTemplateRequest request) {
         Long userId = securityUtils.getCurrentUserId();
-        Long id = Long.parseLong(templateId);
 
         CodeTemplate template = templateRepository
-                .findByIdAndUserId(id, userId)
+                .findByIdAndUserId(templateId, userId)
                 .orElseThrow(() -> new TemplateException("Template not found"));
 
         template.setTemplateName(request.getTemplateName());
@@ -361,12 +354,11 @@ public class CodingEditorServiceImpl implements CodingEditorService {
 
     @Override
     @Transactional
-    public void deleteTemplate(String templateId) {
+    public void deleteTemplate(Long templateId) {
         Long userId = securityUtils.getCurrentUserId();
 
-        Long id = Long.parseLong(templateId);
         CodeTemplate template = templateRepository
-                .findByIdAndUserId(id, userId)
+                .findByIdAndUserId(templateId, userId)
                 .orElseThrow(() -> new TemplateException("Template not found"));
 
         templateRepository.delete(template);

@@ -8,7 +8,7 @@ import java.util.List;
 public interface CodingEditorService {
     TokenResponse submitCode(SubmissionRequest request);
 
-    LanguageResponse getLanguage(String id);
+    LanguageResponse getLanguage(Integer id);
 
     List<LanguageResponse> getLanguages();
 
@@ -20,13 +20,13 @@ public interface CodingEditorService {
 
     CodeTemplateResponse addTemplate(CodeTemplateRequest request);
 
-    CodeTemplateResponse toggleTemplate(String templateId, boolean force);
+    CodeTemplateResponse toggleTemplate(Long templateId, boolean force);
 
-    CodeTemplateResponse getTemplate(String  templateId);
+    CodeTemplateResponse getTemplate(Long templateId);
 
     Page<CodeTemplateResponse> getTemplates(int page);
 
-    CodeTemplateResponse editTemplate(String templateId, CodeTemplateRequest request);
+    CodeTemplateResponse editTemplate(Long templateId, CodeTemplateRequest request);
 
-    void deleteTemplate(String templateId);
+    void deleteTemplate(Long templateId);
 }
