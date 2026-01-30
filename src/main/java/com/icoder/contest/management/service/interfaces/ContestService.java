@@ -1,5 +1,6 @@
 package com.icoder.contest.management.service.interfaces;
 
+import com.icoder.contest.management.dto.ContestResponse;
 import com.icoder.contest.management.dto.CreateContestRequest;
 import com.icoder.contest.management.dto.GroupContestsResponse;
 import com.icoder.core.dto.MessageResponse;
@@ -14,4 +15,6 @@ public interface ContestService {
     void deleteContest(Long contestId, Long groupId);
 
     Page<GroupContestsResponse> viewContestsInGroup(Long groupId, Pageable pageable);
+
+    ContestResponse viewContest(Long contestId);
 }

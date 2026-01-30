@@ -1,5 +1,6 @@
 package com.icoder.contest.management.controller;
 
+import com.icoder.contest.management.dto.ContestResponse;
 import com.icoder.contest.management.dto.CreateContestRequest;
 import com.icoder.contest.management.dto.GroupContestsResponse;
 import com.icoder.contest.management.service.interfaces.ContestService;
@@ -39,5 +40,10 @@ public class ContestController {
     public ResponseEntity<Page<GroupContestsResponse>> getContestsInGroup(@PathVariable Long groupId,
                                                                           @SortDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(contestService.viewContestsInGroup(groupId, pageable));
+    }
+
+    @GetMapping("{contestId}")
+    public ResponseEntity<ContestResponse> getContest(@PathVariable Long contestId) {
+        return ResponseEntity.ok(contestService.viewContest(contestId));
     }
 }

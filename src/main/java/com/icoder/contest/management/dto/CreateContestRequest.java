@@ -4,10 +4,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.icoder.contest.management.enums.ContestOpenness;
 import com.icoder.contest.management.enums.ContestType;
-import com.icoder.core.utils.LowercaseEnumSerializer;
 import com.icoder.core.utils.UppercaseEnumDeserializer;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -40,11 +38,9 @@ public class CreateContestRequest {
     )
     private String length;
 
-    @JsonSerialize(using = LowercaseEnumSerializer.class)
     @JsonDeserialize(using = UppercaseEnumDeserializer.class)
     private ContestType contestType;
 
-    @JsonSerialize(using = LowercaseEnumSerializer.class)
     @JsonDeserialize(using = UppercaseEnumDeserializer.class)
     private ContestOpenness contestOpenness;
 

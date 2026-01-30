@@ -49,8 +49,12 @@ public class CodingEditorController {
 
     @GetMapping("/submissions/{token}")
     @Operation(
-            summary = "Retrieve the execution result for a single submission token",
-            description = "Polls the Judge0 service using the provided token. If processing is still ongoing, returns 202 Accepted. If finished, returns 200 OK with the final result (output, status, time, memory) (requires login)"
+            summary = "Retrieve the execution result (Polling Endpoint)",
+            description = "Retrieves the current status and output of a submission. \n\n" +
+                    "**Frontend Workflow:** \n" +
+                    "1. If this endpoint returns **202 Accepted**, it means the code is still in queue or processing. The frontend should wait (e.g., 1-2 seconds) and poll again. \n" +
+                    "2. If it returns **200 OK**, the execution is complete (regardless of whether the result is 'Accepted', 'Wrong Answer', or 'Error'). \n\n" +
+                    "**Note:** Use the `status.id` to distinguish between 'Processing' (< 3) and 'Final' states (>= 3)."
     )
     public ResponseEntity<SubmissionResult> getResult(@PathVariable String token) {
         SubmissionResult result = codingEditorService.processAndGetResult(token);

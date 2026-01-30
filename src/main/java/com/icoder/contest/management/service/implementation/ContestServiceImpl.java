@@ -1,5 +1,6 @@
 package com.icoder.contest.management.service.implementation;
 
+import com.icoder.contest.management.dto.ContestResponse;
 import com.icoder.contest.management.dto.CreateContestRequest;
 import com.icoder.contest.management.dto.GroupContestsResponse;
 import com.icoder.contest.management.entity.Contest;
@@ -10,7 +11,6 @@ import com.icoder.contest.management.service.interfaces.ContestService;
 import com.icoder.contest.management.util.ContestUtils;
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.core.exception.ResourceNotFoundException;
-import com.icoder.core.utils.ConvertFromString;
 import com.icoder.core.utils.SecurityUtils;
 import com.icoder.group.management.entity.Group;
 import com.icoder.group.management.repository.GroupRepository;
@@ -33,7 +33,6 @@ public class ContestServiceImpl implements ContestService {
     private final SecurityUtils securityUtils;
     private final GroupRepository groupRepository;
     private final ContestMapper contestMapper;
-    private final ConvertFromString convertFromString;
 
     @Override
     @Transactional
@@ -140,5 +139,10 @@ public class ContestServiceImpl implements ContestService {
         Page<Contest> contests = contestRepository.findByGroupId(groupId, pageable);
 
         return contests.map(contestMapper::toDto);
+    }
+
+    @Override
+    public ContestResponse viewContest(Long contestId) {
+        return null;
     }
 }
