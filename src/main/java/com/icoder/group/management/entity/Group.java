@@ -5,6 +5,7 @@ import com.icoder.group.management.enums.ContestCoordinatorType;
 import com.icoder.group.management.enums.Visibility;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Formula;
 
 import java.time.Instant;
 import java.util.HashSet;
@@ -46,6 +47,12 @@ public class Group {
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
+
+    @Column(nullable = true)
+    private Long ownerId;
+
+    @Formula("(SELECT COUNT(*) FROM user_group_roles ugr WHERE ugr.group_id = id)")
+    private Long groupMembersCount;
 
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore

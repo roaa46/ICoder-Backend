@@ -21,6 +21,7 @@ import com.icoder.core.dto.PictureUrlResponse;
 import com.icoder.user.management.entity.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -45,6 +46,9 @@ public class GroupServiceImpl implements GroupService {
     private final UserGroupRoleMapper userGroupRoleMapper;
     private final Cloudinary cloudinary;
     private final ImageService imageService;
+    @Value("${group.picture.folder}")
+    private String groupPictureFolder;
+
     @Override
     public Page<GroupResponse> getMyGroups(Pageable pageable) {
         Page<Group> myGroups = groupRepository.getMyGroups(securityUtils.getCurrentUserUsername(), pageable);
@@ -71,11 +75,6 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public Long getMembersCount(Long groupId) {
-        return userGroupRoleRepository.countByGroupId(groupId);
-    }
-
-    @Override
     @Transactional
     public MessageResponse createGroup(CreateGroupRequest groupDetails) {
         Group group = groupMapper.toEntity(groupDetails);
@@ -84,7 +83,7 @@ public class GroupServiceImpl implements GroupService {
         group.setCode(UUID.randomUUID().toString().substring(0, 8).toUpperCase());
 
         User owner = groupUtil.findCurrentUser();
-
+        group.setOwnerId(owner.getId());
         UserGroupRole ownerRole = new UserGroupRole();
         ownerRole.setUser(owner);
         ownerRole.setGroup(group);
@@ -231,7 +230,6 @@ public class GroupServiceImpl implements GroupService {
     @Override
     @Transactional
     public MessageResponse updateGroupPicture(UpdateGroupPictureRequest pictureRequest) {
-        String folderPath = "groups/profile-pictures";
         Group group = groupUtil.findGroupById(pictureRequest.getGroupId());
 
         groupUtil.checkLeaderPermission(group);
@@ -240,10 +238,10 @@ public class GroupServiceImpl implements GroupService {
 
         try {
             if (group.getPictureUrl() != null) {
-                imageService.deleteImageFromCloudinary(group.getPictureUrl(), folderPath);
+                imageService.deleteImageFromCloudinary(group.getPictureUrl(), groupPictureFolder);
             }
             Map<String, Object> uploadResult = cloudinary.uploader().upload(pictureRequest.getPicture().getBytes(),
-                    Map.of("folder", folderPath));
+                    Map.of("folder", groupPictureFolder));
 
             String imageUrl = uploadResult.get("secure_url").toString();
             group.setPictureUrl(imageUrl);
@@ -266,7 +264,6 @@ public class GroupServiceImpl implements GroupService {
     @Override
     @Transactional
     public MessageResponse deleteGroupPicture(Long groupId) {
-        String folderPath = "groups/profile-pictures";
         Group group = groupUtil.findGroupById(groupId);
 
         groupUtil.checkLeaderPermission(group);
@@ -281,7 +278,7 @@ public class GroupServiceImpl implements GroupService {
         groupRepository.save(group);
 
         try {
-            imageService.deleteImageFromCloudinary(pictureUrl, folderPath);
+            imageService.deleteImageFromCloudinary(pictureUrl, groupPictureFolder);
         } catch (Exception e) {
             log.warn("Failed to delete profile image from Cloudinary", e);
         }

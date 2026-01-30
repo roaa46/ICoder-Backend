@@ -56,15 +56,6 @@ public class GroupController {
             return ResponseEntity.ok(groupService.getAllMembers(groupId, pageable));
     }
     @Operation(
-            summary = "Count group members",
-            description = "Retrieves the total number of members in a specific group using group id."
-    )
-    @GetMapping("/{groupId}/members/count")
-    @PreAuthorize(value = "isAuthenticated()")
-    public ResponseEntity<Long> getMembersCount(@PathVariable Long groupId){
-        return ResponseEntity.ok(groupService.getMembersCount(groupId));
-    }
-    @Operation(
             summary = "Search groups by name",
             description = "Retrieves groups that match the search query with pagination support."
     )

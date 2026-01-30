@@ -1,7 +1,9 @@
 package com.icoder.group.management.dto;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.icoder.core.utils.UppercaseEnumDeserializer;
 import com.icoder.group.management.enums.ContestCoordinatorType;
 import com.icoder.group.management.enums.Visibility;
 import jakarta.validation.constraints.NotBlank;
@@ -17,6 +19,7 @@ public class CreateGroupRequest {
     @NotBlank
     private String name;
     @NotNull
+    @JsonDeserialize(using = UppercaseEnumDeserializer.class)
     private Visibility visibility;
     @NotNull
     private Boolean codeEnabled;

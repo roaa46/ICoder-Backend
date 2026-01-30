@@ -1,5 +1,6 @@
 package com.icoder.group.management.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import jakarta.validation.constraints.NotNull;
@@ -16,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class UpdateGroupPictureRequest {
     @NotNull
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long groupId;
     private MultipartFile picture;
 }

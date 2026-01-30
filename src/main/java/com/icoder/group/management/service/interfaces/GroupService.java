@@ -13,7 +13,6 @@ public interface GroupService {
     Page<GroupResponse> getAllGroups(Pageable pageable);
     Page<GroupMemberResponse> getAllMembers(Long groupId, Pageable pageable);
     ResponseEntity<Page<GroupResponse>> searchByGroupName(String query, Pageable pageable);
-    Long getMembersCount(Long groupId);
     MessageResponse createGroup(CreateGroupRequest groupDetails);
     MessageResponse joinPublicGroup(Long groupId);
     MessageResponse joinGroupByCode(String groupCode);
