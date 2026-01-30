@@ -25,6 +25,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -126,10 +127,10 @@ public class ContestUtils {
         return ContestStatus.ENDED;
     }
 
-    public List<ContestProblemRelation> mapProblemSetToRelations(List<ProblemSetRequest> problemSet, Contest contest) {
-        List<Long> problemIds = problemSet.stream()
+    public Set<ContestProblemRelation> mapProblemSetToRelations(List<ProblemSetRequest> problemSet, Contest contest) {
+        Set<Long> problemIds = problemSet.stream()
                 .map(p -> Long.parseLong(p.getProblemId()))
-                .toList();
+                .collect(Collectors.toSet());
 
         Map<Long, Problem> problemMap = problemRepository.findAllById(problemIds).stream()
                 .collect(Collectors.toMap(Problem::getId, p -> p));
@@ -148,7 +149,7 @@ public class ContestUtils {
                             .problemWeight(weight)
                             .problemAlias(pReq.getProblemAlias())
                             .build();
-                }).toList();
+                }).collect(Collectors.toSet());
     }
 
     private int parseWeight(String weightStr) {

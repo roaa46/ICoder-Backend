@@ -1,6 +1,7 @@
 package com.icoder.contest.management.service.implementation;
 
 import com.icoder.contest.management.dto.CreateContestRequest;
+import com.icoder.contest.management.dto.GroupContestsResponse;
 import com.icoder.contest.management.entity.Contest;
 import com.icoder.contest.management.entity.ContestProblemRelation;
 import com.icoder.contest.management.mapper.ContestMapper;
@@ -15,10 +16,13 @@ import com.icoder.group.management.entity.Group;
 import com.icoder.group.management.repository.GroupRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.time.Instant;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -60,6 +64,7 @@ public class ContestServiceImpl implements ContestService {
                 .beginTime(contestUtils.parseInstant(request.getBeginTime()))
                 .length(contestUtils.parseDuration(request.getLength()))
                 .historyRank(request.getHistoryRank() == null || request.getHistoryRank())
+                .createdAt(Instant.now())
                 .build();
 
         contest.setContestStatus(contestUtils.calculateStatus(contest.getBeginTime(), contest.getLength()));
@@ -67,7 +72,7 @@ public class ContestServiceImpl implements ContestService {
         contestUtils.checkGroupVisibility(group, request);
         contestUtils.applyContestRulesBasedOnGroupVisibility(contest, group, request.getPassword());
 
-        List<ContestProblemRelation> relations = contestUtils.mapProblemSetToRelations(request.getProblemSet(), contest);
+        Set<ContestProblemRelation> relations = contestUtils.mapProblemSetToRelations(request.getProblemSet(), contest);
         contest.setProblemRelation(relations);
 
         contestRepository.save(contest);
@@ -105,7 +110,7 @@ public class ContestServiceImpl implements ContestService {
         contestUtils.checkGroupVisibility(group, request);
         contestUtils.applyContestRulesBasedOnGroupVisibility(existingContest, group, request.getPassword());
 
-        List<ContestProblemRelation> newRelations = contestUtils.mapProblemSetToRelations(request.getProblemSet(), existingContest);
+        Set<ContestProblemRelation> newRelations = contestUtils.mapProblemSetToRelations(request.getProblemSet(), existingContest);
 
         existingContest.getProblemRelation().clear();
         existingContest.getProblemRelation().addAll(newRelations);
@@ -131,5 +136,13 @@ public class ContestServiceImpl implements ContestService {
         contestUtils.isContestInGroup(contestIdLong, groupIdLong);
 
         contestRepository.deleteById(contestIdLong);
+    }
+
+    @Override
+    public Page<GroupContestsResponse> viewContestsInGroup(String groupId, Pageable pageable) {
+        Long groupIdLong = convertFromString.toLong(groupId);
+        Page<Contest> contests = contestRepository.findByGroupId(groupIdLong, pageable);
+
+        return contests.map(contestMapper::toDto);
     }
 }

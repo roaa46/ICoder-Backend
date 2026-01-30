@@ -1,16 +1,17 @@
 package com.icoder.contest.management.entity;
 
+import com.icoder.contest.management.enums.ContestOpenness;
 import com.icoder.contest.management.enums.ContestStatus;
 import com.icoder.contest.management.enums.ContestType;
-import com.icoder.contest.management.enums.ContestOpenness;
 import com.icoder.group.management.entity.Group;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Formula;
 import org.hibernate.validator.constraints.time.DurationMax;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -51,6 +52,8 @@ public class Contest {
 
     private String password; // it will be set if openness is protected
 
+    private Instant createdAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id")
     private Group group;
@@ -59,5 +62,21 @@ public class Contest {
             fetch = FetchType.LAZY,
             cascade = CascadeType.ALL,
             orphanRemoval = true)
-    private List<ContestProblemRelation> problemRelation;
+    private Set<ContestProblemRelation> problemRelation;
+
+    @OneToMany(mappedBy = "contest",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    private Set<ContestUserRelation> userRelation;
+
+    @Formula("""
+            (
+               SELECT COALESCE(COUNT(*), 0)
+               FROM contest_user_relations cur
+               WHERE cur.contest_id = id
+                 AND cur.role = 'PARTICIPANT'
+            )
+            """)
+    private Long participantsCount;
 }
