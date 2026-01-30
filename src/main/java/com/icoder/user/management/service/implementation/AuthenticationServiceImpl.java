@@ -3,9 +3,10 @@ package com.icoder.user.management.service.implementation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.core.exception.ApiException;
+import com.icoder.core.utils.SecurityUtils;
 import com.icoder.core.security.CustomUserDetails;
-import com.icoder.core.helpers.TokenHelper;
-import com.icoder.core.helpers.ValidatePasswordChange;
+import com.icoder.core.utils.TokenHelper;
+import com.icoder.core.utils.ValidatePasswordChange;
 import com.icoder.user.management.dto.auth.*;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.mapper.AuthMapper;
@@ -43,6 +44,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final ValidatePasswordChange validatePasswordChange;
     private final TokenHelper tokenHelper;
     private final AuthMapper authMapper;
+    private final SecurityUtils securityUtils;
 
     @Transactional
     @Override
@@ -197,7 +199,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Transactional
     @Override
     public MessageResponse changePassword(ChangePasswordRequest request) {
-        User user = userRepository.findById(getCurrentUserId())
+        User user = userRepository.findById(securityUtils.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         validatePasswordChange.validatePasswordChange(request, user);
         String encodedNewPassword = passwordEncoder.encode(request.getNewPassword());
@@ -222,24 +224,5 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         );
 
         SecurityContextHolder.getContext().setAuthentication(newAuth);
-    }
-
-    @Override
-    public Long getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if(authentication == null || !authentication.isAuthenticated()){
-            throw new RuntimeException("User not authenticated");
-        }
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        return userDetails.getId();
-    }
-    @Override
-    public String getCurrentUserUsername() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if(authentication == null || !authentication.isAuthenticated()){
-            throw new RuntimeException("User not authenticated");
-        }
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        return userDetails.getUsername();
     }
 }

@@ -1,4 +1,4 @@
-package com.icoder.core.helpers;
+package com.icoder.core.utils;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
@@ -11,7 +11,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class PublicHelpers {
+public class ImageService {
     private final Cloudinary cloudinary;
 
     public void checkPictureType(MultipartFile file) {

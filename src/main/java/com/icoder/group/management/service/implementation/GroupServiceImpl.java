@@ -3,7 +3,8 @@ package com.icoder.group.management.service.implementation;
 import com.cloudinary.Cloudinary;
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.core.exception.ApiException;
-import com.icoder.core.helpers.PublicHelpers;
+import com.icoder.core.utils.ImageService;
+import com.icoder.core.utils.SecurityUtils;
 import com.icoder.group.management.dto.*;
 import com.icoder.group.management.entity.Group;
 import com.icoder.group.management.entity.UserGroupRole;
@@ -18,7 +19,6 @@ import com.icoder.group.management.util.GroupUtil;
 import com.icoder.group.management.dto.GroupMemberResponse;
 import com.icoder.core.dto.PictureUrlResponse;
 import com.icoder.user.management.entity.User;
-import com.icoder.user.management.service.interfaces.AuthenticationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,16 +39,15 @@ import java.util.UUID;
 public class GroupServiceImpl implements GroupService {
     private final GroupRepository groupRepository;
     private final GroupMapper groupMapper;
-    private final AuthenticationService authenticationService;
+    private final SecurityUtils securityUtils;
     private final UserGroupRoleRepository userGroupRoleRepository;
     private final GroupUtil groupUtil;
-    private final PublicHelpers publicHelpers;
     private final UserGroupRoleMapper userGroupRoleMapper;
     private final Cloudinary cloudinary;
-
+    private final ImageService imageService;
     @Override
     public Page<GroupResponse> getMyGroups(Pageable pageable) {
-        Page<Group> myGroups = groupRepository.getMyGroups(authenticationService.getCurrentUserUsername(), pageable);
+        Page<Group> myGroups = groupRepository.getMyGroups(securityUtils.getCurrentUserUsername(), pageable);
         return myGroups.map(groupMapper::toDTO);
     }
 
@@ -237,11 +236,11 @@ public class GroupServiceImpl implements GroupService {
 
         groupUtil.checkLeaderPermission(group);
 
-        publicHelpers.checkPictureType(pictureRequest.getPicture());
+        imageService.checkPictureType(pictureRequest.getPicture());
 
         try {
             if (group.getPictureUrl() != null) {
-                publicHelpers.deleteImageFromCloudinary(group.getPictureUrl(), folderPath);
+                imageService.deleteImageFromCloudinary(group.getPictureUrl(), folderPath);
             }
             Map<String, Object> uploadResult = cloudinary.uploader().upload(pictureRequest.getPicture().getBytes(),
                     Map.of("folder", folderPath));
@@ -282,7 +281,7 @@ public class GroupServiceImpl implements GroupService {
         groupRepository.save(group);
 
         try {
-            publicHelpers.deleteImageFromCloudinary(pictureUrl, folderPath);
+            imageService.deleteImageFromCloudinary(pictureUrl, folderPath);
         } catch (Exception e) {
             log.warn("Failed to delete profile image from Cloudinary", e);
         }
