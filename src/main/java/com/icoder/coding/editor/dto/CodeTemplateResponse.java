@@ -1,9 +1,8 @@
 package com.icoder.coding.editor.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,10 +16,10 @@ import java.time.Instant;
 @Builder
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class CodeTemplateResponse {
-    @JsonSerialize(using = ToStringSerializer.class)
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long templateId;
     private String templateName;
-    @JsonSerialize(using = ToStringSerializer.class)
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Integer languageId;
     private String code;
     private boolean enabled;

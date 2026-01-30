@@ -24,7 +24,7 @@ public class CodingEditorController {
             description = "Fetches detailed information (name, version) for a specific coding language " +
                     "supported by Judge0 using its unique ID (doesn't require login)"
     )
-    public ResponseEntity<LanguageResponse> getLanguage(@RequestParam String id) {
+    public ResponseEntity<LanguageResponse> getLanguage(@RequestParam Integer id) {
         return ResponseEntity.ok(codingEditorService.getLanguage(id));
     }
 
@@ -112,7 +112,7 @@ public class CodingEditorController {
                     "If 'force' is false and another template for the same language is already active, it returns a 409 Conflict. " +
                     "If 'force' is true, it deactivates the existing template and activates this one."
     )
-    public ResponseEntity<CodeTemplateResponse> toggleTemplate(@PathVariable String id, @RequestParam boolean force){
+    public ResponseEntity<CodeTemplateResponse> toggleTemplate(@PathVariable Long id, @RequestParam boolean force){
         return ResponseEntity.ok(codingEditorService.toggleTemplate(id, force));
     }
 
@@ -121,7 +121,7 @@ public class CodingEditorController {
             summary = "Retrieve a code template by ID",
             description = "Returns the details of a single code template using its unique ID (requires login)"
     )
-    public ResponseEntity<CodeTemplateResponse> getTemplate(@PathVariable String id) {
+    public ResponseEntity<CodeTemplateResponse> getTemplate(@PathVariable Long id) {
         return ResponseEntity.ok(codingEditorService.getTemplate(id));
     }
 
@@ -141,7 +141,7 @@ public class CodingEditorController {
             summary = "Update an existing code template",
             description = "Updates the details of a code template using its ID and returns the updated template (requires login)"
     )
-    public ResponseEntity<CodeTemplateResponse> editTemplate(@PathVariable String id, @RequestBody CodeTemplateRequest request) {
+    public ResponseEntity<CodeTemplateResponse> editTemplate(@PathVariable Long id, @RequestBody CodeTemplateRequest request) {
         return ResponseEntity.ok(codingEditorService.editTemplate(id, request));
     }
 
@@ -150,7 +150,7 @@ public class CodingEditorController {
             summary = "Delete a code template",
             description = "Deletes the code template identified by the given ID (requires login)"
     )
-    public ResponseEntity deleteTemplate(@PathVariable String id) {
+    public ResponseEntity deleteTemplate(@PathVariable Long id) {
         codingEditorService.deleteTemplate(id);
         return ResponseEntity.noContent().build();
     }
