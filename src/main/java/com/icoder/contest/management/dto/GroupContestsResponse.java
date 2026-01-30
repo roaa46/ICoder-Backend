@@ -24,5 +24,7 @@ public class GroupContestsResponse {
 
     private Instant beginTime;
 
+    private Instant endTime;
+
     private String length;
 }

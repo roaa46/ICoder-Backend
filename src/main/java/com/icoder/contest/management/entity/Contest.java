@@ -34,6 +34,9 @@ public class Contest {
     private Instant beginTime;
 
     @Column(nullable = false)
+    private Instant endTime;
+
+    @Column(nullable = false)
     @DurationMax(days = 365, message = "Contest length cannot exceed 1 year")
     private Duration length;
 

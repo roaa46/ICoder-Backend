@@ -180,4 +180,17 @@ public class ContestUtils {
             return true;
         throw new IllegalArgumentException("Contest not found in group");
     }
+
+    public Group getGroup(Long contestId) {
+        return contestRepository.findById(contestId)
+                .map(Contest::getGroup)
+                .orElseThrow(() -> new ResourceNotFoundException("Contest not found with id: " + contestId));
+    }
+
+    public void validateAccess(Contest contest) {
+        Instant now = Instant.now();
+        if (now.isBefore(contest.getBeginTime())) {
+            throw new ResourceNotFoundException("The contest hasn't started yet!");
+        }
+    }
 }

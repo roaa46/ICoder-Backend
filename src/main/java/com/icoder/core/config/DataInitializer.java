@@ -11,8 +11,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.Instant;
-
 @RequiredArgsConstructor
 @Configuration
 @Slf4j
@@ -34,11 +32,11 @@ public class DataInitializer {
                     .passwordConfirmation(passwordEncoder.encode("Password@123"))
                     .build();
             User user = userMapper.toEntity(request);
+            user.setVerified(true);
             if (!userRepository.existsByHandle(user.getHandle())) {
                 userRepository.save(user);
                 log.info("User created successfully.");
-            }
-            else {
+            } else {
                 log.warn("User already exists.");
             }
         };

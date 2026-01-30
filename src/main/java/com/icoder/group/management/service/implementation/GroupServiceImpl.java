@@ -1,5 +1,9 @@
 package com.icoder.group.management.service.implementation;
 
+import com.icoder.contest.management.dto.GroupContestsResponse;
+import com.icoder.contest.management.entity.Contest;
+import com.icoder.contest.management.mapper.ContestMapper;
+import com.icoder.contest.management.repository.ContestRepository;
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.core.utils.SecurityUtils;
 import com.icoder.group.management.dto.*;
@@ -37,6 +41,8 @@ public class GroupServiceImpl implements GroupService {
     private final UserGroupRoleRepository userGroupRoleRepository;
     private final GroupUtil groupUtil;
     private final SecurityUtils securityUtils;
+    private final ContestRepository contestRepository;
+    private final ContestMapper contestMapper;
 
     @Override
     public Page<GroupResponse> GetMyGroups(Pageable pageable) {
@@ -205,5 +211,12 @@ public class GroupServiceImpl implements GroupService {
                         group.getName()
                 ))
                 .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Page<GroupContestsResponse> viewContestsInGroup(Long groupId, Pageable pageable) {
+        Page<Contest> contests = contestRepository.findByGroupId(groupId, pageable);
+
+        return contests.map(contestMapper::toGroupContestDto);
     }
 }

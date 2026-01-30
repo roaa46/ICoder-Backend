@@ -1,5 +1,6 @@
 package com.icoder.group.management.service.interfaces;
 
+import com.icoder.contest.management.dto.GroupContestsResponse;
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.group.management.dto.*;
 import org.springframework.data.domain.Page;
@@ -22,4 +23,6 @@ public interface GroupService {
     MessageResponse updateGroupDetails(UpdateGroupRequest updateGroupRequest);
 
     Set<ManagedGroupsResponse> getManagedGroups();
+
+    Page<GroupContestsResponse> viewContestsInGroup(Long groupId, Pageable pageable);
 }

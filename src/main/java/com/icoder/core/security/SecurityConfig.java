@@ -87,10 +87,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/coding/editor/templates/**").authenticated()
 
 
-                        ///    --------- contests ---------
-                        .requestMatchers("/api/v1/contests").authenticated()
-
-
 
                         /// --------- swagger ---------
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()

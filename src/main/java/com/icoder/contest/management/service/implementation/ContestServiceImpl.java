@@ -1,8 +1,8 @@
 package com.icoder.contest.management.service.implementation;
 
-import com.icoder.contest.management.dto.ContestResponse;
+import com.icoder.contest.management.dto.ContestDetailsResponse;
 import com.icoder.contest.management.dto.CreateContestRequest;
-import com.icoder.contest.management.dto.GroupContestsResponse;
+import com.icoder.contest.management.dto.ProblemSetResponse;
 import com.icoder.contest.management.entity.Contest;
 import com.icoder.contest.management.entity.ContestProblemRelation;
 import com.icoder.contest.management.mapper.ContestMapper;
@@ -16,11 +16,10 @@ import com.icoder.group.management.entity.Group;
 import com.icoder.group.management.repository.GroupRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Set;
 
@@ -56,12 +55,15 @@ public class ContestServiceImpl implements ContestService {
 
         contestUtils.validateContestRules(request, group);
 
+        Duration contesestDuration = contestUtils.parseDuration(request.getLength());
+
         Contest contest = Contest.builder()
                 .group(group)
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .beginTime(request.getBeginTime())
-                .length(contestUtils.parseDuration(request.getLength()))
+                .endTime(request.getBeginTime().plus(contesestDuration))
+                .length(contesestDuration)
                 .historyRank(request.getHistoryRank() == null || request.getHistoryRank())
                 .createdAt(Instant.now())
                 .build();
@@ -99,9 +101,12 @@ public class ContestServiceImpl implements ContestService {
             throw new IllegalArgumentException("A contest must have at least one problem.");
         }
 
+        Duration contesestDuration = contestUtils.parseDuration(request.getLength());
+
         contestMapper.updateContestFromDto(request, existingContest);
         existingContest.setBeginTime(request.getBeginTime());
-        existingContest.setLength(contestUtils.parseDuration(request.getLength()));
+        existingContest.setEndTime(request.getBeginTime().plus(contesestDuration));
+        existingContest.setLength(contesestDuration);
         existingContest.setContestStatus(contestUtils.calculateStatus(existingContest.getBeginTime(), existingContest.getLength()));
         existingContest.setHistoryRank(request.getHistoryRank() == null || request.getHistoryRank());
 
@@ -120,29 +125,33 @@ public class ContestServiceImpl implements ContestService {
 
     @Override
     @Transactional
-    public void deleteContest(Long contestId, Long groupId) {
+    public void deleteContest(Long contestId) {
         Long userId = securityUtils.getCurrentUserId();
 
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new ResourceNotFoundException("Group not found with id: " + groupId));
+        Group group = contestUtils.getGroup(contestId);
+
         if (!contestUtils.isUserContestCoordinator(userId, group)) {
             throw new org.springframework.security.access.AccessDeniedException("User is not a contest coordinator");
         }
 
-        contestUtils.isContestInGroup(contestId, groupId);
+        contestUtils.isContestInGroup(contestId, group.getId());
 
         contestRepository.deleteById(contestId);
     }
 
     @Override
-    public Page<GroupContestsResponse> viewContestsInGroup(Long groupId, Pageable pageable) {
-        Page<Contest> contests = contestRepository.findByGroupId(groupId, pageable);
-
-        return contests.map(contestMapper::toDto);
+    public ContestDetailsResponse viewContestDetails(Long contestId) {
+        Contest contest = contestRepository.findById(contestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Contest not found with id: " + contestId));
+        return contestMapper.toContestDetailsDto(contest);
     }
 
     @Override
-    public ContestResponse viewContest(Long contestId) {
-        return null;
+    public Set<ProblemSetResponse> viewProblemSet(Long contestId) {
+        Contest contest = contestRepository.findById(contestId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Contest not found with id: " + contestId));
+        contestUtils.validateAccess(contest);
+
+        return contestMapper.toProblemSetResponse(contest.getProblemRelation());
     }
 }

@@ -11,22 +11,20 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
-import java.util.Set;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class ContestResponse {
+public class ContestDetailsResponse {
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long id;
     private String title;
     private String description;
     private Instant beginTime;
     private Instant endTime;
+    private String length;
 
     @JsonSerialize(using = LowercaseEnumSerializer.class)
     private ContestStatus contestStatus;
-
-    private Set<ProblemSetResponse> problemSet;
 }

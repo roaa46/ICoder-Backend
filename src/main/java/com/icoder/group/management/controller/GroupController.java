@@ -1,5 +1,6 @@
 package com.icoder.group.management.controller;
 
+import com.icoder.contest.management.dto.GroupContestsResponse;
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.group.management.dto.*;
 import com.icoder.group.management.service.implementation.GroupServiceImpl;
@@ -7,7 +8,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.SortDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,13 +28,14 @@ public class GroupController {
     @GetMapping("/me")
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<Page<GroupResponse>> getMyGroups(
-           @PageableDefault(size = 9, sort = "name") Pageable pageable) {
+            @PageableDefault(size = 9, sort = "name") Pageable pageable) {
         return ResponseEntity.ok(groupService.GetMyGroups(pageable));
     }
+
     @GetMapping("")
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<Page<GroupResponse>> getAllGroups(
-            @PageableDefault(size = 9, sort = "name") Pageable pageable){
+            @PageableDefault(size = 9, sort = "name") Pageable pageable) {
         return ResponseEntity.ok(groupService.getAllGroups(pageable));
     }
 
@@ -43,38 +47,40 @@ public class GroupController {
 
     @PutMapping("/join")
     @PreAuthorize(value = "isAuthenticated()")
-    public ResponseEntity<MessageResponse> joinGroup(@RequestBody GroupIdRequest groupIdRequest){
+    public ResponseEntity<MessageResponse> joinGroup(@RequestBody GroupIdRequest groupIdRequest) {
         return ResponseEntity.ok(groupService.joinGroup(groupIdRequest));
     }
+
     @PutMapping("/members/add")
     @PreAuthorize(value = "isAuthenticated()")
-    public ResponseEntity<MessageResponse> addMemberToGroup(@RequestBody GroupMemberActionRequest groupMemberActionRequest){
+    public ResponseEntity<MessageResponse> addMemberToGroup(@RequestBody GroupMemberActionRequest groupMemberActionRequest) {
         return ResponseEntity.ok(groupService.addMemberToGroup(groupMemberActionRequest));
     }
 
     @PutMapping("members/promote")
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<MessageResponse> promoteMemberToManager(
-            @RequestBody GroupMemberActionRequest groupMemberActionRequest){
+            @RequestBody GroupMemberActionRequest groupMemberActionRequest) {
         return ResponseEntity.ok(groupService.promoteMemberToManager(groupMemberActionRequest));
     }
 
     @PutMapping("/members/demote")
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<MessageResponse> demoteManagerToMember(
-            @RequestBody GroupMemberActionRequest groupMemberActionRequest){
+            @RequestBody GroupMemberActionRequest groupMemberActionRequest) {
         return ResponseEntity.ok(groupService.demoteManagerToMember(groupMemberActionRequest));
     }
+
     @PutMapping()
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<MessageResponse> updateGroupDetails(
-            @Valid @RequestBody UpdateGroupRequest updateGroupRequest){
+            @Valid @RequestBody UpdateGroupRequest updateGroupRequest) {
         return ResponseEntity.ok(groupService.updateGroupDetails(updateGroupRequest));
     }
 
     @DeleteMapping("/members/remove")
     @PreAuthorize(value = "isAuthenticated()")
-    public ResponseEntity<MessageResponse> removeMemberFromGroup(@RequestBody GroupMemberActionRequest group){
+    public ResponseEntity<MessageResponse> removeMemberFromGroup(@RequestBody GroupMemberActionRequest group) {
         return ResponseEntity.ok(groupService.removeMemberFromGroup(group));
     }
 
@@ -82,5 +88,12 @@ public class GroupController {
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<Set<ManagedGroupsResponse>> getManagedGroups() {
         return ResponseEntity.ok(groupService.getManagedGroups());
+    }
+
+    @GetMapping("/{groupId}/contests")
+    @PreAuthorize(value = "isAuthenticated()")
+    public ResponseEntity<Page<GroupContestsResponse>> getContestsInGroup(@PathVariable Long groupId,
+                                                                          @SortDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(groupService.viewContestsInGroup(groupId, pageable));
     }
 }

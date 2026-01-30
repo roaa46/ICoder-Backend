@@ -27,4 +27,7 @@ public class ContestProblemRelation {
     private Integer problemWeight; // default is 1
 
     private String problemAlias; // if blank, use problem title
+
+    private int solvedCount = 0;
+    private int attemptedCount = 0;
 }
