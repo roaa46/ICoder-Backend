@@ -15,6 +15,7 @@ import java.util.Optional;
 public interface UserGroupRoleRepository extends JpaRepository<UserGroupRole, Long> {
     Optional<UserGroupRole> findByUserAndGroup(User user, Group group);
     Page<UserGroupRole> findAllByGroupId(Long groupId, Pageable pageable);
+    Long countByGroupId(Long groupId);
 
     @Query("""
     SELECT COUNT(ugr) > 0

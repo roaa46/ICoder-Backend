@@ -14,7 +14,7 @@ import java.util.Map;
 public class PublicHelpers {
     private final Cloudinary cloudinary;
 
-    public void checkpictureType(MultipartFile file) {
+    public void checkPictureType(MultipartFile file) {
         String pictureType = file.getContentType();
         if (pictureType == null ||
                 !(pictureType.equals("image/png") ||

@@ -33,8 +33,13 @@ public class GroupUtil {
                 .orElseThrow(() -> new NoSuchElementException("User not found"));
     }
 
-    public Group findGroup(Long groupId) {
+    public Group findGroupById(Long groupId) {
         return groupRepository.findById(groupId)
+                .orElseThrow(() -> new NoSuchElementException("Group not found"));
+    }
+
+    public Group findGroupByCode(String code){
+        return groupRepository.findByCode(code)
                 .orElseThrow(() -> new NoSuchElementException("Group not found"));
     }
 

@@ -19,8 +19,9 @@ public class CreateGroupRequest {
     @NotNull
     private Visibility visibility;
     @NotNull
+    private Boolean codeEnabled;
+    @NotNull
     private ContestCoordinatorType contestCoordinatorType;
     @NotBlank
     private String description;
-    private String pictureUrl;
 }

@@ -20,6 +20,7 @@ public class UpdateGroupRequest {
     private Long groupId;
     private String name;
     private Visibility visibility;
+    private Boolean codeEnabled;
     private ContestCoordinatorType contestCoordinatorType;
     private String description;
 }

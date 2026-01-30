@@ -23,6 +23,10 @@ public class Group {
 
     @Column(nullable = false, updatable = false, unique = true)
     private String code;
+
+    @Column(nullable = false)
+    private Boolean codeEnabled;
+
     @Column(nullable = false)
     private String name;
 
