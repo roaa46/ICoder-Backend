@@ -12,6 +12,7 @@ import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
 import java.time.Instant;
 import java.util.Set;
@@ -39,9 +40,11 @@ public class CreateContestRequest {
     private String length;
 
     @JsonDeserialize(using = UppercaseEnumDeserializer.class)
+    @NonNull
     private ContestType contestType;
 
     @JsonDeserialize(using = UppercaseEnumDeserializer.class)
+    @NonNull
     private ContestOpenness contestOpenness;
 
     private String password;
