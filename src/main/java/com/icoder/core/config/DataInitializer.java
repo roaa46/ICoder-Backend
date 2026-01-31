@@ -50,13 +50,17 @@ public class DataInitializer {
     }
 
     private void saveUserIfNotExists(RegisterRequest request) {
-        if (!userRepository.existsByHandle(request.getHandle())) {
-            User user = userMapper.toEntity(request);
-            user.setVerified(true);
-            userRepository.save(user);
-            log.info("User [{}] created successfully.", request.getHandle());
-        } else {
-            log.warn("User [{}] already exists. Skipping...", request.getHandle());
+        try {
+            if (!userRepository.existsByHandle(request.getHandle())) {
+                User user = userMapper.toEntity(request);
+                user.setVerified(true);
+                userRepository.save(user);
+                log.info("Successfully created user: [{}]", request.getHandle());
+            } else {
+                log.warn("Skipping: User [{}] already exists.", request.getHandle());
+            }
+        } catch (Exception e) {
+            log.error("Failed to create user [{}]. Error: {}", request.getHandle(), e.getMessage());
         }
     }
 }
