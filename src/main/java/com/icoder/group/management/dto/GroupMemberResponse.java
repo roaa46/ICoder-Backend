@@ -20,6 +20,7 @@ public class GroupMemberResponse {
     private String nickname;
     private String pictureUrl;
     private boolean verified;
+
     @JsonSerialize(using = LowercaseEnumSerializer.class)
     private GroupRole role;
 }

@@ -10,9 +10,13 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Set;
 
+import java.util.Optional;
+
 
 public interface GroupRepository extends JpaRepository<Group, Long> {
 
+    Optional<Group> findByCode(String code);
+    Page<Group> findByNameContainingIgnoreCaseAndVisibility(String name, Visibility visibility, Pageable pageable);
     @Query("SELECT g FROM Group g JOIN UserGroupRole ugr ON g.id = ugr.group.id JOIN User u ON ugr.user.id = u.id WHERE u.handle = :handle")
     Page<Group> getMyGroups(@Param("handle") String handle, Pageable pageable);
 

@@ -28,4 +28,8 @@ public class GroupResponse {
     private String description;
     private String pictureUrl;
     private Instant createdAt;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    private Long groupMembersCount;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    private Long ownerId;
 }

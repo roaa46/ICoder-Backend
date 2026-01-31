@@ -6,9 +6,8 @@ import com.icoder.contest.management.entity.Contest;
 import com.icoder.contest.management.mapper.ContestMapper;
 import com.icoder.contest.management.repository.ContestRepository;
 import com.icoder.core.dto.MessageResponse;
-import com.icoder.core.dto.PictureUrlResponse;
 import com.icoder.core.exception.ApiException;
-import com.icoder.core.helpers.PublicHelpers;
+import com.icoder.core.utils.ImageService;
 import com.icoder.core.utils.SecurityUtils;
 import com.icoder.group.management.dto.*;
 import com.icoder.group.management.entity.Group;
@@ -21,12 +20,16 @@ import com.icoder.group.management.repository.GroupRepository;
 import com.icoder.group.management.repository.UserGroupRoleRepository;
 import com.icoder.group.management.service.interfaces.GroupService;
 import com.icoder.group.management.util.GroupUtil;
+import com.icoder.group.management.dto.GroupMemberResponse;
+import com.icoder.core.dto.PictureUrlResponse;
 import com.icoder.user.management.entity.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -37,24 +40,25 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class GroupServiceImpl implements GroupService {
     private final GroupRepository groupRepository;
     private final GroupMapper groupMapper;
+    private final SecurityUtils securityUtils;
     private final UserGroupRoleRepository userGroupRoleRepository;
     private final GroupUtil groupUtil;
-    private final SecurityUtils securityUtils;
+    private final UserGroupRoleMapper userGroupRoleMapper;
+    private final Cloudinary cloudinary;
+    private final ImageService imageService;
+    @Value("${group.picture.folder}")
+    private String groupPictureFolder;
     private final ContestRepository contestRepository;
     private final ContestMapper contestMapper;
 
-    private final PublicHelpers publicHelpers;
-    private final UserGroupRoleMapper userGroupRoleMapper;
-    private final Cloudinary cloudinary;
-
     @Override
-    public Page<GroupResponse> GetMyGroups(Pageable pageable) {
+    public Page<GroupResponse> getMyGroups(Pageable pageable) {
         Page<Group> myGroups = groupRepository.getMyGroups(securityUtils.getCurrentUserUsername(), pageable);
         return myGroups.map(groupMapper::toDTO);
     }
@@ -73,15 +77,21 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
+    public ResponseEntity<Page<GroupResponse>> searchByGroupName(String query, Pageable pageable) {
+        Page<Group> groups = groupRepository.findByNameContainingIgnoreCaseAndVisibility(query, Visibility.PUBLIC, pageable);
+        return ResponseEntity.ok(groups.map(groupMapper::toDTO));
+    }
+
+    @Override
     @Transactional
     public MessageResponse createGroup(CreateGroupRequest groupDetails) {
         Group group = groupMapper.toEntity(groupDetails);
         group.setCreatedAt(Instant.now());
-        group.setContestCoordinatorType(groupDetails.getContestCoordinatorType());
+
         group.setCode(UUID.randomUUID().toString().substring(0, 8).toUpperCase());
 
         User owner = groupUtil.findCurrentUser();
-
+        group.setOwnerId(owner.getId());
         UserGroupRole ownerRole = new UserGroupRole();
         ownerRole.setUser(owner);
         ownerRole.setGroup(group);
@@ -94,14 +104,27 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     @Transactional
-    public MessageResponse joinGroup(Long groupId) {
+    public MessageResponse joinPublicGroup(Long groupId) {
         User user = groupUtil.findCurrentUser();
 
-        Group group = groupUtil.findGroup(groupId);
+        Group group = groupUtil.findGroupById(groupId);
 
         if (group.getVisibility() == Visibility.PRIVATE) {
             throw new AccessDeniedException("Cannot join a private group without an invitation");
         }
+
+        groupUtil.addUserToGroup(user, group);
+
+        return new MessageResponse("Joined group successfully");
+    }
+
+    @Override
+    public MessageResponse joinGroupByCode(String groupCode) {
+        Group group = groupUtil.findGroupByCode(groupCode);
+        if (!group.getCodeEnabled()) {
+            throw new AccessDeniedException("Group code-based joining is disabled");
+        }
+        User user = groupUtil.findCurrentUser();
 
         groupUtil.addUserToGroup(user, group);
 
@@ -114,9 +137,9 @@ public class GroupServiceImpl implements GroupService {
 
         User newMember = groupUtil.findUser(groupMemberActionRequest.getUserHandle());
 
-        Group group = groupUtil.findGroup(groupMemberActionRequest.getGroupId());
+        Group group = groupUtil.findGroupById(groupMemberActionRequest.getGroupId());
 
-        if (group.getVisibility() == Visibility.PRIVATE) {
+        if(group.getVisibility() == Visibility.PRIVATE) {
             groupUtil.checkLeaderPermission(group);
         }
 
@@ -129,7 +152,7 @@ public class GroupServiceImpl implements GroupService {
     public MessageResponse promoteMemberToManager(GroupMemberActionRequest groupMemberActionRequest) {
         User member = groupUtil.findUser(groupMemberActionRequest.getUserHandle());
 
-        Group group = groupUtil.findGroup(groupMemberActionRequest.getGroupId());
+        Group group = groupUtil.findGroupById(groupMemberActionRequest.getGroupId());
 
         groupUtil.checkLeaderPermission(group);
 
@@ -149,7 +172,7 @@ public class GroupServiceImpl implements GroupService {
     public MessageResponse demoteManagerToMember(GroupMemberActionRequest groupMemberActionRequest) {
         User member = groupUtil.findUser(groupMemberActionRequest.getUserHandle());
 
-        Group group = groupUtil.findGroup(groupMemberActionRequest.getGroupId());
+        Group group = groupUtil.findGroupById(groupMemberActionRequest.getGroupId());
 
         groupUtil.checkLeaderPermission(group);
 
@@ -157,7 +180,7 @@ public class GroupServiceImpl implements GroupService {
 
         if (userRole.getRole() == GroupRole.MEMBER) {
             throw new IllegalArgumentException("The user is already a member");
-        } else if (userRole.getRole() == GroupRole.OWNER) {
+        }else if (userRole.getRole() == GroupRole.OWNER) {
             throw new IllegalArgumentException("Cannot demote the group owner");
         }
 
@@ -171,12 +194,12 @@ public class GroupServiceImpl implements GroupService {
     public MessageResponse removeMemberFromGroup(Long groupId, String userHandle) {
         User member = groupUtil.findUser(userHandle);
 
-        Group group = groupUtil.findGroup(groupId);
+        Group group = groupUtil.findGroupById(groupId);
 
         groupUtil.checkLeaderPermission(group);
 
         UserGroupRole userRole = groupUtil.findUserRole(member, group);
-        if (userRole.getRole() == GroupRole.OWNER) {
+        if(userRole.getRole() == GroupRole.OWNER) {
             throw new IllegalArgumentException("Cannot remove the group owner");
         }
 
@@ -188,7 +211,7 @@ public class GroupServiceImpl implements GroupService {
     @Transactional
     public MessageResponse updateGroupDetails(UpdateGroupRequest updateGroupRequest) {
 
-        Group group = groupUtil.findGroup(updateGroupRequest.getGroupId());
+        Group group = groupUtil.findGroupById(updateGroupRequest.getGroupId());
         groupUtil.checkLeaderPermission(group);
 
         boolean updated = false;
@@ -196,11 +219,11 @@ public class GroupServiceImpl implements GroupService {
         updated |= groupUtil.updateField(updateGroupRequest.getName(), group::setName);
         updated |= groupUtil.updateField(updateGroupRequest.getDescription(), group::setDescription);
 
-        if (updateGroupRequest.getVisibility() != null) {
+        if(updateGroupRequest.getVisibility() != null) {
             group.setVisibility(updateGroupRequest.getVisibility());
             updated = true;
         }
-        if (updateGroupRequest.getContestCoordinatorType() != null) {
+        if(updateGroupRequest.getContestCoordinatorType() != null) {
             group.setContestCoordinatorType(updateGroupRequest.getContestCoordinatorType());
             updated = true;
         }
@@ -238,19 +261,18 @@ public class GroupServiceImpl implements GroupService {
     @Override
     @Transactional
     public MessageResponse updateGroupPicture(UpdateGroupPictureRequest pictureRequest) {
-        String folderPath = "groups/profile-pictures";
-        Group group = groupUtil.findGroup(pictureRequest.getGroupId());
+        Group group = groupUtil.findGroupById(pictureRequest.getGroupId());
 
         groupUtil.checkLeaderPermission(group);
 
-        publicHelpers.checkpictureType(pictureRequest.getPicture());
+        imageService.checkPictureType(pictureRequest.getPicture());
 
         try {
             if (group.getPictureUrl() != null) {
-                publicHelpers.deleteImageFromCloudinary(group.getPictureUrl(), folderPath);
+                imageService.deleteImageFromCloudinary(group.getPictureUrl(), groupPictureFolder);
             }
-            Map uploadResult = cloudinary.uploader().upload(pictureRequest.getPicture().getBytes(),
-                    Map.of("folder", folderPath));
+            Map<String, Object> uploadResult = cloudinary.uploader().upload(pictureRequest.getPicture().getBytes(),
+                    Map.of("folder", groupPictureFolder));
 
             String imageUrl = uploadResult.get("secure_url").toString();
             group.setPictureUrl(imageUrl);
@@ -265,31 +287,29 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     public PictureUrlResponse viewGroupPicture(Long groupId) {
-        Group group = groupUtil.findGroup(groupId);
+        Group group = groupUtil.findGroupById(groupId);
         return PictureUrlResponse.builder()
                 .pictureUrl(group.getPictureUrl())
                 .build();
     }
-
     @Override
     @Transactional
     public MessageResponse deleteGroupPicture(Long groupId) {
-        String folderPath = "groups/profile-pictures";
-        Group group = groupUtil.findGroup(groupId);
+        Group group = groupUtil.findGroupById(groupId);
 
         groupUtil.checkLeaderPermission(group);
 
         String pictureUrl = group.getPictureUrl();
 
         if (pictureUrl == null || pictureUrl.isBlank()) {
-            throw new ApiException("User does not have a profile picture");
+            throw new ApiException("Group does not have a profile picture");
         }
 
         group.setPictureUrl(null);
         groupRepository.save(group);
 
         try {
-            publicHelpers.deleteImageFromCloudinary(pictureUrl, folderPath);
+            imageService.deleteImageFromCloudinary(pictureUrl, groupPictureFolder);
         } catch (Exception e) {
             log.warn("Failed to delete profile image from Cloudinary", e);
         }

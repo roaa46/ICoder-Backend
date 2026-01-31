@@ -25,6 +25,7 @@ public class UpdateGroupRequest {
     private String name;
     @JsonDeserialize(using = UppercaseEnumDeserializer.class)
     private Visibility visibility;
+    private Boolean codeEnabled;
     @JsonDeserialize(using = UppercaseEnumDeserializer.class)
     private ContestCoordinatorType contestCoordinatorType;
     private String description;

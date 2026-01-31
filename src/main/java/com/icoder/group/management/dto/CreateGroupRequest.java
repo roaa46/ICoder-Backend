@@ -22,9 +22,10 @@ public class CreateGroupRequest {
     @JsonDeserialize(using = UppercaseEnumDeserializer.class)
     private Visibility visibility;
     @NotNull
+    private Boolean codeEnabled;
+    @NotNull
     @JsonDeserialize(using = UppercaseEnumDeserializer.class)
     private ContestCoordinatorType contestCoordinatorType;
     @NotBlank
     private String description;
-    private String pictureUrl;
 }
