@@ -19,6 +19,9 @@ import lombok.NoArgsConstructor;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class RegisterRequest {
     @NotBlank(message = "Handle is required")
+    @Size(min = 3, max = 20)
+    @Pattern(regexp = "^[a-z][a-z0-9_]{2,19}$",
+            message = "Handle must be 3-20 characters, start with a letter, and contain only lowercase letters, numbers, or underscores.")
     private String handle;
 
     @NotBlank(message = "Nickname is required")
