@@ -11,6 +11,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 @Configuration
 @Slf4j
@@ -22,23 +24,39 @@ public class DataInitializer {
     @Bean
     public CommandLineRunner commandLineRunner() {
         return args -> {
-            log.info(">>>> Start Initializing");
+            log.info(">>>> Start Initializing Data...");
 
-            RegisterRequest request = RegisterRequest.builder()
-                    .handle("roaazz")
-                    .nickname("Roaa Mohamed")
-                    .email("roaaamohamed66@gmail.com")
-                    .password(passwordEncoder.encode("Password@123"))
-                    .passwordConfirmation(passwordEncoder.encode("Password@123"))
-                    .build();
+            List<RegisterRequest> usersToCreate = List.of(
+                    createRequest("roaazz", "roaa mohamed", "roaaamohamed66@gmail.com"),
+                    createRequest("saam_03", "sam", "samshx404@gmail.com"),
+                    createRequest("roaa", "roaa2", "roaamohamedd60@gmail.com")
+            );
+
+            usersToCreate.forEach(this::saveUserIfNotExists);
+
+            log.info(">>>> Data Initialization Finished.");
+        };
+    }
+
+    private RegisterRequest createRequest(String handle, String nickname, String email) {
+        String encodedPassword = passwordEncoder.encode("Password@123");
+        return RegisterRequest.builder()
+                .handle(handle)
+                .nickname(nickname)
+                .email(email)
+                .password(encodedPassword)
+                .passwordConfirmation(encodedPassword)
+                .build();
+    }
+
+    private void saveUserIfNotExists(RegisterRequest request) {
+        if (!userRepository.existsByHandle(request.getHandle())) {
             User user = userMapper.toEntity(request);
             user.setVerified(true);
-            if (!userRepository.existsByHandle(user.getHandle())) {
-                userRepository.save(user);
-                log.info("User created successfully.");
-            } else {
-                log.warn("User already exists.");
-            }
-        };
+            userRepository.save(user);
+            log.info("User [{}] created successfully.", request.getHandle());
+        } else {
+            log.warn("User [{}] already exists. Skipping...", request.getHandle());
+        }
     }
 }
