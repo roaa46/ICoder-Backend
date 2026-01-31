@@ -8,14 +8,16 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class GroupIdRequest {
+public class UpdateGroupPictureRequest {
     @NotNull
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long groupId;
+    private MultipartFile picture;
 }

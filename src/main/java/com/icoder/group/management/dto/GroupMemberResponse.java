@@ -5,27 +5,21 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.icoder.core.utils.LowercaseEnumSerializer;
-import com.icoder.group.management.enums.ContestCoordinatorType;
-import com.icoder.group.management.enums.Visibility;
+import com.icoder.group.management.enums.GroupRole;
 import lombok.*;
-
-import java.time.Instant;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class GroupResponse {
+public class GroupMemberResponse {
     @JsonFormat(shape = JsonFormat.Shape.STRING)
-    private String id;
-    private String code;
-    private String name;
-    @JsonSerialize(using = LowercaseEnumSerializer.class)
-    private Visibility visibility;
-    @JsonSerialize(using = LowercaseEnumSerializer.class)
-    private ContestCoordinatorType contestCoordinatorType;
-    private String description;
+    private Long userId;
+    private String handle;
+    private String nickname;
     private String pictureUrl;
-    private Instant createdAt;
+    private boolean verified;
+    @JsonSerialize(using = LowercaseEnumSerializer.class)
+    private GroupRole role;
 }

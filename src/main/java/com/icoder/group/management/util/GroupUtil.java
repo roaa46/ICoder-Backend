@@ -1,5 +1,6 @@
 package com.icoder.group.management.util;
 
+import com.icoder.core.utils.SecurityUtils;
 import com.icoder.group.management.entity.Group;
 import com.icoder.group.management.entity.UserGroupRole;
 import com.icoder.group.management.enums.GroupRole;
@@ -7,7 +8,6 @@ import com.icoder.group.management.repository.GroupRepository;
 import com.icoder.group.management.repository.UserGroupRoleRepository;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
-import com.icoder.user.management.service.interfaces.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -21,10 +21,10 @@ public class GroupUtil {
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
     private final UserGroupRoleRepository userGroupRoleRepository;
-    private final AuthenticationService authenticationService;
+    private final SecurityUtils securityUtils;
 
     public User findCurrentUser() {
-        return userRepository.findById(authenticationService.getCurrentUserId())
+        return userRepository.findById(securityUtils.getCurrentUserId())
                 .orElseThrow(() -> new NoSuchElementException("User not found"));
     }
 
@@ -44,7 +44,7 @@ public class GroupUtil {
     }
 
     public void checkLeaderPermission(Group group) {
-        Long currentUserId = authenticationService.getCurrentUserId();
+        Long currentUserId = securityUtils.getCurrentUserId();
         boolean isLeader = userGroupRoleRepository.isLeaderOfGroup(currentUserId, group.getId());
 
         if (!isLeader) {

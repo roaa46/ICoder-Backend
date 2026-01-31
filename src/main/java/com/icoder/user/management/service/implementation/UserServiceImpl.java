@@ -4,7 +4,7 @@ import com.cloudinary.Cloudinary;
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.core.utils.ImageService;
 import com.icoder.core.utils.SecurityUtils;
-import com.icoder.user.management.dto.user.PictureUrlResponse;
+import com.icoder.core.dto.PictureUrlResponse;
 import com.icoder.user.management.enums.TokenType;
 import com.icoder.core.exception.ApiException;
 import com.icoder.core.utils.TokenHelper;

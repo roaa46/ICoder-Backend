@@ -38,7 +38,6 @@ public class Group {
     @Column(nullable = false)
     private String description;
 
-    @Column(nullable = false)
     private String pictureUrl;
 
     @Column(nullable = false, updatable = false)
