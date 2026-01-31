@@ -193,4 +193,9 @@ public class ContestUtils {
             throw new ResourceNotFoundException("The contest hasn't started yet!");
         }
     }
+
+    public boolean checkIfContestRunning(Contest contest) {
+        Instant now = Instant.now();
+        return now.isBefore(contest.getEndTime());
+    }
 }

@@ -1,12 +1,19 @@
 package com.icoder.contest.management.controller;
 
 import com.icoder.contest.management.dto.ContestDetailsResponse;
+import com.icoder.contest.management.dto.ContestResponse;
 import com.icoder.contest.management.dto.CreateContestRequest;
 import com.icoder.contest.management.dto.ProblemSetResponse;
+import com.icoder.contest.management.enums.ContestStatus;
+import com.icoder.contest.management.enums.ContestType;
 import com.icoder.contest.management.service.interfaces.ContestService;
 import com.icoder.core.dto.MessageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.SortDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -48,5 +55,16 @@ public class ContestController {
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<Set<ProblemSetResponse>> getProblemSet(@PathVariable Long contestId) {
         return ResponseEntity.ok(contestService.viewProblemSet(contestId));
+    }
+
+    @GetMapping("/all")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<ContestResponse>> getAllContests(
+            @RequestParam String title,
+            @RequestParam(value = "group_name") String groupName,
+            @RequestParam ContestStatus status,
+            @RequestParam ContestType type,
+            @SortDefault(sort = "beginTime", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(contestService.viewAllContests(title, groupName, status, type, pageable));
     }
 }

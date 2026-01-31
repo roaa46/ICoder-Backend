@@ -1,6 +1,7 @@
 package com.icoder.problem.management.service.implementation;
 
 import com.icoder.core.exception.ScrapingException;
+import com.icoder.core.specification.SpecBuilder;
 import com.icoder.core.utils.SecurityUtils;
 import com.icoder.problem.management.dto.FavoriteRequest;
 import com.icoder.problem.management.dto.ProblemResponse;
@@ -14,7 +15,6 @@ import com.icoder.problem.management.repository.ProblemUserRelationRepository;
 import com.icoder.problem.management.scraping.service.ScrapingServiceImpl;
 import com.icoder.problem.management.service.interfaces.ProblemPersistenceService;
 import com.icoder.problem.management.service.interfaces.ProblemService;
-import com.icoder.problem.management.service.specification.ProblemSpecificationsBuilder;
 import com.icoder.user.management.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -117,14 +117,13 @@ public class ProblemServiceImpl implements ProblemService {
     @Transactional(readOnly = true)
     public Page<ProblemResponse> getAllProblems(String oj, String code, String title, Pageable pageable) {
         Long currentUserId = securityUtils.getCurrentUserId();
-        ProblemSpecificationsBuilder builder = new ProblemSpecificationsBuilder();
 
-        if (oj != null) builder.with("onlineJudge", ":", OJudgeType.fromString(oj));
-        if (code != null) builder.with("problemCode", ":", code);
-        if (title != null) builder.with("problemTitle", ":", title);
-        if (title != null) builder.with("problemTitle", ":", title);
-
-        Specification<Problem> spec = builder.build();
+        Specification<Problem> spec = new SpecBuilder<Problem>()
+                .with("onlineJudge", ":", OJudgeType.fromString(oj))
+                .with("problemCode", ":", code)
+                .with("problemTitle", ":", title)
+                .with("problemTitle", ":", title)
+                .build();
 
         Page<Problem> problemsPage = problemRepository.findAll(spec, pageable);
 

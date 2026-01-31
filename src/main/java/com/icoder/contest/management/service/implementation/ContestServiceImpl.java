@@ -1,21 +1,28 @@
 package com.icoder.contest.management.service.implementation;
 
 import com.icoder.contest.management.dto.ContestDetailsResponse;
+import com.icoder.contest.management.dto.ContestResponse;
 import com.icoder.contest.management.dto.CreateContestRequest;
 import com.icoder.contest.management.dto.ProblemSetResponse;
 import com.icoder.contest.management.entity.Contest;
 import com.icoder.contest.management.entity.ContestProblemRelation;
+import com.icoder.contest.management.enums.ContestStatus;
+import com.icoder.contest.management.enums.ContestType;
 import com.icoder.contest.management.mapper.ContestMapper;
 import com.icoder.contest.management.repository.ContestRepository;
 import com.icoder.contest.management.service.interfaces.ContestService;
 import com.icoder.contest.management.util.ContestUtils;
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.core.exception.ResourceNotFoundException;
+import com.icoder.core.specification.SpecBuilder;
 import com.icoder.core.utils.SecurityUtils;
 import com.icoder.group.management.entity.Group;
 import com.icoder.group.management.repository.GroupRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,6 +72,8 @@ public class ContestServiceImpl implements ContestService {
                 .beginTime(request.getBeginTime())
                 .endTime(request.getBeginTime().plus(contesestDuration))
                 .length(contesestDuration)
+                .contestOpenness(request.getContestOpenness())
+                .contestType(request.getContestType())
                 .historyRank(request.getHistoryRank() == null || request.getHistoryRank())
                 .createdAt(Instant.now())
                 .build();
@@ -150,11 +159,32 @@ public class ContestServiceImpl implements ContestService {
     @Override
     public Set<ProblemSetResponse> viewProblemSet(Long contestId) {
         Contest contest = contestRepository.findById(contestId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Contest not found with id: " + contestId));
+                .orElseThrow(() -> new ResourceNotFoundException("Contest not found with id: " + contestId));
+
         contestUtils.validateAccess(contest);
+        boolean isContestRunning = contestUtils.checkIfContestRunning(contest);
 
         return contest.getProblemRelation().stream()
-                .map(contestMapper::toProblemSetResponse)
-                .collect(Collectors.toSet());
+                .map(relation -> {
+                    ProblemSetResponse response = contestMapper.toProblemSetResponse(relation);
+                    if (isContestRunning) {
+                        response.setTitle(null);
+                        response.setOrigin(null);
+                    }
+                    return response;
+                }).collect(Collectors.toSet());
+    }
+
+    @Override
+    public Page<ContestResponse> viewAllContests(String contestTitle, String groupName, ContestStatus status, ContestType type, Pageable pageable) {
+        Specification<Contest> spec = new SpecBuilder<Contest>()
+                .with("title", ":", contestTitle)
+                .with("group.name", ":", groupName)
+                .with("contestStatus", ":", status)
+                .with("contestType", ":", type)
+                .build();
+
+        return contestRepository.findAll(spec, pageable)
+                .map(contestMapper::toContestResponse);
     }
 }

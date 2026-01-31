@@ -1,9 +1,6 @@
 package com.icoder.contest.management.mapper;
 
-import com.icoder.contest.management.dto.ContestDetailsResponse;
-import com.icoder.contest.management.dto.CreateContestRequest;
-import com.icoder.contest.management.dto.GroupContestsResponse;
-import com.icoder.contest.management.dto.ProblemSetResponse;
+import com.icoder.contest.management.dto.*;
 import com.icoder.contest.management.entity.Contest;
 import com.icoder.contest.management.entity.ContestProblemRelation;
 import com.icoder.core.utils.DateTimeMapper;
@@ -33,4 +30,6 @@ public interface ContestMapper {
     @Mapping(target = "title", source = "problem.problemTitle")
     @Mapping(target = "origin", source = "problem.problemLink")
     ProblemSetResponse toProblemSetResponse(ContestProblemRelation relation);
+
+    ContestResponse toContestResponse(Contest contest);
 }

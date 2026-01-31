@@ -1,4 +1,4 @@
-package com.icoder.problem.management.service.specification;
+package com.icoder.core.specification;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
