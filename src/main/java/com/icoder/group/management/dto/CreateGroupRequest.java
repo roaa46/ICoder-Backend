@@ -24,6 +24,7 @@ public class CreateGroupRequest {
     @NotNull
     private Boolean codeEnabled;
     @NotNull
+    @JsonDeserialize(using = UppercaseEnumDeserializer.class)
     private ContestCoordinatorType contestCoordinatorType;
     @NotBlank
     private String description;
