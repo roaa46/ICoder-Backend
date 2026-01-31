@@ -67,4 +67,12 @@ public class ContestController {
             @SortDefault(sort = "beginTime", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(contestService.viewAllContests(title, groupName, status, type, pageable));
     }
+
+    @GetMapping("/reset-filters")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<ContestResponse>> resetFilters(
+            @SortDefault(sort = "beginTime", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        return ResponseEntity.ok(contestService.viewAllContests(null, null, null, null, pageable));
+    }
 }
