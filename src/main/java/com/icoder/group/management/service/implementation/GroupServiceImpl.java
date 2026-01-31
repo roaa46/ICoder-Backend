@@ -130,11 +130,6 @@ public class GroupServiceImpl implements GroupService {
         User newMember = groupUtil.findUser(groupMemberActionRequest.getUserHandle());
 
         Group group = groupUtil.findGroupById(groupMemberActionRequest.getGroupId());
-
-        if(group.getVisibility() == Visibility.PRIVATE) {
-            groupUtil.checkLeaderPermission(group);
-        }
-
         groupUtil.addUserToGroup(newMember, group);
         return new MessageResponse("User added to group successfully");
     }
@@ -145,8 +140,6 @@ public class GroupServiceImpl implements GroupService {
         User member = groupUtil.findUser(groupMemberActionRequest.getUserHandle());
 
         Group group = groupUtil.findGroupById(groupMemberActionRequest.getGroupId());
-
-        groupUtil.checkLeaderPermission(group);
 
         UserGroupRole userRole = groupUtil.findUserRole(member, group);
 
@@ -165,8 +158,6 @@ public class GroupServiceImpl implements GroupService {
         User member = groupUtil.findUser(groupMemberActionRequest.getUserHandle());
 
         Group group = groupUtil.findGroupById(groupMemberActionRequest.getGroupId());
-
-        groupUtil.checkLeaderPermission(group);
 
         UserGroupRole userRole = groupUtil.findUserRole(member, group);
 
@@ -188,8 +179,6 @@ public class GroupServiceImpl implements GroupService {
 
         Group group = groupUtil.findGroupById(groupId);
 
-        groupUtil.checkLeaderPermission(group);
-
         UserGroupRole userRole = groupUtil.findUserRole(member, group);
         if(userRole.getRole() == GroupRole.OWNER) {
             throw new IllegalArgumentException("Cannot remove the group owner");
@@ -204,7 +193,6 @@ public class GroupServiceImpl implements GroupService {
     public MessageResponse updateGroupDetails(UpdateGroupRequest updateGroupRequest) {
 
         Group group = groupUtil.findGroupById(updateGroupRequest.getGroupId());
-        groupUtil.checkLeaderPermission(group);
 
         boolean updated = false;
 
@@ -231,8 +219,6 @@ public class GroupServiceImpl implements GroupService {
     @Transactional
     public MessageResponse updateGroupPicture(UpdateGroupPictureRequest pictureRequest) {
         Group group = groupUtil.findGroupById(pictureRequest.getGroupId());
-
-        groupUtil.checkLeaderPermission(group);
 
         imageService.checkPictureType(pictureRequest.getPicture());
 
@@ -266,7 +252,6 @@ public class GroupServiceImpl implements GroupService {
     public MessageResponse deleteGroupPicture(Long groupId) {
         Group group = groupUtil.findGroupById(groupId);
 
-        groupUtil.checkLeaderPermission(group);
 
         String pictureUrl = group.getPictureUrl();
 

@@ -61,7 +61,7 @@ public class GroupController {
     )
     @GetMapping(params = "query")
     @PreAuthorize(value = "isAuthenticated()")
-    public ResponseEntity<Page<GroupResponse>> searchGroups(
+    public ResponseEntity<Page<GroupResponse>> searchPublicGroupsByName(
             @RequestParam("query") String query, @PageableDefault(size = 9, sort = "name") Pageable pageable){
         return groupService.searchByGroupName(query, pageable);
     }
@@ -101,7 +101,7 @@ public class GroupController {
             description = "Allows group leader or manager to add a new member to the group by their user handle."
     )
     @PutMapping("/members/add")
-    @PreAuthorize(value = "isAuthenticated()")
+    @PreAuthorize("@groupUtil.hasManagerPermission(#groupMemberActionRequest.groupId)")
     public ResponseEntity<MessageResponse> addMemberToGroup(
             @Valid @RequestBody GroupMemberActionRequest groupMemberActionRequest){
         return ResponseEntity.ok(groupService.addMemberToGroup(groupMemberActionRequest));
@@ -112,7 +112,7 @@ public class GroupController {
             description = "Allows group leader to promote a regular member to manager role with additional permissions."
     )
     @PutMapping("/members/promote")
-    @PreAuthorize(value = "isAuthenticated()")
+    @PreAuthorize("@groupUtil.hasOwnerPermission(#groupMemberActionRequest.groupId)")
     public ResponseEntity<MessageResponse> promoteMemberToManager(
             @Valid @RequestBody GroupMemberActionRequest groupMemberActionRequest){
         return ResponseEntity.ok(groupService.promoteMemberToManager(groupMemberActionRequest));
@@ -123,7 +123,7 @@ public class GroupController {
             description = "Allows group leader to demote a manager back to regular member role."
     )
     @PutMapping("/members/demote")
-    @PreAuthorize(value = "isAuthenticated()")
+    @PreAuthorize("@groupUtil.hasOwnerPermission(#groupMemberActionRequest.groupId)")
         public ResponseEntity<MessageResponse> demoteManagerToMember(
             @Valid @RequestBody GroupMemberActionRequest groupMemberActionRequest){
         return ResponseEntity.ok(groupService.demoteManagerToMember(groupMemberActionRequest));
@@ -133,7 +133,7 @@ public class GroupController {
             description = "Allows group leader to update group information such as name, description, visibility, and contest coordinator type."
     )
     @PutMapping("")
-    @PreAuthorize(value = "isAuthenticated()")
+    @PreAuthorize("@groupUtil.hasManagerPermission(#updateGroupRequest.groupId)")
     public ResponseEntity<MessageResponse> updateGroupDetails(
             @Valid @RequestBody UpdateGroupRequest updateGroupRequest){
         return ResponseEntity.ok(groupService.updateGroupDetails(updateGroupRequest));
@@ -143,9 +143,9 @@ public class GroupController {
             description = "Allows group leader to remove a member from the group. The group owner cannot be removed."
     )
     @DeleteMapping("/{groupId}/members")
-    @PreAuthorize(value = "isAuthenticated()")
+    @PreAuthorize("@groupUtil.hasManagerPermission(#groupId)")
     public ResponseEntity<MessageResponse> removeMemberFromGroup(
-            @PathVariable Long groupId, @RequestParam String userHandle){
+            @PathVariable Long groupId, @RequestParam(value = "handle") String userHandle){
         return ResponseEntity.ok(groupService.removeMemberFromGroup(groupId, userHandle));
     }
 
@@ -154,7 +154,7 @@ public class GroupController {
             description = "Allows group leader to upload or update the group's profile picture."
     )
     @PutMapping(value = "/{groupId}/group-picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@groupUtil.hasManagerPermission(#updateGroupPictureRequest.groupId)")
     public ResponseEntity<MessageResponse> updateGroupPicture(
             @Valid @ModelAttribute UpdateGroupPictureRequest updateGroupPictureRequest) {
 
@@ -176,7 +176,7 @@ public class GroupController {
             description = "Allows group leader to remove the group's profile picture."
     )
     @DeleteMapping("/{groupId}/group-picture")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@groupUtil.hasManagerPermission(#groupId)")
     public ResponseEntity<MessageResponse> deleteGroupPicture(@PathVariable Long groupId) {
         return ResponseEntity.ok(groupService.deleteGroupPicture(groupId));
     }

@@ -22,11 +22,28 @@ public interface UserGroupRoleRepository extends JpaRepository<UserGroupRole, Lo
     FROM UserGroupRole ugr
     WHERE ugr.user.id = :userId
       AND ugr.group.id = :groupId
+      AND ugr.role IN ('OWNER', 'MANAGER', 'MEMBER')
+""")
+    boolean hasMemberPermission(Long userId, Long groupId);
+
+    @Query("""
+    SELECT COUNT(ugr) > 0
+    FROM UserGroupRole ugr
+    WHERE ugr.user.id = :userId
+      AND ugr.group.id = :groupId
       AND ugr.role IN ('OWNER', 'MANAGER')
 """)
-    boolean isLeaderOfGroup(@Param("userId") Long userId,
+    boolean hasManagerPermission(@Param("userId") Long userId,
                             @Param("groupId") Long groupId);
 
+    @Query("""
+    SELECT COUNT(ugr) > 0
+    FROM UserGroupRole ugr
+    WHERE ugr.user.id = :userId
+      AND ugr.group.id = :groupId
+      AND ugr.role = 'OWNER'
+""")
+    boolean hasOwnerPermission(Long userId, Long groupId);
     @Query("""
        SELECT COUNT(ugr) > 0
        FROM UserGroupRole ugr

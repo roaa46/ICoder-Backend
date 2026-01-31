@@ -48,14 +48,14 @@ public class GroupUtil {
                 .orElseThrow(() -> new NoSuchElementException("User is not a member of this group"));
     }
 
-    public void checkLeaderPermission(Group group) {
-        Long currentUserId = securityUtils.getCurrentUserId();
-        boolean isLeader = userGroupRoleRepository.isLeaderOfGroup(currentUserId, group.getId());
-
-        if (!isLeader) {
-            throw new AccessDeniedException("Only group leaders (OWNER/MANAGER) can perform this action.");
-        }
-    }
+//    public void checkLeaderPermission(Group group) {
+//        Long currentUserId = securityUtils.getCurrentUserId();
+//        boolean isLeader = userGroupRoleRepository.hasManagerPermission(currentUserId, group.getId());
+//
+//        if (!isLeader) {
+//            throw new AccessDeniedException("Only group leaders (OWNER/MANAGER) can perform this action.");
+//        }
+//    }
 
     public void addUserToGroup(User user, Group group) {
         if (userGroupRoleRepository.existInGroup(user.getId(), group.getId())) {
@@ -79,5 +79,20 @@ public class GroupUtil {
             return true;
         }
         return false;
+    }
+
+    public boolean hasOwnerPermission(Long groupId) {
+        Long currentUserId = securityUtils.getCurrentUserId();
+        return userGroupRoleRepository.hasOwnerPermission(currentUserId, groupId);
+    }
+
+    public boolean hasManagerPermission(Long groupId) {
+        Long currentUserId = securityUtils.getCurrentUserId();
+        return userGroupRoleRepository.hasManagerPermission(currentUserId, groupId);
+    }
+
+    public boolean hasMemberPermission(Long groupId) {
+        Long currentUserId = securityUtils.getCurrentUserId();
+        return userGroupRoleRepository.hasMemberPermission(currentUserId, groupId);
     }
 }
