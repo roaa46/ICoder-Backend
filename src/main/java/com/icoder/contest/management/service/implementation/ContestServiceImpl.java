@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -152,6 +153,8 @@ public class ContestServiceImpl implements ContestService {
                         .orElseThrow(() -> new ResourceNotFoundException("Contest not found with id: " + contestId));
         contestUtils.validateAccess(contest);
 
-        return contestMapper.toProblemSetResponse(contest.getProblemRelation());
+        return contest.getProblemRelation().stream()
+                .map(contestMapper::toProblemSetResponse)
+                .collect(Collectors.toSet());
     }
 }

@@ -12,9 +12,6 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
-import java.util.Set;
-
-
 @Mapper(componentModel = "spring",
         uses = {DateTimeMapper.class, ContestUserRelationMapper.class},
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -35,8 +32,5 @@ public interface ContestMapper {
     @Mapping(target = "id", source = "problem.id")
     @Mapping(target = "title", source = "problem.problemTitle")
     @Mapping(target = "origin", source = "problem.problemLink")
-    @Mapping(target = "problemAlias", source = "problemAlias")
-    @Mapping(target = "solvedCount", source = "solvedCount")
-    @Mapping(target = "attemptedCount", source = "attemptedCount")
-    Set<ProblemSetResponse> toProblemSetResponse(Set<ContestProblemRelation> relations);
+    ProblemSetResponse toProblemSetResponse(ContestProblemRelation relation);
 }
