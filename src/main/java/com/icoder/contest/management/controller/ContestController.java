@@ -60,10 +60,10 @@ public class ContestController {
     @GetMapping("/all")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<ContestResponse>> getAllContests(
-            @RequestParam String title,
-            @RequestParam(value = "group_name") String groupName,
-            @RequestParam ContestStatus status,
-            @RequestParam ContestType type,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false, value = "group_name") String groupName,
+            @RequestParam(required = false) ContestStatus status,
+            @RequestParam(required = false) ContestType type,
             @SortDefault(sort = "beginTime", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(contestService.viewAllContests(title, groupName, status, type, pageable));
     }

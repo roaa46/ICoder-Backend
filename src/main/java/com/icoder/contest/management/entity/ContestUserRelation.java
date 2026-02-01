@@ -3,14 +3,12 @@ package com.icoder.contest.management.entity;
 import com.icoder.contest.management.enums.ContestRole;
 import com.icoder.user.management.entity.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Getter
 @Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "contest_user_relations")

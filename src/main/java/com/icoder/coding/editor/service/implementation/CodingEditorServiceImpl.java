@@ -146,7 +146,7 @@ public class CodingEditorServiceImpl implements CodingEditorService {
                 .block();
     }
 
-    private SubmissionResult getRawResult(String token) {
+        private SubmissionResult getRawResult(String token) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/submissions/{token}")
                         .queryParam("base64_encoded", "true")

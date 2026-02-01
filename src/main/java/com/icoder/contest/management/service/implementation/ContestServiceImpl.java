@@ -6,6 +6,8 @@ import com.icoder.contest.management.dto.CreateContestRequest;
 import com.icoder.contest.management.dto.ProblemSetResponse;
 import com.icoder.contest.management.entity.Contest;
 import com.icoder.contest.management.entity.ContestProblemRelation;
+import com.icoder.contest.management.entity.ContestUserRelation;
+import com.icoder.contest.management.enums.ContestRole;
 import com.icoder.contest.management.enums.ContestStatus;
 import com.icoder.contest.management.enums.ContestType;
 import com.icoder.contest.management.mapper.ContestMapper;
@@ -18,6 +20,8 @@ import com.icoder.core.specification.SpecBuilder;
 import com.icoder.core.utils.SecurityUtils;
 import com.icoder.group.management.entity.Group;
 import com.icoder.group.management.repository.GroupRepository;
+import com.icoder.user.management.entity.User;
+import com.icoder.user.management.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -40,6 +44,7 @@ public class ContestServiceImpl implements ContestService {
     private final SecurityUtils securityUtils;
     private final GroupRepository groupRepository;
     private final ContestMapper contestMapper;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -85,6 +90,15 @@ public class ContestServiceImpl implements ContestService {
 
         Set<ContestProblemRelation> relations = contestUtils.mapProblemSetToRelations(request.getProblemSet(), contest);
         contest.setProblemRelation(relations);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        ContestUserRelation userRelation = ContestUserRelation.builder()
+                .user(user)
+                .contest(contest)
+                .role(ContestRole.OWNER)
+                .build();
+        contest.getUserRelation().add(userRelation);
 
         contestRepository.save(contest);
 
@@ -161,13 +175,16 @@ public class ContestServiceImpl implements ContestService {
         Contest contest = contestRepository.findById(contestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Contest not found with id: " + contestId));
 
-        contestUtils.validateAccess(contest);
+        Long userId = securityUtils.getCurrentUserId();
+        boolean isCoordinator = contestUtils.isUserContestCoordinator(userId, contest.getGroup());
+        contestUtils.validateAccessWithRole(contest, isCoordinator);
+
         boolean isContestRunning = contestUtils.checkIfContestRunning(contest);
 
         return contest.getProblemRelation().stream()
                 .map(relation -> {
                     ProblemSetResponse response = contestMapper.toProblemSetResponse(relation);
-                    if (isContestRunning) {
+                    if (isContestRunning && !isCoordinator) {
                         response.setTitle(null);
                         response.setOrigin(null);
                     }
@@ -177,11 +194,17 @@ public class ContestServiceImpl implements ContestService {
 
     @Override
     public Page<ContestResponse> viewAllContests(String contestTitle, String groupName, ContestStatus status, ContestType type, Pageable pageable) {
+
         Specification<Contest> spec = new SpecBuilder<Contest>()
+
                 .with("title", ":", contestTitle)
+
                 .with("group.name", ":", groupName)
+
                 .with("contestStatus", ":", status)
+
                 .with("contestType", ":", type)
+
                 .build();
 
         return contestRepository.findAll(spec, pageable)

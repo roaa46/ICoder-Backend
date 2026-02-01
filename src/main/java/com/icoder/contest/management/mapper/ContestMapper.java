@@ -31,5 +31,10 @@ public interface ContestMapper {
     @Mapping(target = "origin", source = "problem.problemLink")
     ProblemSetResponse toProblemSetResponse(ContestProblemRelation relation);
 
+    @Mapping(target = "type", source = "contest.contestType")
+    @Mapping(target = "status", source = "contest.contestStatus")
+    @Mapping(target = "length", source = "contest.length")
+    @Mapping(target = "groupId", source = "contest.group.id")
+    @Mapping(target = "groupName", source = "contest.group.name")
     ContestResponse toContestResponse(Contest contest);
 }

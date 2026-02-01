@@ -17,6 +17,7 @@ import com.icoder.problem.management.entity.Problem;
 import com.icoder.problem.management.repository.ProblemRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -187,15 +188,22 @@ public class ContestUtils {
                 .orElseThrow(() -> new ResourceNotFoundException("Contest not found with id: " + contestId));
     }
 
-    public void validateAccess(Contest contest) {
+    public void validateAccessWithRole(Contest contest, boolean isCoordinator) {
         Instant now = Instant.now();
-        if (now.isBefore(contest.getBeginTime())) {
-            throw new ResourceNotFoundException("The contest hasn't started yet!");
+
+        if (now.isBefore(contest.getBeginTime()) && !isCoordinator) {
+            throw new AccessDeniedException("The contest hasn't started yet! Only coordinators can view it now.");
         }
     }
 
     public boolean checkIfContestRunning(Contest contest) {
         Instant now = Instant.now();
         return now.isBefore(contest.getEndTime());
+    }
+
+    public boolean isUserContestOwner(Long userId, Long contestId) {
+        return contestRepository.findById(contestId)
+                .map(contest -> contest.getGroup().getOwnerId().equals(userId))
+                .orElse(false);
     }
 }
