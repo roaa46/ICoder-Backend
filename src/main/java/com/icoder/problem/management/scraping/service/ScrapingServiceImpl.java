@@ -31,7 +31,7 @@ public class ScrapingServiceImpl implements ScrapingService {
                     return cses.scrapProblemStatement(problemUrl);
                 }
                 case CODEFORCES -> {
-                    problemUrl = toCodeforcesUrl(code);
+                    problemUrl = toCodeforcesUrl(code, "contest");
                     log.info(problemUrl);
                     return codeforces.scrapProblemStatement(problemUrl);
                 }
@@ -40,12 +40,16 @@ public class ScrapingServiceImpl implements ScrapingService {
                     log.info(problemUrl);
                     return atcoder.scrapProblemStatement(problemUrl);
                 }
+                case GYM -> {
+                    problemUrl = toCodeforcesUrl(code, "gym");
+                    log.info(problemUrl);
+                    return codeforces.scrapProblemStatement(problemUrl);
+                }
                 default -> throw new ScrapingException("Unsupported judge: " + source);
             }
         } catch (ScrapingException e) {
             throw e;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new ScrapingException("Failed to scrape full statement for source=" + source + ", code=" + code, e);
         }
     }
@@ -62,7 +66,7 @@ public class ScrapingServiceImpl implements ScrapingService {
                     return cses.scrapMetadata(problemUrl);
                 }
                 case CODEFORCES -> {
-                    problemUrl = toCodeforcesUrl(code);
+                    problemUrl = toCodeforcesUrl(code, "contest");
                     log.info(problemUrl);
                     return codeforces.scrapMetadata(problemUrl);
                 }
@@ -71,12 +75,16 @@ public class ScrapingServiceImpl implements ScrapingService {
                     log.info(problemUrl);
                     return atcoder.scrapMetadata(problemUrl);
                 }
+                case GYM -> {
+                    problemUrl = toCodeforcesUrl(code, "gym");
+                    log.info(problemUrl);
+                    return codeforces.scrapMetadata(problemUrl);
+                }
                 default -> throw new ScrapingException("Unsupported judge: " + source);
             }
         } catch (ScrapingException e) {
             throw e;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new ScrapingException("Failed to scrape metadata for source=" + source + ", code=" + code, e);
         }
     }
@@ -85,12 +93,12 @@ public class ScrapingServiceImpl implements ScrapingService {
         return "https://cses.fi/problemset/task/" + code;
     }
 
-    private String toCodeforcesUrl(String code) {
+    private String toCodeforcesUrl(String code, String source) {
         int i = 0;
         while (i < code.length() && Character.isDigit(code.charAt(i))) i++;
         int id = Integer.parseInt(code.substring(0, i));
         String order = code.substring(i);
-        return "https://codeforces.com/contest/" + id + "/problem/" + order;
+        return "https://codeforces.com/" + source + "/" + id + "/problem/" + order;
     }
 
     private String toAtCoderUrl(String code) {

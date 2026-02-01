@@ -46,6 +46,9 @@ public class CodeforcesScraperServiceImpl implements CodeforcesScraperService {
 
 //            Element contestEl = doc.selectFirst(".problem-statement .header a");
             Element contestLink = doc.selectFirst("a[href^=/contest/]");
+            if (contestLink == null) {
+                contestLink = doc.selectFirst("a[href^=/gym/]");
+            }
 
             return ProblemResponse.builder()
                     .problemCode(problemCode)
@@ -103,6 +106,9 @@ public class CodeforcesScraperServiceImpl implements CodeforcesScraperService {
             int index = 1;
 
             Element contestLink = doc.selectFirst("a[href^=/contest/]");
+            if (contestLink == null) {
+                contestLink = doc.selectFirst("a[href^=/gym/]");
+            }
 
             props.add(buildProp(
                     "Source",
