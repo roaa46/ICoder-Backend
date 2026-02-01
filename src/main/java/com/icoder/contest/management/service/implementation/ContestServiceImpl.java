@@ -12,6 +12,7 @@ import com.icoder.contest.management.enums.ContestStatus;
 import com.icoder.contest.management.enums.ContestType;
 import com.icoder.contest.management.mapper.ContestMapper;
 import com.icoder.contest.management.repository.ContestRepository;
+import com.icoder.contest.management.repository.ContestUserRelationRepository;
 import com.icoder.contest.management.service.interfaces.ContestService;
 import com.icoder.contest.management.util.ContestUtils;
 import com.icoder.core.dto.MessageResponse;
@@ -45,6 +46,7 @@ public class ContestServiceImpl implements ContestService {
     private final GroupRepository groupRepository;
     private final ContestMapper contestMapper;
     private final UserRepository userRepository;
+    private final ContestUserRelationRepository contestUserRelationRepository;
 
     @Override
     @Transactional
@@ -98,7 +100,7 @@ public class ContestServiceImpl implements ContestService {
                 .contest(contest)
                 .role(ContestRole.OWNER)
                 .build();
-        contest.getUserRelation().add(userRelation);
+        contest.addUserRelation(userRelation);
 
         contestRepository.save(contest);
 
@@ -167,7 +169,16 @@ public class ContestServiceImpl implements ContestService {
     public ContestDetailsResponse viewContestDetails(Long contestId) {
         Contest contest = contestRepository.findById(contestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Contest not found with id: " + contestId));
-        return contestMapper.toContestDetailsDto(contest);
+
+        ContestUserRelation userRelation = contestUserRelationRepository.findByContestIdAndRole(contestId, ContestRole.OWNER)
+                .orElseThrow(() -> new ResourceNotFoundException("Contest owner not found for contest with id: " + contestId));
+        User user = userRelation.getUser();
+
+        ContestDetailsResponse response = contestMapper.toContestDetailsDto(contest);
+        response.setOwnerId(user.getId());
+        response.setOwnerHandle(user.getHandle());
+
+        return response;
     }
 
     @Override

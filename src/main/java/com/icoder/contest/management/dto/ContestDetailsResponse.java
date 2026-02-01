@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.icoder.contest.management.enums.ContestStatus;
+import com.icoder.contest.management.enums.ContestType;
 import com.icoder.core.utils.LowercaseEnumSerializer;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -28,4 +29,14 @@ public class ContestDetailsResponse {
 
     @JsonSerialize(using = LowercaseEnumSerializer.class)
     private ContestStatus contestStatus;
+
+    @JsonSerialize(using = LowercaseEnumSerializer.class)
+    private ContestType contestType;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    private Long ownerId;
+    private String ownerHandle;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    private Long groupId;
+    private String groupName;
 }

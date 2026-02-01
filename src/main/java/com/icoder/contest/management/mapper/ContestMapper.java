@@ -24,6 +24,10 @@ public interface ContestMapper {
 
     GroupContestsResponse toGroupContestDto(Contest contest);
 
+    @Mapping(target = "ownerId", ignore = true)
+    @Mapping(target = "ownerHandle", ignore = true)
+    @Mapping(target = "groupId", source = "contest.group.id")
+    @Mapping(target = "groupName", source = "contest.group.name")
     ContestDetailsResponse toContestDetailsDto(Contest contest);
 
     @Mapping(target = "id", source = "problem.id")

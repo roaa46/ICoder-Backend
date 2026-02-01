@@ -11,6 +11,7 @@ import org.hibernate.validator.constraints.time.DurationMax;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -65,13 +66,15 @@ public class Contest {
             fetch = FetchType.LAZY,
             cascade = CascadeType.ALL,
             orphanRemoval = true)
-    private Set<ContestProblemRelation> problemRelation;
+    @Builder.Default
+    private Set<ContestProblemRelation> problemRelation = new HashSet<>();
 
     @OneToMany(mappedBy = "contest",
             fetch = FetchType.LAZY,
             cascade = CascadeType.ALL,
             orphanRemoval = true)
-    private Set<ContestUserRelation> userRelation;
+    @Builder.Default
+    private Set<ContestUserRelation> userRelation = new HashSet<>();
 
     @Formula("""
             (
@@ -82,4 +85,12 @@ public class Contest {
             )
             """)
     private Long participantsCount;
+
+    public void addUserRelation(ContestUserRelation relation) {
+        if (this.userRelation == null) {
+            this.userRelation = new HashSet<>();
+        }
+        this.userRelation.add(relation);
+        relation.setContest(this);
+    }
 }
