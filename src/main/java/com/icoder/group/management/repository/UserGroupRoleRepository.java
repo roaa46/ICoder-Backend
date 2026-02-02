@@ -15,16 +15,6 @@ import java.util.Optional;
 public interface UserGroupRoleRepository extends JpaRepository<UserGroupRole, Long> {
     Optional<UserGroupRole> findByUserAndGroup(User user, Group group);
     Page<UserGroupRole> findAllByGroupId(Long groupId, Pageable pageable);
-    Long countByGroupId(Long groupId);
-
-    @Query("""
-    SELECT COUNT(ugr) > 0
-    FROM UserGroupRole ugr
-    WHERE ugr.user.id = :userId
-      AND ugr.group.id = :groupId
-      AND ugr.role IN ('OWNER', 'MANAGER', 'MEMBER')
-""")
-    boolean hasMemberPermission(Long userId, Long groupId);
 
     @Query("""
     SELECT COUNT(ugr) > 0

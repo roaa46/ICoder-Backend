@@ -9,7 +9,6 @@ import com.icoder.group.management.repository.UserGroupRoleRepository;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.NoSuchElementException;
@@ -48,15 +47,6 @@ public class GroupUtil {
                 .orElseThrow(() -> new NoSuchElementException("User is not a member of this group"));
     }
 
-//    public void checkLeaderPermission(Group group) {
-//        Long currentUserId = securityUtils.getCurrentUserId();
-//        boolean isLeader = userGroupRoleRepository.hasManagerPermission(currentUserId, group.getId());
-//
-//        if (!isLeader) {
-//            throw new AccessDeniedException("Only group leaders (OWNER/MANAGER) can perform this action.");
-//        }
-//    }
-
     public void addUserToGroup(User user, Group group) {
         if (userGroupRoleRepository.existInGroup(user.getId(), group.getId())) {
             throw new IllegalArgumentException("User is already a member of the group");
@@ -89,10 +79,5 @@ public class GroupUtil {
     public boolean hasManagerPermission(Long groupId) {
         Long currentUserId = securityUtils.getCurrentUserId();
         return userGroupRoleRepository.hasManagerPermission(currentUserId, groupId);
-    }
-
-    public boolean hasMemberPermission(Long groupId) {
-        Long currentUserId = securityUtils.getCurrentUserId();
-        return userGroupRoleRepository.hasMemberPermission(currentUserId, groupId);
     }
 }
