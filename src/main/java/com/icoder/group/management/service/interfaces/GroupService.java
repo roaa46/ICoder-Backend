@@ -33,4 +33,6 @@ public interface GroupService {
     MessageResponse updateGroupPicture(UpdateGroupPictureRequest updateGroupPictureRequest);
     PictureUrlResponse viewGroupPicture(Long groupId);
     MessageResponse deleteGroupPicture(Long groupId);
+
+    Page<GroupContestsResponse> searchContestByName(Long groupId, String contestTitle, Pageable pageable);
 }

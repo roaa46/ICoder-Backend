@@ -6,7 +6,9 @@ import com.icoder.contest.management.entity.Contest;
 import com.icoder.contest.management.mapper.ContestMapper;
 import com.icoder.contest.management.repository.ContestRepository;
 import com.icoder.core.dto.MessageResponse;
+import com.icoder.core.dto.PictureUrlResponse;
 import com.icoder.core.exception.ApiException;
+import com.icoder.core.specification.SpecBuilder;
 import com.icoder.core.utils.ImageService;
 import com.icoder.core.utils.SecurityUtils;
 import com.icoder.group.management.dto.*;
@@ -20,15 +22,14 @@ import com.icoder.group.management.repository.GroupRepository;
 import com.icoder.group.management.repository.UserGroupRoleRepository;
 import com.icoder.group.management.service.interfaces.GroupService;
 import com.icoder.group.management.util.GroupUtil;
-import com.icoder.group.management.dto.GroupMemberResponse;
-import com.icoder.core.dto.PictureUrlResponse;
 import com.icoder.user.management.entity.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -139,7 +140,7 @@ public class GroupServiceImpl implements GroupService {
 
         Group group = groupUtil.findGroupById(groupMemberActionRequest.getGroupId());
 
-        if(group.getVisibility() == Visibility.PRIVATE) {
+        if (group.getVisibility() == Visibility.PRIVATE) {
             groupUtil.checkLeaderPermission(group);
         }
 
@@ -180,7 +181,7 @@ public class GroupServiceImpl implements GroupService {
 
         if (userRole.getRole() == GroupRole.MEMBER) {
             throw new IllegalArgumentException("The user is already a member");
-        }else if (userRole.getRole() == GroupRole.OWNER) {
+        } else if (userRole.getRole() == GroupRole.OWNER) {
             throw new IllegalArgumentException("Cannot demote the group owner");
         }
 
@@ -199,7 +200,7 @@ public class GroupServiceImpl implements GroupService {
         groupUtil.checkLeaderPermission(group);
 
         UserGroupRole userRole = groupUtil.findUserRole(member, group);
-        if(userRole.getRole() == GroupRole.OWNER) {
+        if (userRole.getRole() == GroupRole.OWNER) {
             throw new IllegalArgumentException("Cannot remove the group owner");
         }
 
@@ -219,11 +220,11 @@ public class GroupServiceImpl implements GroupService {
         updated |= groupUtil.updateField(updateGroupRequest.getName(), group::setName);
         updated |= groupUtil.updateField(updateGroupRequest.getDescription(), group::setDescription);
 
-        if(updateGroupRequest.getVisibility() != null) {
+        if (updateGroupRequest.getVisibility() != null) {
             group.setVisibility(updateGroupRequest.getVisibility());
             updated = true;
         }
-        if(updateGroupRequest.getContestCoordinatorType() != null) {
+        if (updateGroupRequest.getContestCoordinatorType() != null) {
             group.setContestCoordinatorType(updateGroupRequest.getContestCoordinatorType());
             updated = true;
         }
@@ -292,6 +293,7 @@ public class GroupServiceImpl implements GroupService {
                 .pictureUrl(group.getPictureUrl())
                 .build();
     }
+
     @Override
     @Transactional
     public MessageResponse deleteGroupPicture(Long groupId) {
@@ -315,5 +317,18 @@ public class GroupServiceImpl implements GroupService {
         }
 
         return new MessageResponse("Your profile picture has been successfully deleted");
+    }
+
+    public Page<GroupContestsResponse> searchContestByName(Long groupId, String contestTitle, Pageable pageable) {
+        Specification<Contest> spec = new SpecBuilder<Contest>()
+
+                .with("title", ":", contestTitle)
+
+                .with("group.id", ":", groupId)
+
+                .build();
+
+        return contestRepository.findAll(spec, pageable)
+                .map(contestMapper::toGroupContestDto);
     }
 }

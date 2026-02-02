@@ -45,13 +45,13 @@ public class ContestController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("{contestId}")
+    @GetMapping("/{contestId}")
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<ContestDetailsResponse> getContestDetails(@PathVariable Long contestId) {
         return ResponseEntity.ok(contestService.viewContestDetails(contestId));
     }
 
-    @GetMapping("{contestId}/problems")
+    @GetMapping("/{contestId}/problems")
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<Set<ProblemSetResponse>> getProblemSet(@PathVariable Long contestId) {
         return ResponseEntity.ok(contestService.viewProblemSet(contestId));

@@ -48,14 +48,14 @@ public class ProblemController {
             description = "Returns a paginated list of problems. You can optionally filter by OJ, code, or title. Supports sorting and pagination (requires login)"
     )
     public ResponseEntity<Page<ProblemResponse>> getAllProblems(
-            @RequestParam(required = false) String online_judge,
-            @RequestParam(required = false) String problem_code,
-            @RequestParam(required = false) String problem_title,
+            @RequestParam(value = "online_judge", required = false) String onlineJudge,
+            @RequestParam(value = "problemCode", required = false) String problemCode,
+            @RequestParam(value = "problemTitle", required = false) String problemTitle,
             @SortDefault(
                     sort = "fetchedAt", direction = Sort.Direction.DESC
             ) Pageable pageable
     ) {
-        Page<ProblemResponse> response = problemService.getAllProblems(online_judge, problem_code, problem_title, pageable);
+        Page<ProblemResponse> response = problemService.getAllProblems(onlineJudge, problemCode, problemTitle, pageable);
         return ResponseEntity.ok(response);
     }
 

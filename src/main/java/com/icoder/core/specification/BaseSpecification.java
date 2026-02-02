@@ -1,9 +1,6 @@
 package com.icoder.core.specification;
 
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.lang.Nullable;
@@ -14,30 +11,28 @@ public class BaseSpecification<T> implements Specification<T> {
 
     @Override
     public Predicate toPredicate(Root<T> root, @Nullable CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
-        if (criteria.getKey().contains("."))
-            return buildJoinPredicate(root, criteriaBuilder);
+        Path<Object> path;
+        if (criteria.getKey().contains(".")) {
+            String[] parts = criteria.getKey().split("\\.");
+            path = root.join(parts[0]).get(parts[1]);
+        } else {
+            path = root.get(criteria.getKey());
+        }
 
         switch (criteria.getOperation()) {
-            case ">":
-                return criteriaBuilder.greaterThanOrEqualTo(root.get(criteria.getKey()), criteria.getValue().toString());
-            case "<":
-                return criteriaBuilder.lessThanOrEqualTo(root.get(criteria.getKey()), criteria.getValue().toString());
             case ":":
-                if (root.get(criteria.getKey()).getJavaType() == String.class) {
-                    return criteriaBuilder.like(criteriaBuilder.lower(root.get(criteria.getKey())), "%" + criteria.getValue().toString().toLowerCase() + "%");
+                if (path.getJavaType() == String.class) {
+                    return criteriaBuilder.like(criteriaBuilder.lower(path.as(String.class)),
+                            "%" + criteria.getValue().toString().toLowerCase() + "%");
                 } else {
-                    return criteriaBuilder.equal(root.get(criteria.getKey()), criteria.getValue());
+                    return criteriaBuilder.equal(path, criteria.getValue());
                 }
+            case ">":
+                return criteriaBuilder.greaterThanOrEqualTo(path.as(String.class), criteria.getValue().toString());
+            case "<":
+                return criteriaBuilder.lessThanOrEqualTo(path.as(String.class), criteria.getValue().toString());
             default:
                 return null;
         }
-    }
-
-    private Predicate buildJoinPredicate(Root<T> root, CriteriaBuilder builder) {
-        String[] parts = criteria.getKey().split("\\.");
-        return builder.like(
-                builder.lower(root.join(parts[0]).get(parts[1])),
-                "%" + criteria.getValue().toString().toLowerCase() + "%"
-        );
     }
 }

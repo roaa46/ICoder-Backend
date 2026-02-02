@@ -4,8 +4,7 @@ import com.icoder.contest.management.dto.GroupContestsResponse;
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.core.dto.PictureUrlResponse;
 import com.icoder.group.management.dto.*;
-import com.icoder.group.management.service.implementation.GroupServiceImpl;
-import com.icoder.group.management.dto.GroupMemberResponse;
+import com.icoder.group.management.service.interfaces.GroupService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +26,7 @@ import java.util.Set;
 @RequestMapping("/api/v1/groups")
 @RequiredArgsConstructor
 public class GroupController {
-    private final GroupServiceImpl groupService;
+    private final GroupService groupService;
 
     @Operation(
             summary = "Get my groups",
@@ -36,9 +35,10 @@ public class GroupController {
     @GetMapping("/me")
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<Page<GroupResponse>> getMyGroups(
-           @PageableDefault(size = 9, sort = "name") Pageable pageable) {
+            @PageableDefault(size = 9, sort = "name") Pageable pageable) {
         return ResponseEntity.ok(groupService.getMyGroups(pageable));
     }
+
     @Operation(
             summary = "Get all public groups",
             description = "Retrieves all publicly visible groups with pagination support."
@@ -46,9 +46,10 @@ public class GroupController {
     @GetMapping("")
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<Page<GroupResponse>> getAllGroups(
-            @PageableDefault(size = 9, sort = "name") Pageable pageable){
+            @PageableDefault(size = 9, sort = "name") Pageable pageable) {
         return ResponseEntity.ok(groupService.getAllGroups(pageable));
     }
+
     @Operation(
             summary = "Get all group members",
             description = "Retrieves all members of a specific group including their roles with pagination support."
@@ -57,9 +58,10 @@ public class GroupController {
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<Page<GroupMemberResponse>> getAllMembers(
             @PathVariable Long groupId,
-            Pageable pageable){
-            return ResponseEntity.ok(groupService.getAllMembers(groupId, pageable));
+            Pageable pageable) {
+        return ResponseEntity.ok(groupService.getAllMembers(groupId, pageable));
     }
+
     @Operation(
             summary = "Search groups by name",
             description = "Retrieves groups that match the search query with pagination support."
@@ -67,7 +69,7 @@ public class GroupController {
     @GetMapping(params = "query")
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<Page<GroupResponse>> searchGroups(
-            @RequestParam("query") String query, @PageableDefault(size = 9, sort = "name") Pageable pageable){
+            @RequestParam("query") String query, @PageableDefault(size = 9, sort = "name") Pageable pageable) {
         return groupService.searchByGroupName(query, pageable);
     }
 
@@ -87,7 +89,7 @@ public class GroupController {
     )
     @PutMapping("/{groupId}/join")
     @PreAuthorize(value = "isAuthenticated()")
-    public ResponseEntity<MessageResponse> joinPublicGroup(@PathVariable Long groupId){
+    public ResponseEntity<MessageResponse> joinPublicGroup(@PathVariable Long groupId) {
         return ResponseEntity.ok(groupService.joinPublicGroup(groupId));
     }
 
@@ -97,7 +99,7 @@ public class GroupController {
     )
     @PutMapping("join")
     @PreAuthorize(value = "isAuthenticated()")
-    public ResponseEntity<MessageResponse> joinGroupByCode(@Valid @RequestParam String code){
+    public ResponseEntity<MessageResponse> joinGroupByCode(@Valid @RequestParam String code) {
         return ResponseEntity.ok(groupService.joinGroupByCode(code));
     }
 
@@ -108,7 +110,7 @@ public class GroupController {
     @PutMapping("/members/add")
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<MessageResponse> addMemberToGroup(
-            @Valid @RequestBody GroupMemberActionRequest groupMemberActionRequest){
+            @Valid @RequestBody GroupMemberActionRequest groupMemberActionRequest) {
         return ResponseEntity.ok(groupService.addMemberToGroup(groupMemberActionRequest));
     }
 
@@ -119,7 +121,7 @@ public class GroupController {
     @PutMapping("/members/promote")
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<MessageResponse> promoteMemberToManager(
-            @Valid @RequestBody GroupMemberActionRequest groupMemberActionRequest){
+            @Valid @RequestBody GroupMemberActionRequest groupMemberActionRequest) {
         return ResponseEntity.ok(groupService.promoteMemberToManager(groupMemberActionRequest));
     }
 
@@ -129,10 +131,11 @@ public class GroupController {
     )
     @PutMapping("/members/demote")
     @PreAuthorize(value = "isAuthenticated()")
-        public ResponseEntity<MessageResponse> demoteManagerToMember(
-            @Valid @RequestBody GroupMemberActionRequest groupMemberActionRequest){
+    public ResponseEntity<MessageResponse> demoteManagerToMember(
+            @Valid @RequestBody GroupMemberActionRequest groupMemberActionRequest) {
         return ResponseEntity.ok(groupService.demoteManagerToMember(groupMemberActionRequest));
     }
+
     @Operation(
             summary = "Update group details",
             description = "Allows group leader to update group information such as name, description, visibility, and contest coordinator type."
@@ -140,9 +143,10 @@ public class GroupController {
     @PutMapping("")
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<MessageResponse> updateGroupDetails(
-            @Valid @RequestBody UpdateGroupRequest updateGroupRequest){
+            @Valid @RequestBody UpdateGroupRequest updateGroupRequest) {
         return ResponseEntity.ok(groupService.updateGroupDetails(updateGroupRequest));
     }
+
     @Operation(
             summary = "Remove member from group",
             description = "Allows group leader to remove a member from the group. The group owner cannot be removed."
@@ -150,7 +154,7 @@ public class GroupController {
     @DeleteMapping("/{groupId}/members")
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<MessageResponse> removeMemberFromGroup(
-            @PathVariable Long groupId, @RequestParam String userHandle){
+            @PathVariable Long groupId, @RequestParam String userHandle) {
         return ResponseEntity.ok(groupService.removeMemberFromGroup(groupId, userHandle));
     }
 
@@ -197,5 +201,13 @@ public class GroupController {
     public ResponseEntity<Page<GroupContestsResponse>> getContestsInGroup(@PathVariable Long groupId,
                                                                           @SortDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(groupService.viewContestsInGroup(groupId, pageable));
+    }
+
+    @GetMapping("/{groupId}/contests/search")
+    @PreAuthorize(value = "isAuthenticated()")
+    public ResponseEntity<Page<GroupContestsResponse>> searchContestByName(@PathVariable Long groupId,
+                                                                           @RequestParam("contest_name") String title,
+                                                                           @SortDefault(sort = "beginTime", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(groupService.searchContestByName(groupId, title, pageable));
     }
 }

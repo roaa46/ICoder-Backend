@@ -122,7 +122,6 @@ public class ProblemServiceImpl implements ProblemService {
                 .with("onlineJudge", ":", OJudgeType.fromString(oj))
                 .with("problemCode", ":", code)
                 .with("problemTitle", ":", title)
-                .with("problemTitle", ":", title)
                 .build();
 
         Page<Problem> problemsPage = problemRepository.findAll(spec, pageable);
