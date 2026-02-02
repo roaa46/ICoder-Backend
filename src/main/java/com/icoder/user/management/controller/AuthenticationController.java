@@ -95,7 +95,7 @@ public class AuthenticationController {
         return ResponseEntity.ok(authenticationService.resetPassword(request));
     }
 
-    @PatchMapping("password")
+    @PatchMapping("/password")
     @Operation(
             summary = "Change authenticated user's password",
             description = "Allows an authenticated user to change their password by providing the old and new passwords."
