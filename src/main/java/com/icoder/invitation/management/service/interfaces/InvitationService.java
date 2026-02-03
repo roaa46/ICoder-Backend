@@ -1,4 +1,4 @@
-package com.icoder.invitation.management.service.implementation;
+package com.icoder.invitation.management.service.interfaces;
 
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.invitation.management.dto.RespondToInvitationRequest;
