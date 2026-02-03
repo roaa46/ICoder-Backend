@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.Instant;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Configuration
@@ -24,23 +24,43 @@ public class DataInitializer {
     @Bean
     public CommandLineRunner commandLineRunner() {
         return args -> {
-            log.info(">>>> Start Initializing");
+            log.info(">>>> Start Initializing Data...");
 
-            RegisterRequest request = RegisterRequest.builder()
-                    .handle("roaazz")
-                    .nickname("Roaa Mohamed")
-                    .email("roaaamohamed66@gmail.com")
-                    .password(passwordEncoder.encode("Password@123"))
-                    .passwordConfirmation(passwordEncoder.encode("Password@123"))
-                    .build();
-            User user = userMapper.toEntity(request);
-            if (!userRepository.existsByHandle(user.getHandle())) {
-                userRepository.save(user);
-                log.info("User created successfully.");
-            }
-            else {
-                log.warn("User already exists.");
-            }
+            List<RegisterRequest> usersToCreate = List.of(
+                    createRequest("roaazz", "roaa mohamed", "roaaamohamed66@gmail.com"),
+                    createRequest("saam_03", "sam", "samshx404@gmail.com"),
+                    createRequest("roaa", "roaa2", "roaamohamedd60@gmail.com")
+            );
+
+            usersToCreate.forEach(this::saveUserIfNotExists);
+
+            log.info(">>>> Data Initialization Finished.");
         };
+    }
+
+    private RegisterRequest createRequest(String handle, String nickname, String email) {
+        String encodedPassword = passwordEncoder.encode("Password@123");
+        return RegisterRequest.builder()
+                .handle(handle)
+                .nickname(nickname)
+                .email(email)
+                .password(encodedPassword)
+                .passwordConfirmation(encodedPassword)
+                .build();
+    }
+
+    private void saveUserIfNotExists(RegisterRequest request) {
+        try {
+            if (!userRepository.existsByHandle(request.getHandle())) {
+                User user = userMapper.toEntity(request);
+                user.setVerified(true);
+                userRepository.save(user);
+                log.info("Successfully created user: [{}]", request.getHandle());
+            } else {
+                log.warn("Skipping: User [{}] already exists.", request.getHandle());
+            }
+        } catch (Exception e) {
+            log.error("Failed to create user [{}]. Error: {}", request.getHandle(), e.getMessage());
+        }
     }
 }
