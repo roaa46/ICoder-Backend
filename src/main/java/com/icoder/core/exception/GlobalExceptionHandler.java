@@ -23,6 +23,39 @@ public class GlobalExceptionHandler {
         HttpStatus status = resolveStatus(ex);
         return buildErrorResponse(status, ex.getMessage(), request.getRequestURI(), ex.getDetails());
     }
+    @ExceptionHandler(ActiveTemplateConflictException.class)
+    public ResponseEntity<ErrorResponse> handleActiveTemplateConflictException(ActiveTemplateConflictException ex, HttpServletRequest request) {
+        log.error("ActiveTemplateConflict Exception ");
+        HttpStatus status = resolveStatus(ex);
+        return buildErrorResponse(status, ex.getMessage(), request.getRequestURI(), ex.getDetails());
+    }
+    @ExceptionHandler(TemplateException.class)
+    public ResponseEntity<ErrorResponse> handleTemplateException(TemplateException ex, HttpServletRequest request) {
+        log.error("Template Exception");
+        HttpStatus status = resolveStatus(ex);
+        return buildErrorResponse(status, ex.getMessage(), request.getRequestURI(), ex.getDetails());
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex, HttpServletRequest request) {
+        log.error("ResourceNotFound Exception");
+        HttpStatus status = resolveStatus(ex);
+        return buildErrorResponse(status, ex.getMessage(), request.getRequestURI(), ex.getDetails());
+    }
+
+    @ExceptionHandler(ScrapingException.class)
+    public ResponseEntity<ErrorResponse> handleScrapingException(ScrapingException ex, HttpServletRequest request) {
+        log.error("Scraping Exception");
+        HttpStatus status = resolveStatus(ex);
+        return buildErrorResponse(status, ex.getMessage(), request.getRequestURI(), ex.getDetails());
+    }
+
+    @ExceptionHandler(OnlineJudgeException.class)
+    public ResponseEntity<ErrorResponse> handleOnlineJudgeException(OnlineJudgeException ex, HttpServletRequest request) {
+        log.error("OnlineJudge Exception");
+        HttpStatus status = resolveStatus(ex);
+        return buildErrorResponse(status, ex.getMessage(), request.getRequestURI(), ex.getDetails());
+    }
 
     // handling any unexpected exception
     @ExceptionHandler(Exception.class)
