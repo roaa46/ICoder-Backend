@@ -2,7 +2,7 @@ package com.icoder.invitation.management.controller;
 
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.invitation.management.dto.RespondToInvitationRequest;
-import com.icoder.invitation.management.service.implementation.InvitationService;
+import com.icoder.invitation.management.service.interfaces.InvitationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

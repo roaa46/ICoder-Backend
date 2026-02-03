@@ -9,6 +9,7 @@ import com.icoder.invitation.management.entity.Invitation;
 import com.icoder.invitation.management.enums.InvitationResponse;
 import com.icoder.invitation.management.enums.InvitationStatus;
 import com.icoder.invitation.management.repository.InvitationRepository;
+import com.icoder.invitation.management.service.interfaces.InvitationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,7 @@ import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
-public class InvitationServiceImp implements InvitationService{
+public class InvitationServiceImp implements InvitationService {
     private final InvitationRepository invitationRepository;
     private final GroupUtil groupUtil;
 
