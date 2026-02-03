@@ -18,11 +18,16 @@ import com.icoder.group.management.service.interfaces.GroupService;
 import com.icoder.group.management.util.GroupUtil;
 import com.icoder.group.management.dto.GroupMemberResponse;
 import com.icoder.core.dto.PictureUrlResponse;
+import com.icoder.invitation.management.entity.Invitation;
+import com.icoder.invitation.management.repository.InvitationRepository;
+import com.icoder.invitation.management.utils.InvitationUtils;
+import com.icoder.notification.management.events.InvitationSentEvent;
 import com.icoder.user.management.entity.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -46,6 +51,8 @@ public class GroupServiceImpl implements GroupService {
     private final UserGroupRoleMapper userGroupRoleMapper;
     private final Cloudinary cloudinary;
     private final ImageService imageService;
+    private final InvitationRepository invitationRepository;
+    private final ApplicationEventPublisher eventPublisher;
     @Value("${group.picture.folder}")
     private String groupPictureFolder;
 
@@ -126,12 +133,13 @@ public class GroupServiceImpl implements GroupService {
     @Override
     @Transactional
     public MessageResponse addMemberToGroup(GroupMemberActionRequest groupMemberActionRequest) {
-
         User newMember = groupUtil.findUser(groupMemberActionRequest.getUserHandle());
-
         Group group = groupUtil.findGroupById(groupMemberActionRequest.getGroupId());
-        groupUtil.addUserToGroup(newMember, group);
-        return new MessageResponse("User added to group successfully");
+        Invitation invitation = InvitationUtils.groupInvitationBuilder(
+                group.getId(), groupUtil.findCurrentUser(), newMember);
+        invitationRepository.save(invitation);
+        eventPublisher.publishEvent(new InvitationSentEvent(invitation, group.getName()));
+        return new MessageResponse("Invitation sent successfully");
     }
 
     @Override

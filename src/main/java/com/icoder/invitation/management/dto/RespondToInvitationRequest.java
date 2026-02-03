@@ -22,5 +22,5 @@ public class RespondToInvitationRequest {
     @JsonDeserialize(using = UppercaseEnumDeserializer.class)
     private InvitationResponse response;
     @NotBlank
-    private String Token;
+    private String token;
 }
