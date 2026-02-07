@@ -19,8 +19,7 @@ import com.icoder.group.management.util.GroupUtil;
 import com.icoder.group.management.dto.GroupMemberResponse;
 import com.icoder.core.dto.PictureUrlResponse;
 import com.icoder.invitation.management.entity.Invitation;
-import com.icoder.invitation.management.repository.InvitationRepository;
-import com.icoder.invitation.management.utils.InvitationUtils;
+import com.icoder.invitation.management.service.interfaces.InvitationService;
 import com.icoder.notification.management.events.InvitationSentEvent;
 import com.icoder.user.management.entity.User;
 import jakarta.transaction.Transactional;
@@ -51,8 +50,8 @@ public class GroupServiceImpl implements GroupService {
     private final UserGroupRoleMapper userGroupRoleMapper;
     private final Cloudinary cloudinary;
     private final ImageService imageService;
-    private final InvitationRepository invitationRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final InvitationService invitationService;
     @Value("${group.picture.folder}")
     private String groupPictureFolder;
 
@@ -135,9 +134,8 @@ public class GroupServiceImpl implements GroupService {
     public MessageResponse addMemberToGroup(GroupMemberActionRequest groupMemberActionRequest) {
         User newMember = groupUtil.findUser(groupMemberActionRequest.getUserHandle());
         Group group = groupUtil.findGroupById(groupMemberActionRequest.getGroupId());
-        Invitation invitation = InvitationUtils.groupInvitationBuilder(
+        Invitation invitation = invitationService.sendGroupInvitation(
                 group.getId(), groupUtil.findCurrentUser(), newMember);
-        invitationRepository.save(invitation);
         eventPublisher.publishEvent(new InvitationSentEvent(invitation, group.getName()));
         return new MessageResponse("Invitation sent successfully");
     }
