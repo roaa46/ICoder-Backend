@@ -4,6 +4,7 @@ import com.icoder.invitation.management.entity.Invitation;
 import com.icoder.notification.management.events.InvitationSentEvent;
 import com.icoder.notification.management.entity.Notification;
 import com.icoder.notification.management.enums.NotificationType;
+import com.icoder.notification.management.service.interfaces.EmailService;
 import com.icoder.notification.management.service.interfaces.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
@@ -14,7 +15,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class InvitationEventListener {
     private final NotificationService notificationService;
-    // emailService: EmailService
+    private final EmailService emailService;
 
     @Async
     @EventListener
@@ -31,7 +32,12 @@ public class InvitationEventListener {
 
         notificationService.createNotification(notification);
 
-        // send email
+        emailService.sendInvitationEmail(
+                invitation.getRecipient().getEmail(),
+                invitation.getSender().getNickname(),
+                event.getTargetName(),
+                invitation.getToken()
+        );
 
         System.out.println("Async notification processed for token: " + invitation.getToken());
     }
