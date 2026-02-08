@@ -2,8 +2,10 @@ package com.icoder.notification.management.service.implementation;
 
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.core.utils.SecurityUtils;
+import com.icoder.invitation.management.entity.Invitation;
 import com.icoder.notification.management.dto.NotificationResponse;
 import com.icoder.notification.management.entity.Notification;
+import com.icoder.notification.management.enums.NotificationType;
 import com.icoder.notification.management.mapper.NotificationMapper;
 import com.icoder.notification.management.repository.NotificationRepository;
 import com.icoder.notification.management.service.interfaces.NotificationService;
@@ -20,8 +22,15 @@ public class NotificationServiceImp implements NotificationService {
     private final NotificationMapper notificationMapper;
     @Override
     @Transactional
-    public void createNotification(Notification notification) {
-        notificationRepository.save(notification);
+    public Notification createNotification(Invitation invitation, String targetName) {
+        Notification notification = Notification.builder()
+                .recipient(invitation.getRecipient())
+                .targetId(invitation.getTargetId())
+                .message(invitation.getSender().getNickname() + " invited you to join " + targetName)
+                .type(NotificationType.INVITATION)
+                .actionUrl("/api/v1/invitations/respond?token=" + invitation.getToken())
+                .build();
+        return notificationRepository.save(notification);
     }
 
     @Override
