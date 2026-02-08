@@ -3,11 +3,11 @@ package com.icoder.notification.management.listener;
 import com.icoder.invitation.management.entity.Invitation;
 import com.icoder.notification.management.events.InvitationSentEvent;
 import com.icoder.notification.management.entity.Notification;
-import com.icoder.notification.management.enums.NotificationType;
 import com.icoder.notification.management.service.interfaces.EmailService;
 import com.icoder.notification.management.service.interfaces.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -16,21 +16,21 @@ import org.springframework.stereotype.Component;
 public class InvitationEventListener {
     private final NotificationService notificationService;
     private final EmailService emailService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Async
     @EventListener
     public void handleInvitationSentEvent(InvitationSentEvent event) {
         Invitation invitation = event.getInvitation();
 
-        Notification notification = Notification.builder()
-                .recipient(invitation.getRecipient())
-                .targetId(invitation.getTargetId())
-                .message(invitation.getSender().getNickname() + " invited you to join " + event.getTargetName())
-                .type(NotificationType.INVITATION)
-                .actionUrl("/api/v1/invitations/respond?token=" + invitation.getToken())
-                .build();
+        Notification notification = notificationService.createNotification(invitation, event.getTargetName());
 
-        notificationService.createNotification(notification);
+        String destination = "/topic/notifications";
+        messagingTemplate.convertAndSendToUser(
+                invitation.getRecipient().getId().toString(),
+                destination,
+                notification
+        );
 
         emailService.sendInvitationEmail(
                 invitation.getRecipient().getEmail(),
