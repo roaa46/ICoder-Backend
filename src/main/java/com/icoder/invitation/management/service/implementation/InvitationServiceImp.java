@@ -10,6 +10,8 @@ import com.icoder.invitation.management.enums.InvitationResponse;
 import com.icoder.invitation.management.enums.InvitationStatus;
 import com.icoder.invitation.management.repository.InvitationRepository;
 import com.icoder.invitation.management.service.interfaces.InvitationService;
+import com.icoder.invitation.management.utils.InvitationUtils;
+import com.icoder.user.management.entity.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,7 +24,12 @@ public class InvitationServiceImp implements InvitationService {
     private final InvitationRepository invitationRepository;
     private final GroupUtil groupUtil;
 
-
+    @Override
+    @Transactional
+    public Invitation sendGroupInvitation(Long groupId, User sender, User recipient){
+        Invitation invitation = InvitationUtils.groupInvitationBuilder(groupId, sender, recipient);
+        return invitationRepository.save(invitation);
+    }
     @Override
     @Transactional
     public MessageResponse respondToGroupInvitation(RespondToInvitationRequest request) {
