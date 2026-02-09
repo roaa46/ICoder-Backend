@@ -1,8 +1,8 @@
 package com.icoder.user.management.entity;
 
 import com.icoder.coding.editor.entity.CodeTemplate;
-import com.icoder.problem.management.entity.ProblemUserRelation;
 import com.icoder.group.management.entity.UserGroupRole;
+import com.icoder.problem.management.entity.ProblemUserRelation;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -63,7 +63,10 @@ public class User {
             orphanRemoval = true)
     private List<ProblemUserRelation> problemUserRelations = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
     private Set<CodeTemplate> templates = new HashSet<>();
 }
 

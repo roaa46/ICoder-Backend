@@ -2,7 +2,10 @@ package com.icoder.problem.management.entity;
 
 import com.icoder.problem.management.enums.OJudgeType;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.Instant;
 import java.util.ArrayList;
