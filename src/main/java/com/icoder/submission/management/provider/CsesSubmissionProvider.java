@@ -1,32 +1,26 @@
 package com.icoder.submission.management.provider;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icoder.core.config.PlaywrightService;
 import com.icoder.problem.management.enums.OJudgeType;
 import com.icoder.submission.management.dto.SubmissionResult;
 import com.icoder.submission.management.entity.BotAccount;
 import com.icoder.submission.management.entity.Submission;
 import com.icoder.submission.management.enums.SubmissionVerdict;
-import com.icoder.submission.management.repository.BotAccountRepository;
-import com.microsoft.playwright.BrowserContext;
+import com.icoder.submission.management.utils.SubmissionUtils;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.options.Cookie;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class CsesSubmissionProvider implements OnlineJudgeSubmissionProvider {
     private final PlaywrightService playwrightService;
-    private final BotAccountRepository accountRepository;
+    private final SubmissionUtils submissionUtils;
 
     private static final String BASE_URL = "https://cses.fi/problemset/";
 
@@ -40,72 +34,83 @@ public class CsesSubmissionProvider implements OnlineJudgeSubmissionProvider {
         return playwrightService.execute(page -> {
             Path tempFile = null;
             try {
-                loadCookies(page.context(), account);
+                handleAuthentication(page, account);
 
-                page.navigate("https://cses.fi/login");
-                if (page.locator("input[name='nick']").isVisible()) {
-                    page.locator("input[name='nick']").fill(account.getUsername());
-                    page.locator("input[name='pass']").fill(account.getPassword());
-                    page.click("input[type='submit']");
-                    page.waitForCondition(() -> !page.url().contains("login"));
-                    saveCookies(page.context(), account);
-                }
+                String[] langSettings = determineLanguageSettings(submission.getLanguage());
+                tempFile = createTempSubmissionFile(submission.getSubmissionCode(), langSettings[0]);
 
-                String submitUrl = "https://cses.fi/problemset/submit/" + submission.getProblem().getProblemCode() + "/";
-                page.navigate(submitUrl);
-
-                if (page.url().contains("login") || page.locator("input[name='nick']").isVisible()) {
-                    return new SubmissionResult(null, SubmissionVerdict.FAILED, "Login failed or session expired");
-                }
-
-                String langValue = "C++";
-                String optionValue = "C++11";
-
-                if (submission.getLanguage().contains("C++")) {
-                    langValue = "C++";
-                    optionValue = submission.getLanguage();
-                } else if (submission.getLanguage().contains("Python")) {
-                    langValue = "Python3";
-                    optionValue = "CPython3";
-                }
-
-                String extension = getExtension(langValue);
-                tempFile = Files.createTempFile("submission-", extension);
-                Files.writeString(tempFile, submission.getSubmissionCode());
-
-                page.setInputFiles("input[name='file']", tempFile);
-                page.selectOption("select[name='lang']", langValue);
-
-                if (page.locator("select[name='option']").isVisible()) {
-                    page.selectOption("select[name='option']", optionValue);
-                }
-
-                page.click("input[type='submit']");
-                page.waitForURL("**/result/**");
-
-                saveCookies(page.context(), account);
-                return new SubmissionResult(extractRemoteId(page.url()), SubmissionVerdict.IN_QUEUE, null);
-
+                String submitUrl = BASE_URL + "submit/" + submission.getProblem().getProblemCode() + "/";
+                return performUpload(page, submitUrl, tempFile, langSettings, account);
             } catch (Exception e) {
-                page.screenshot(new Page.ScreenshotOptions().setPath(java.nio.file.Paths.get("debug-error.png")));
-                log.error("CSES Submission failed: {}", e.getMessage());
+                takeErrorScreenshot(page);
                 return new SubmissionResult(null, SubmissionVerdict.FAILED, e.getMessage());
             } finally {
-                if (tempFile != null) {
-                    try {
-                        Files.deleteIfExists(tempFile);
-                    } catch (Exception ignored) {
-                    }
-                }
+                cleanupTempFile(tempFile);
             }
         });
+    }
+
+    private SubmissionResult performUpload(Page page, String url, Path file, String[] settings, BotAccount account) {
+        page.navigate(url);
+
+        if (page.url().contains("login")) {
+            return new SubmissionResult(null, SubmissionVerdict.FAILED, "Session expired after navigation");
+        }
+
+        page.setInputFiles("input[name='file']", file);
+        page.selectOption("select[name='lang']", settings[0]); // langValue
+
+        if (page.locator("select[name='option']").isVisible()) {
+            page.selectOption("select[name='option']", settings[1]); // optionValue
+        }
+
+        page.click("input[type='submit']");
+        page.waitForURL("**/result/**");
+
+        submissionUtils.saveCookies(page.context(), account);
+        return new SubmissionResult(extractRemoteId(page.url()), SubmissionVerdict.IN_QUEUE, null);
+    }
+
+    private String[] determineLanguageSettings(String lang) {
+        // [langValue, optionValue]
+        if (lang.contains("C++")) return new String[]{"C++", lang};
+        if (lang.contains("Python")) return new String[]{"Python3", "CPython3"};
+        return new String[]{"C++", "C++11"}; // Default
+    }
+
+    private Path createTempSubmissionFile(String code, String lang) throws Exception {
+        String ext = lang.contains("Python") ? ".py" : ".cpp";
+        Path path = Files.createTempFile("sub-", ext);
+        Files.writeString(path, code);
+        return path;
+    }
+
+    private void cleanupTempFile(Path path) {
+        if (path != null) {
+            try {
+                Files.deleteIfExists(path);
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    private void takeErrorScreenshot(Page page) {
+        try {
+            page.screenshot(new Page.ScreenshotOptions().setPath(java.nio.file.Paths.get("debug-error.png")));
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void handleAuthentication(Page page, BotAccount account) {
+        submissionUtils.loadCookies(page.context(), account);
+        ensureLoggedIn(page, account);
     }
 
     @Override
     public SubmissionResult checkVerdict(String remoteRunId, BotAccount account) {
         return playwrightService.execute(page -> {
             try {
-                loadCookies(page.context(), account);
+                submissionUtils.loadCookies(page.context(), account);
                 page.navigate(BASE_URL + "result/" + remoteRunId + "/");
 
                 page.waitForSelector("tr:has-text('Result:')", new Page.WaitForSelectorOptions().setTimeout(10000));
@@ -146,57 +151,15 @@ public class CsesSubmissionProvider implements OnlineJudgeSubmissionProvider {
 
             page.waitForNavigation(() -> page.locator("input[type='submit']").click());
 
-            saveCookies(page.context(), account);
+            submissionUtils.saveCookies(page.context(), account);
             log.info("New cookies saved for bot: {}", account.getUsername());
         } else {
             log.info("Already logged in via cookies for: {}", account.getUsername());
         }
     }
 
-    private void loadCookies(BrowserContext context, BotAccount account) {
-        if (account.getCookies() != null && !account.getCookies().isBlank()) {
-            try {
-                ObjectMapper mapper = new ObjectMapper();
-                List<Map<String, Object>> cookieMaps = mapper.readValue(account.getCookies(), new TypeReference<>() {});
-
-                for (Map<String, Object> map : cookieMaps) {
-                    context.addCookies(List.of(new Cookie((String) map.get("name"), (String) map.get("value"))
-                            .setDomain((String) map.get("domain"))
-                            .setPath((String) map.get("path"))
-                            .setExpires(((Number) map.get("expires")).doubleValue())
-                            .setHttpOnly((Boolean) map.get("httpOnly"))
-                            .setSecure((Boolean) map.get("secure"))
-                            .setSameSite(com.microsoft.playwright.options.SameSiteAttribute.valueOf((String) map.get("sameSite")))
-                    ));
-                }
-                log.info("Cookies loaded successfully for: {}", account.getUsername());
-            } catch (Exception e) {
-                log.error("Detailed Cookie Loading Error: {}", e.getMessage());
-            }
-        }
-    }
-
-    private void saveCookies(BrowserContext context, BotAccount account) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            List<Cookie> cookies = context.cookies();
-            String cookiesJson = mapper.writeValueAsString(cookies);
-            account.setCookies(cookiesJson);
-            accountRepository.save(account);
-        } catch (Exception e) {
-            log.error("Failed to extract cookies: {}", e.getMessage());
-        }
-    }
-
     private String extractRemoteId(String url) {
         String[] parts = url.split("/");
         return parts[parts.length - 1];
-    }
-
-    private String getExtension(String language) {
-        if (language.contains("C++")) return ".cpp";
-        if (language.contains("Java")) return ".java";
-        if (language.contains("Python")) return ".py";
-        return ".txt";
     }
 }
