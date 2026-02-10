@@ -40,6 +40,7 @@ public class Submission {
     private int length;
 
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private OJudgeType onlineJudge;
 
     @Column(nullable = false)
