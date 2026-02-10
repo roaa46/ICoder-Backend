@@ -25,7 +25,6 @@ public class CodeTemplateRequest {
     private Integer languageId;
     @NotBlank
     private String code;
-    private boolean enabled;
     @NotNull
     private Instant createdAndUpdatedAt;
 }
