@@ -46,7 +46,7 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // --------- auth ---------
+                        /// --------- auth ---------
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").authenticated()
@@ -58,7 +58,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/auth/password").authenticated()
 
 
-                        // --------- users ---------
+                        /// --------- users ---------
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/email/confirm").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/delete/confirm").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/users").permitAll()
@@ -67,7 +67,18 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/email/request-update").authenticated()
                         .requestMatchers("/api/v1/users/profile-picture/**").authenticated()
 
-                        // --------- swagger ---------
+                        ///  --------- problems ---------
+                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/*/*/metadata").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/*/*").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/recrawl/*/*").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/problems").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/reset-filters").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/problems").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/attempted").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/favorites").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/solved").authenticated()
+
+                        /// --------- swagger ---------
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
                         .requestMatchers("/uploads/**").permitAll()

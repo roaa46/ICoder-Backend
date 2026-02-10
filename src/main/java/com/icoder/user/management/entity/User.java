@@ -1,5 +1,6 @@
 package com.icoder.user.management.entity;
 
+import com.icoder.problem.management.entity.ProblemUserRelation;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -48,5 +50,10 @@ public class User {
     private List<Token> tokens;
 
     private Instant lastVerificationEmailSentAt;
-}
 
+    @OneToMany(mappedBy = "user",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    private List<ProblemUserRelation> problemUserRelations = new ArrayList<>();
+}
