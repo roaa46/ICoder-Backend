@@ -14,6 +14,7 @@ import com.icoder.submission.management.enums.SubmissionVerdict;
 import com.icoder.submission.management.mapper.SubmissionMapper;
 import com.icoder.submission.management.repository.SubmissionRepository;
 import com.icoder.submission.management.service.interfaces.SubmissionService;
+import com.icoder.submission.management.utils.SubmissionUtils;
 import com.icoder.user.management.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     private final SubmissionProcessor submissionProcessor;
     private final SubmissionMapper submissionMapper;
     private final SecurityUtils securityUtils;
+    private final SubmissionUtils submissionUtils;
 
 
     public List<LanguageOptionResponse> getCsesLanguages() {
@@ -127,8 +129,9 @@ public class SubmissionServiceImpl implements SubmissionService {
                 .build();
 
         submission = submissionRepository.save(submission);
-        final Long submissionId = submission.getId();
+        submissionUtils.updateUserProblemRelation(currentUser, problem);
 
+        final Long submissionId = submission.getId();
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {

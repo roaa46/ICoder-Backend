@@ -2,16 +2,23 @@ package com.icoder.submission.management.utils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.icoder.problem.management.entity.Problem;
+import com.icoder.problem.management.entity.ProblemUserRelation;
+import com.icoder.problem.management.repository.ProblemRepository;
+import com.icoder.problem.management.repository.ProblemUserRelationRepository;
 import com.icoder.submission.management.entity.BotAccount;
+import com.icoder.submission.management.entity.Submission;
 import com.icoder.submission.management.enums.SubmissionStatus;
 import com.icoder.submission.management.enums.SubmissionVerdict;
 import com.icoder.submission.management.repository.BotAccountRepository;
 import com.icoder.submission.management.repository.SubmissionRepository;
+import com.icoder.user.management.entity.User;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.options.Cookie;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -23,6 +30,8 @@ public class SubmissionUtils {
     private final SubmissionRepository submissionRepository;
     private final BotAccountRepository accountRepository;
     private final ObjectMapper mapper = new ObjectMapper();
+    private final ProblemUserRelationRepository relationRepository;
+    private final ProblemRepository problemRepository;
 
     public void handleFailure(Long id) {
         submissionRepository.findById(id).ifPresent(s -> {
@@ -55,6 +64,7 @@ public class SubmissionUtils {
         }
     }
 
+    @Transactional
     public void saveCookies(BrowserContext context, BotAccount account) {
         try {
             List<Cookie> cookies = context.cookies();
@@ -80,5 +90,46 @@ public class SubmissionUtils {
 
     public boolean isFinalVerdict(SubmissionVerdict v) {
         return v != SubmissionVerdict.IN_QUEUE && v != SubmissionVerdict.PENDING && v != SubmissionVerdict.RUNNING;
+    }
+
+    @Transactional
+    public void updateUserProblemRelation(User user, Problem problem) {
+        boolean exists = relationRepository.existsByUserIdAndProblemId(user.getId(), problem.getId());
+
+        if (!exists) {
+            ProblemUserRelation relation = new ProblemUserRelation();
+            relation.setUser(user);
+            relation.setProblem(problem);
+            relation.setAttempted(true);
+            relationRepository.saveAndFlush(relation);
+
+            problem.setAttemptedCount(problem.getAttemptedCount() + 1);
+            problemRepository.saveAndFlush(problem);
+        }
+    }
+
+    @Transactional
+    public void updateRelationAsSolved(Submission submission) {
+        Long userId = submission.getUser().getId();
+        Long problemId = submission.getProblem().getId();
+
+        relationRepository.findByUserIdAndProblemId(userId, problemId)
+                .ifPresentOrElse(relation -> {
+                    if (!relation.isSolved()) {
+                        relation.setSolved(true);
+                        relationRepository.saveAndFlush(relation);
+
+                        Problem problem = problemRepository.findById(problemId)
+                                .orElseThrow();
+
+                        problem.setSolvedCount(problem.getSolvedCount() + 1);
+                        problemRepository.saveAndFlush(problem);
+
+                        log.info("Problem {} marked as SOLVED for user {}. Total solved: {}",
+                                problem.getProblemCode(), submission.getUser().getHandle(), problem.getSolvedCount());
+                    } else {
+                        log.info("Problem {} was already solved by user {}", problemId, userId);
+                    }
+                }, () -> log.warn("Relation not found for User {} and Problem {}", userId, problemId));
     }
 }

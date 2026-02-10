@@ -24,7 +24,7 @@ public class CsesSubmissionProvider implements OnlineJudgeSubmissionProvider {
     private final SubmissionUtils submissionUtils;
 
     private static final String BASE_URL = "https://cses.fi/problemset/";
-    private static final String RESULT_ROW_SELECTOR = "tr:has-text('Result:')";
+    private static final String RESULT_ROW_SELECTOR = "tr:has-text('Result:') span.verdict";
     private static final String SUBMISSION_ROWS_SELECTOR = "table.wide tbody tr";
 
     @Override
@@ -116,9 +116,14 @@ public class CsesSubmissionProvider implements OnlineJudgeSubmissionProvider {
                 submissionUtils.loadCookies(page.context(), account);
                 page.navigate(BASE_URL + "result/" + remoteRunId + "/");
 
-                page.waitForSelector(RESULT_ROW_SELECTOR, new Page.WaitForSelectorOptions().setTimeout(10000));
+                page.waitForSelector(
+                        RESULT_ROW_SELECTOR,
+                        new Page.WaitForSelectorOptions().setTimeout(10000)
+                );
 
-                String verdictText = page.locator(RESULT_ROW_SELECTOR + ".verdict").textContent().trim().toUpperCase();
+                String verdictText = page.locator(
+                        RESULT_ROW_SELECTOR
+                ).textContent().trim().toUpperCase();
 
                 log.debug("CSES Checker: RemoteID {} - Highly accurate verdict found: {}", remoteRunId, verdictText);
 

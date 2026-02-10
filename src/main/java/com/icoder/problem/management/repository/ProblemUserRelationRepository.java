@@ -2,6 +2,7 @@ package com.icoder.problem.management.repository;
 
 import com.icoder.problem.management.entity.Problem;
 import com.icoder.problem.management.entity.ProblemUserRelation;
+import com.icoder.user.management.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,4 +23,8 @@ public interface ProblemUserRelationRepository extends JpaRepository<ProblemUser
     Page<ProblemUserRelation> findByUserIdAndFavoriteTrue(Long userId, Pageable pageable);
 
     List<ProblemUserRelation> findByUserIdAndProblemIn(Long userId, List<Problem> problems);
+
+    Optional<ProblemUserRelation> findByUserAndProblem(User user, Problem problem);
+
+    boolean existsByUserIdAndProblemId(Long userId, Long problemId);
 }

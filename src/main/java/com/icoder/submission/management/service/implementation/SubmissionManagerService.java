@@ -31,12 +31,10 @@ public class SubmissionManagerService {
     @Transactional
     public void processSubmission(Submission submission) {
         OnlineJudgeSubmissionProvider provider = getProvider(submission.getOnlineJudge());
-
         BotAccount account = reserveAccount(submission.getOnlineJudge());
 
         try {
             log.info("Executing submission {} using account {}", submission.getId(), account.getUsername());
-
             submission.setBotAccount(account);
 
             SubmissionResult result = provider.submit(submission, account);
@@ -54,13 +52,18 @@ public class SubmissionManagerService {
                 submission.setStatus(SubmissionStatus.SUBMITTING);
             }
 
-            log.info("Submission {} updated with Remote ID: {} and Verdict: {}",
-                    submission.getId(), result.remoteRunId(), result.verdict());
+            submission = submissionRepository.saveAndFlush(submission);
 
-        } catch (ResourceNotFoundException e) {
-            throw e;
+            if (submission.getVerdict() == SubmissionVerdict.ACCEPTED) {
+                log.info("Submission {} is ACCEPTED, updating relation...", submission.getId());
+                submissionUtils.updateRelationAsSolved(submission);
+            }
+
+            log.info("Submission {} updated with Remote ID: {} and Verdict: {}",
+                    submission.getId(), submission.getRemoteRunId(), submission.getVerdict());
+
         } catch (Exception e) {
-            log.error("Error during provider execution for submission {}: {}", submission.getId(), e.getMessage());
+            log.error("Error during execution for submission {}: {}", submission.getId(), e.getMessage());
             throw e;
         } finally {
             releaseAccount(account);

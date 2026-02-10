@@ -136,21 +136,8 @@ public class ProblemServiceImpl implements ProblemService {
                 ));
 
         Page<ProblemResponse> responsePage = problemsPage.map(problem -> {
-            ProblemResponse responseDTO = problemMapper.toResponseDTO(problem);
-
             ProblemUserRelation relation = solvedStatusMap.get(problem.getId());
-
-            if (relation != null) {
-                responseDTO.setSolved(relation.isSolved());
-                responseDTO.setAttempted(relation.isAttempted());
-                responseDTO.setFavorite(relation.isFavorite());
-            } else {
-                responseDTO.setSolved(false);
-                responseDTO.setAttempted(false);
-                responseDTO.setFavorite(false);
-            }
-
-            return responseDTO;
+            return problemMapper.toResponseDTO(problem, relation);
         });
 
         return responsePage;
@@ -162,16 +149,14 @@ public class ProblemServiceImpl implements ProblemService {
     public Page<ProblemResponse> getAttempted(Pageable pageable) {
         Long userId = securityUtils.getCurrentUserId();
         Page<ProblemUserRelation> relations = relationRepository.findByUserIdAndAttemptedTrue(userId, pageable);
-        return relations.map(rel -> problemMapper.toResponseDTO(rel.getProblem()));
+        return relations.map(rel -> problemMapper.toResponseDTO(rel.getProblem(), rel));
     }
 
     /// get all solved problems
-    @Override
-    @Transactional(readOnly = true)
     public Page<ProblemResponse> getSolved(Pageable pageable) {
         Long userId = securityUtils.getCurrentUserId();
         Page<ProblemUserRelation> relations = relationRepository.findByUserIdAndSolvedTrue(userId, pageable);
-        return relations.map(rel -> problemMapper.toResponseDTO(rel.getProblem()));
+        return relations.map(rel -> problemMapper.toResponseDTO(rel.getProblem(), rel));
     }
 
     /// get all favorite problems
@@ -180,6 +165,6 @@ public class ProblemServiceImpl implements ProblemService {
     public Page<ProblemResponse> getFavorites(Pageable pageable) {
         Long userId = securityUtils.getCurrentUserId();
         Page<ProblemUserRelation> relations = relationRepository.findByUserIdAndFavoriteTrue(userId, pageable);
-        return relations.map(rel -> problemMapper.toResponseDTO(rel.getProblem()));
+        return relations.map(rel -> problemMapper.toResponseDTO(rel.getProblem(), rel));
     }
 }

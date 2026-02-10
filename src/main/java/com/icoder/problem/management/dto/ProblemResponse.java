@@ -2,6 +2,7 @@ package com.icoder.problem.management.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -34,7 +35,10 @@ public class ProblemResponse {
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private long solvedCount;
     private Instant fetchedAt;
-    private boolean isSolved;
-    private boolean isAttempted;
-    private boolean isFavorite;
+    @JsonProperty(value = "is_solved")
+    private boolean solved;
+    @JsonProperty(value = "is_attempted")
+    private boolean attempted;
+    @JsonProperty(value = "is_favorite")
+    private boolean favorite;
 }
