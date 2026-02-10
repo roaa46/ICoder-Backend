@@ -9,6 +9,9 @@ import java.time.Instant;
 import java.util.UUID;
 
 public class InvitationUtils {
+    // 24 hours in seconds
+    public static final long DEFAULT_INVITATION_EXPIRY_SECONDS = 86400;
+
     public static Invitation groupInvitationBuilder(Long groupId, User sender, User recipient) {
         String token = UUID.randomUUID().toString();
         return Invitation.builder()
@@ -17,7 +20,7 @@ public class InvitationUtils {
                 .sender(sender)
                 .recipient(recipient)
                 .token(token)
-                .expiryDate(Instant.now().plusSeconds(86400)) // 24 hours expiry
+                .expiryDate(Instant.now().plusSeconds(DEFAULT_INVITATION_EXPIRY_SECONDS))
                 .status(InvitationStatus.PENDING)
                 .build();
     }

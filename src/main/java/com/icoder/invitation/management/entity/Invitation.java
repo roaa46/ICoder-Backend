@@ -44,5 +44,6 @@ public class Invitation {
     private InvitationStatus status;
 
     @Column(nullable = false, updatable = false)
+    @Builder.Default
     private Instant createdAt = Instant.now();
 }
