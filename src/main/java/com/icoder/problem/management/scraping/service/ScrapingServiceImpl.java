@@ -27,22 +27,18 @@ public class ScrapingServiceImpl implements ScrapingService {
             switch (judge) {
                 case CSES -> {
                     problemUrl = toCsesUrl(code);
-                    log.info(problemUrl);
                     return cses.scrapProblemStatement(problemUrl);
                 }
                 case CODEFORCES -> {
                     problemUrl = toCodeforcesUrl(code, "contest");
-                    log.info(problemUrl);
                     return codeforces.scrapProblemStatement(problemUrl);
                 }
                 case AT_CODER -> {
                     problemUrl = toAtCoderUrl(code);
-                    log.info(problemUrl);
                     return atcoder.scrapProblemStatement(problemUrl);
                 }
                 case GYM -> {
                     problemUrl = toCodeforcesUrl(code, "gym");
-                    log.info(problemUrl);
                     return codeforces.scrapProblemStatement(problemUrl);
                 }
                 default -> throw new ScrapingException("Unsupported judge: " + source);
@@ -62,22 +58,18 @@ public class ScrapingServiceImpl implements ScrapingService {
             switch (judge) {
                 case CSES -> {
                     problemUrl = toCsesUrl(code);
-                    log.info(problemUrl);
                     return cses.scrapMetadata(problemUrl);
                 }
                 case CODEFORCES -> {
                     problemUrl = toCodeforcesUrl(code, "contest");
-                    log.info(problemUrl);
                     return codeforces.scrapMetadata(problemUrl);
                 }
                 case AT_CODER -> {
                     problemUrl = toAtCoderUrl(code);
-                    log.info(problemUrl);
                     return atcoder.scrapMetadata(problemUrl);
                 }
                 case GYM -> {
                     problemUrl = toCodeforcesUrl(code, "gym");
-                    log.info(problemUrl);
                     return codeforces.scrapMetadata(problemUrl);
                 }
                 default -> throw new ScrapingException("Unsupported judge: " + source);
