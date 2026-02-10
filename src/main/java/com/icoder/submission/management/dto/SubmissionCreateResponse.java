@@ -1,6 +1,7 @@
 package com.icoder.submission.management.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.icoder.core.utils.LowercaseEnumSerializer;
 import com.icoder.submission.management.enums.SubmissionStatus;
@@ -12,6 +13,7 @@ import java.time.Instant;
 
 @Data
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class SubmissionCreateResponse {
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long id;

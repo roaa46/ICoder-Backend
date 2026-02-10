@@ -10,6 +10,7 @@ import com.icoder.submission.management.enums.SubmissionVerdict;
 import com.icoder.submission.management.provider.OnlineJudgeSubmissionProvider;
 import com.icoder.submission.management.repository.BotAccountRepository;
 import com.icoder.submission.management.repository.SubmissionRepository;
+import com.icoder.submission.management.utils.SubmissionUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class SubmissionManagerService {
     private final List<OnlineJudgeSubmissionProvider> providers;
     private final BotAccountRepository accountRepository;
     private final SubmissionRepository submissionRepository;
+    private final SubmissionUtils submissionUtils;
 
     @Transactional
     public void processSubmission(Submission submission) {
@@ -41,10 +43,12 @@ public class SubmissionManagerService {
 
             submission.setRemoteRunId(result.remoteRunId());
             submission.setVerdict(result.verdict());
+            submission.setTimeUsage(result.timeUsage());
+            submission.setMemoryUsage(result.memoryUsage());
 
             if (result.verdict() == SubmissionVerdict.FAILED) {
                 submission.setStatus(SubmissionStatus.FAILED);
-            } else if (isFinalVerdict(result.verdict())) {
+            } else if (submissionUtils.isFinalVerdict(result.verdict())) {
                 submission.setStatus(SubmissionStatus.COMPLETED);
             } else {
                 submission.setStatus(SubmissionStatus.SUBMITTING);
@@ -61,12 +65,6 @@ public class SubmissionManagerService {
         } finally {
             releaseAccount(account);
         }
-    }
-
-    private boolean isFinalVerdict(SubmissionVerdict v) {
-        return v != SubmissionVerdict.IN_QUEUE &&
-                v != SubmissionVerdict.PENDING &&
-                v != SubmissionVerdict.RUNNING;
     }
 
     @Transactional

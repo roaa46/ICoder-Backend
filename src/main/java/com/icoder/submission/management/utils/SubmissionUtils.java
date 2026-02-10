@@ -65,4 +65,20 @@ public class SubmissionUtils {
             log.error("Failed to extract cookies: {}", e.getMessage());
         }
     }
+
+    public Integer parseTime(String timeText) {
+        if (timeText.contains("--") || timeText.isEmpty()) return 0;
+        double seconds = Double.parseDouble(timeText.replace("s", "").trim());
+        return (int) (seconds * 1000);
+    }
+
+    public Integer parseMemory(String memText) {
+        if (memText.contains("--") || memText.isEmpty()) return 0;
+        double mb = Double.parseDouble(memText.replace("MB", "").trim());
+        return (int) mb;
+    }
+
+    public boolean isFinalVerdict(SubmissionVerdict v) {
+        return v != SubmissionVerdict.IN_QUEUE && v != SubmissionVerdict.PENDING && v != SubmissionVerdict.RUNNING;
+    }
 }

@@ -10,5 +10,5 @@ public interface OnlineJudgeSubmissionProvider {
 
     boolean supports(OJudgeType type);
 
-    SubmissionResult checkVerdict(String remoteRunId, BotAccount account);
+    SubmissionResult checkVerdict(String remoteRunId, BotAccount account, Submission submission);
 }

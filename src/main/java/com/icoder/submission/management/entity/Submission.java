@@ -37,8 +37,6 @@ public class Submission {
     private Integer timeUsage;
     private Integer memoryUsage;
 
-    private int length;
-
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private OJudgeType onlineJudge;

@@ -7,6 +7,7 @@ import com.icoder.submission.management.enums.SubmissionStatus;
 import com.icoder.submission.management.enums.SubmissionVerdict;
 import com.icoder.submission.management.provider.OnlineJudgeSubmissionProvider;
 import com.icoder.submission.management.repository.SubmissionRepository;
+import com.icoder.submission.management.utils.SubmissionUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -23,6 +24,7 @@ public class ResultCheckerService {
 
     private final SubmissionRepository submissionRepository;
     private final List<OnlineJudgeSubmissionProvider> providers;
+    private final SubmissionUtils submissionUtils;
 
     @Scheduled(fixedDelay = 30000)
     @Transactional
@@ -38,15 +40,17 @@ public class ResultCheckerService {
             try {
                 OnlineJudgeSubmissionProvider provider = getProvider(submission.getOnlineJudge());
 
-                // maybe it needs login
-                SubmissionResult result = provider.checkVerdict(submission.getRemoteRunId(), submission.getBotAccount());
+                SubmissionResult result = provider.checkVerdict(submission.getRemoteRunId(), submission.getBotAccount(), submission);
 
                 if (result.verdict() != submission.getVerdict()) {
                     submission.setVerdict(result.verdict());
-                    if (isFinalVerdict(result.verdict())) {
+                    if (submissionUtils.isFinalVerdict(result.verdict())) {
                         submission.setStatus(SubmissionStatus.COMPLETED);
                     }
                     submission.setUpdatedAt(java.time.Instant.now());
+                    submission.setTimeUsage(result.timeUsage());
+                    submission.setMemoryUsage(result.memoryUsage());
+
 
                     submissionRepository.saveAndFlush(submission);
 
@@ -56,10 +60,6 @@ public class ResultCheckerService {
                 log.error("Failed to check verdict for submission {}: {}", submission.getId(), e.getMessage());
             }
         }
-    }
-
-    private boolean isFinalVerdict(SubmissionVerdict v) {
-        return v != SubmissionVerdict.IN_QUEUE && v != SubmissionVerdict.PENDING && v != SubmissionVerdict.RUNNING;
     }
 
     private OnlineJudgeSubmissionProvider getProvider(OJudgeType type) {
