@@ -42,10 +42,12 @@ public class SubmissionManagerService {
             submission.setRemoteRunId(result.remoteRunId());
             submission.setVerdict(result.verdict());
 
-            if (result.verdict() != SubmissionVerdict.FAILED) {
+            if (result.verdict() == SubmissionVerdict.FAILED) {
+                submission.setStatus(SubmissionStatus.FAILED);
+            } else if (isFinalVerdict(result.verdict())) {
                 submission.setStatus(SubmissionStatus.COMPLETED);
             } else {
-                submission.setStatus(SubmissionStatus.FAILED);
+                submission.setStatus(SubmissionStatus.SUBMITTING);
             }
 
             log.info("Submission {} updated with Remote ID: {} and Verdict: {}",
@@ -59,6 +61,12 @@ public class SubmissionManagerService {
         } finally {
             releaseAccount(account);
         }
+    }
+
+    private boolean isFinalVerdict(SubmissionVerdict v) {
+        return v != SubmissionVerdict.IN_QUEUE &&
+                v != SubmissionVerdict.PENDING &&
+                v != SubmissionVerdict.RUNNING;
     }
 
     @Transactional

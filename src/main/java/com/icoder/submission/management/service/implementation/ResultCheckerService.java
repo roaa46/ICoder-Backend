@@ -24,7 +24,7 @@ public class ResultCheckerService {
     private final SubmissionRepository submissionRepository;
     private final List<OnlineJudgeSubmissionProvider> providers;
 
-    @Scheduled(fixedDelay = 10000)
+    @Scheduled(fixedDelay = 30000)
     @Transactional
     public void checkPendingSubmissions() {
         Set<Submission> pendingSubmissions = submissionRepository
@@ -46,8 +46,11 @@ public class ResultCheckerService {
                     if (isFinalVerdict(result.verdict())) {
                         submission.setStatus(SubmissionStatus.COMPLETED);
                     }
-                    submissionRepository.save(submission);
-                    log.info("Submission {} updated to {}", submission.getId(), result.verdict());
+                    submission.setUpdatedAt(java.time.Instant.now());
+
+                    submissionRepository.saveAndFlush(submission);
+
+                    log.info("SUCCESS: Submission {} updated to {}", submission.getId(), result.verdict());
                 }
             } catch (Exception e) {
                 log.error("Failed to check verdict for submission {}: {}", submission.getId(), e.getMessage());

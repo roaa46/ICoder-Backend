@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -107,16 +108,16 @@ public class CsesSubmissionProvider implements OnlineJudgeSubmissionProvider {
                 loadCookies(page.context(), account);
                 page.navigate(BASE_URL + "result/" + remoteRunId + "/");
 
-                page.waitForSelector(".verdict", new Page.WaitForSelectorOptions().setTimeout(5000));
+                page.waitForSelector("tr:has-text('Result:')", new Page.WaitForSelectorOptions().setTimeout(10000));
 
-                String verdictText = page.locator(".verdict").textContent().trim().toUpperCase();
-                log.info("CSES Raw Verdict for {}: {}", remoteRunId, verdictText);
+                String verdictText = page.locator("tr:has-text('Result:') .verdict").textContent().trim().toUpperCase();
+
+                log.info("CSES Checker: RemoteID {} - Highly accurate verdict found: {}", remoteRunId, verdictText);
 
                 SubmissionVerdict verdict = mapCsesVerdict(verdictText);
-
                 return new SubmissionResult(remoteRunId, verdict, null);
             } catch (Exception e) {
-                log.error("Error checking CSES verdict for {}: {}", remoteRunId, e.getMessage());
+                log.error("CSES Checker Error for {}: {}", remoteRunId, e.getMessage());
                 return new SubmissionResult(remoteRunId, SubmissionVerdict.IN_QUEUE, e.getMessage());
             }
         });
@@ -154,14 +155,23 @@ public class CsesSubmissionProvider implements OnlineJudgeSubmissionProvider {
 
     private void loadCookies(BrowserContext context, BotAccount account) {
         if (account.getCookies() != null && !account.getCookies().isBlank()) {
-            ObjectMapper mapper = new ObjectMapper();
             try {
-                List<Cookie> cookies = mapper.readValue(account.getCookies(), new TypeReference<List<Cookie>>() {
-                });
-                context.addCookies(cookies);
-                log.info("Cookies loaded for bot: {}", account.getUsername());
+                ObjectMapper mapper = new ObjectMapper();
+                List<Map<String, Object>> cookieMaps = mapper.readValue(account.getCookies(), new TypeReference<>() {});
+
+                for (Map<String, Object> map : cookieMaps) {
+                    context.addCookies(List.of(new Cookie((String) map.get("name"), (String) map.get("value"))
+                            .setDomain((String) map.get("domain"))
+                            .setPath((String) map.get("path"))
+                            .setExpires(((Number) map.get("expires")).doubleValue())
+                            .setHttpOnly((Boolean) map.get("httpOnly"))
+                            .setSecure((Boolean) map.get("secure"))
+                            .setSameSite(com.microsoft.playwright.options.SameSiteAttribute.valueOf((String) map.get("sameSite")))
+                    ));
+                }
+                log.info("Cookies loaded successfully for: {}", account.getUsername());
             } catch (Exception e) {
-                log.warn("Failed to load cookies for bot: {}", account.getUsername());
+                log.error("Detailed Cookie Loading Error: {}", e.getMessage());
             }
         }
     }
@@ -187,6 +197,6 @@ public class CsesSubmissionProvider implements OnlineJudgeSubmissionProvider {
         if (language.contains("C++")) return ".cpp";
         if (language.contains("Java")) return ".java";
         if (language.contains("Python")) return ".py";
-        return ".txt"; // Default
+        return ".txt";
     }
 }
