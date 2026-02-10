@@ -23,9 +23,27 @@ public class NotificationController {
         return ResponseEntity.ok(notificationService.getMyNotifications(pageable));
     }
 
+    @GetMapping("/unread-count")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Long> getUnreadCount() {
+        return ResponseEntity.ok(notificationService.getUnreadCount());
+    }
+
     @PatchMapping("/{notificationId}/read")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse> markAsRead(@PathVariable Long notificationId) {
         return ResponseEntity.ok(notificationService.markAsRead(notificationId));
+    }
+
+    @PatchMapping("/read-all")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse> markAllAsRead() {
+        return ResponseEntity.ok(notificationService.markAllAsRead());
+    }
+
+    @DeleteMapping("/read")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse> deleteReadNotifications() {
+        return ResponseEntity.ok(notificationService.deleteReadNotifications());
     }
 }

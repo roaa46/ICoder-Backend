@@ -4,6 +4,6 @@ public enum NotificationType {
     INVITATION,
     JOIN_REQUEST,
     CONTEST_UPDATE,
-    MEEETING_REMINDER,
+    MEETING_REMINDER,
     SYSTEM
 }
