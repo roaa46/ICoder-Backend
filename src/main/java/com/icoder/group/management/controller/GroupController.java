@@ -25,6 +25,16 @@ public class GroupController {
     private final GroupServiceImpl groupService;
 
     @Operation(
+            summary = "Get group by ID",
+            description = "Retrieves a group by its unique ID."
+    )
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/{groupId}")
+    public ResponseEntity<GroupResponse> getGroupById(@PathVariable Long groupId) {
+        return ResponseEntity.ok(groupService.getGroupById(groupId));
+    }
+
+    @Operation(
             summary = "Get my groups",
             description = "Retrieves all groups that the authenticated user is a member of with pagination support."
     )
@@ -63,7 +73,7 @@ public class GroupController {
     @PreAuthorize(value = "isAuthenticated()")
     public ResponseEntity<Page<GroupResponse>> searchPublicGroupsByName(
             @RequestParam("query") String query, @PageableDefault(size = 9, sort = "name") Pageable pageable){
-        return groupService.searchByGroupName(query, pageable);
+        return ResponseEntity.ok(groupService.searchByGroupName(query, pageable));
     }
 
     @Operation(

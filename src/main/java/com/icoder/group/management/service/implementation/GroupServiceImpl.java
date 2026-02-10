@@ -29,7 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -56,6 +55,12 @@ public class GroupServiceImpl implements GroupService {
     private String groupPictureFolder;
 
     @Override
+    public GroupResponse getGroupById(Long groupId) {
+        Group group = groupUtil.findGroupById(groupId);
+        return groupMapper.toDTO(group);
+    }
+
+    @Override
     public Page<GroupResponse> getMyGroups(Pageable pageable) {
         Page<Group> myGroups = groupRepository.getMyGroups(securityUtils.getCurrentUserUsername(), pageable);
         return myGroups.map(groupMapper::toDTO);
@@ -75,9 +80,9 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public ResponseEntity<Page<GroupResponse>> searchByGroupName(String query, Pageable pageable) {
+    public Page<GroupResponse> searchByGroupName(String query, Pageable pageable) {
         Page<Group> groups = groupRepository.findByNameContainingIgnoreCaseAndVisibility(query, Visibility.PUBLIC, pageable);
-        return ResponseEntity.ok(groups.map(groupMapper::toDTO));
+        return groups.map(groupMapper::toDTO);
     }
 
     @Override
