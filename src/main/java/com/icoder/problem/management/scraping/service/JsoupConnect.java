@@ -1,6 +1,8 @@
 package com.icoder.problem.management.scraping.service;
 
+import com.icoder.core.config.PlaywrightService;
 import com.icoder.core.exception.ScrapingException;
+import com.microsoft.playwright.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -16,12 +18,12 @@ import java.time.Duration;
 @Service
 public class JsoupConnect {
 
-    private final BrowserService browserService;
+    private final PlaywrightService playwrightService;
     private final HttpClient httpClient;
 
-    public JsoupConnect(BrowserService browserService, HttpClient httpClient) {
-        this.browserService = browserService;
+    public JsoupConnect(HttpClient httpClient, PlaywrightService playwrightService) {
         this.httpClient = httpClient;
+        this.playwrightService = playwrightService;
     }
 
     public Document connect(String url) {
@@ -57,7 +59,15 @@ public class JsoupConnect {
     private Document connectWithBrowser(String url) {
         try {
             log.info("Fetching HTML using Playwright for url: {}", url);
-            String htmlContent = browserService.fetchHtml(url);
+            String htmlContent = playwrightService.execute(page -> {
+                page.navigate(url);
+                try {
+                    page.waitForSelector(".problem-statement", new Page.WaitForSelectorOptions().setTimeout(5000));
+                } catch (Exception e) {
+                    log.debug("Standard selector not found, proceeding with raw content.");
+                }
+                return page.content();
+            });
 
             if (htmlContent == null || htmlContent.isBlank()) {
                 throw new ScrapingException("Received empty HTML from browser");

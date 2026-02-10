@@ -12,10 +12,10 @@ import java.time.Instant;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "online_judge_accounts", indexes = {
+@Table(name = "bot_accounts", indexes = {
         @Index(name = "idx_account_lookup", columnList = "judgeType, inUse, active, lastUsedAt")
 })
-public class OnlineJudgeAccount {
+public class BotAccount {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

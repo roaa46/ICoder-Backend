@@ -58,6 +58,10 @@ public class Submission {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bot_account_id")
+    private BotAccount botAccount;
+
     // contest relation
 
     @PrePersist

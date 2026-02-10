@@ -23,6 +23,14 @@ public class GlobalExceptionHandler {
         HttpStatus status = resolveStatus(ex);
         return buildErrorResponse(status, ex.getMessage(), request.getRequestURI(), ex.getDetails());
     }
+
+    @ExceptionHandler(SubmissionException.class)
+    public ResponseEntity<ErrorResponse> handleSubmissionException(SubmissionException ex, HttpServletRequest request) {
+        log.error("API Exception");
+        HttpStatus status = resolveStatus(ex);
+        return buildErrorResponse(status, ex.getMessage(), request.getRequestURI(), ex.getDetails());
+    }
+
     @ExceptionHandler(ActiveTemplateConflictException.class)
     public ResponseEntity<ErrorResponse> handleActiveTemplateConflictException(ActiveTemplateConflictException ex, HttpServletRequest request) {
         log.error("ActiveTemplateConflict Exception ");
