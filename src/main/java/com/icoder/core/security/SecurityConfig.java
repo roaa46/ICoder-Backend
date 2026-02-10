@@ -67,6 +67,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/email/request-update").authenticated()
                         .requestMatchers("/api/v1/users/profile-picture/**").authenticated()
 
+
                         ///  --------- problems ---------
                         .requestMatchers(HttpMethod.GET, "/api/v1/problems/*/*/metadata").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/problems/*/*").authenticated()
@@ -77,6 +78,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/problems/attempted").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/problems/favorites").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/problems/solved").authenticated()
+
+
+                        ///  --------- editor ---------
+                        .requestMatchers("/api/v1/coding/editor/language", "/api/v1/coding/editor/languages").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/coding/editor/submissions/*", "/api/v1/coding/editor/submissions/batch").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/coding/editor/submissions", "/api/v1/coding/editor/submissions/batch").authenticated()
+                        .requestMatchers("/api/v1/coding/editor/templates/**").authenticated()
 
                         /// --------- swagger ---------
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()

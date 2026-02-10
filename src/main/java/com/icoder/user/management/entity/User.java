@@ -1,15 +1,17 @@
 package com.icoder.user.management.entity;
 
+import com.icoder.coding.editor.entity.CodeTemplate;
 import com.icoder.problem.management.entity.ProblemUserRelation;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Data
@@ -56,4 +58,7 @@ public class User {
             cascade = CascadeType.ALL,
             orphanRemoval = true)
     private List<ProblemUserRelation> problemUserRelations = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<CodeTemplate> templates = new HashSet<>();
 }
