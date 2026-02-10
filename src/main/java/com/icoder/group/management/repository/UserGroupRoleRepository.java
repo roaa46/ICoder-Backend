@@ -10,11 +10,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
 import java.util.Optional;
 
 @Repository
 public interface UserGroupRoleRepository extends JpaRepository<UserGroupRole, Long> {
     Optional<UserGroupRole> findByUserAndGroup(User user, Group group);
+
     Page<UserGroupRole> findAllByGroupId(Long groupId, Pageable pageable);
 
     @Query("""
@@ -24,8 +26,17 @@ public interface UserGroupRoleRepository extends JpaRepository<UserGroupRole, Lo
                   AND ugr.group.id = :groupId
                   AND ugr.role IN ('OWNER', 'MANAGER')
             """)
-    boolean isLeaderOfGroup(@Param("userId") Long userId,
-                            @Param("groupId") Long groupId);
+    boolean hasManagerPermission(@Param("userId") Long userId,
+                                 @Param("groupId") Long groupId);
+
+    @Query("""
+                SELECT COUNT(ugr) > 0
+                FROM UserGroupRole ugr
+                WHERE ugr.user.id = :userId
+                  AND ugr.group.id = :groupId
+                  AND ugr.role = 'OWNER'
+            """)
+    boolean hasOwnerPermission(Long userId, Long groupId);
 
     @Query("""
             SELECT COUNT(ugr) > 0
@@ -36,10 +47,10 @@ public interface UserGroupRoleRepository extends JpaRepository<UserGroupRole, Lo
     boolean existInGroup(@Param("userId") Long userId, @Param("groupId") Long groupId);
 
     @Query("""
-           SELECT ugr.role 
-           FROM UserGroupRole ugr 
-           WHERE ugr.user.id = :userId 
-              AND ugr.group.id = :groupId
+            SELECT ugr.role 
+            FROM UserGroupRole ugr 
+            WHERE ugr.user.id = :userId 
+               AND ugr.group.id = :groupId
             """)
     Optional<GroupRole> findRoleByUserIdAndGroupId(Long userId, Long groupId);
 }
