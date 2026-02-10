@@ -22,7 +22,7 @@ public class Notification {
     @Column(nullable = false)
     private Long targetId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 500)
     private String message;
 
     @Enumerated(EnumType.STRING)
@@ -33,8 +33,16 @@ public class Notification {
     private String actionUrl;
 
     @Column(nullable = false)
-    private boolean isRead = false;
+    private boolean isRead;
 
-    @Column(nullable = false)
-    private Instant createdAt = Instant.now();
+    @Column(nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+    }
 }
+

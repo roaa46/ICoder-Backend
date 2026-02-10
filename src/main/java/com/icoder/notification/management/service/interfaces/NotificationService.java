@@ -11,4 +11,7 @@ public interface NotificationService {
     Notification createNotification(Invitation invitation, String targetName);
     Page<NotificationResponse> getMyNotifications(Pageable pageable);
     MessageResponse markAsRead(Long notificationId);
+    MessageResponse markAllAsRead();
+    Long getUnreadCount();
+    MessageResponse deleteReadNotifications();
 }
