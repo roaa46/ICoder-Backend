@@ -54,11 +54,9 @@ public class ProblemPersistenceServiceImpl implements ProblemPersistenceService 
     @Transactional
     public ProblemStatementResponse saveFullStatement(ProblemStatementResponse scrapedResponse, OJudgeType judgeType) {
         log.info("Saving full statement for: {} - {}", scrapedResponse.getProblemCode(), judgeType);
-        log.info("response data: {}", scrapedResponse);
         Problem problem = problemRepository
                 .findByProblemCodeAndOnlineJudge(scrapedResponse.getProblemCode(), judgeType)
                 .orElseThrow(() -> new ResourceNotFoundException("Metadata not found"));
-        log.info("Problem found: {}", problem);
         updateProperties(problem, scrapedResponse.getProperties());
         updateSections(problem, scrapedResponse.getSections());
         problem.setFetchedAt(Instant.now());

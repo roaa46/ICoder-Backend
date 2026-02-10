@@ -22,15 +22,18 @@ import com.icoder.group.management.repository.GroupRepository;
 import com.icoder.group.management.repository.UserGroupRoleRepository;
 import com.icoder.group.management.service.interfaces.GroupService;
 import com.icoder.group.management.util.GroupUtil;
+import com.icoder.invitation.management.entity.Invitation;
+import com.icoder.invitation.management.service.interfaces.InvitationService;
+import com.icoder.notification.management.events.InvitationSentEvent;
 import com.icoder.user.management.entity.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -53,10 +56,18 @@ public class GroupServiceImpl implements GroupService {
     private final UserGroupRoleMapper userGroupRoleMapper;
     private final Cloudinary cloudinary;
     private final ImageService imageService;
+    private final ApplicationEventPublisher eventPublisher;
+    private final InvitationService invitationService;
     @Value("${group.picture.folder}")
     private String groupPictureFolder;
     private final ContestRepository contestRepository;
     private final ContestMapper contestMapper;
+
+    @Override
+    public GroupResponse getGroupById(Long groupId) {
+        Group group = groupUtil.findGroupById(groupId);
+        return groupMapper.toDTO(group);
+    }
 
     @Override
     public Page<GroupResponse> getMyGroups(Pageable pageable) {
@@ -78,9 +89,9 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public ResponseEntity<Page<GroupResponse>> searchByGroupName(String query, Pageable pageable) {
+    public Page<GroupResponse> searchByGroupName(String query, Pageable pageable) {
         Page<Group> groups = groupRepository.findByNameContainingIgnoreCaseAndVisibility(query, Visibility.PUBLIC, pageable);
-        return ResponseEntity.ok(groups.map(groupMapper::toDTO));
+        return groups.map(groupMapper::toDTO);
     }
 
     @Override
@@ -135,17 +146,12 @@ public class GroupServiceImpl implements GroupService {
     @Override
     @Transactional
     public MessageResponse addMemberToGroup(GroupMemberActionRequest groupMemberActionRequest) {
-
         User newMember = groupUtil.findUser(groupMemberActionRequest.getUserHandle());
-
         Group group = groupUtil.findGroupById(groupMemberActionRequest.getGroupId());
-
-        if (group.getVisibility() == Visibility.PRIVATE) {
-            groupUtil.checkLeaderPermission(group);
-        }
-
-        groupUtil.addUserToGroup(newMember, group);
-        return new MessageResponse("User added to group successfully");
+        Invitation invitation = invitationService.sendGroupInvitation(
+                group.getId(), groupUtil.findCurrentUser(), newMember);
+        eventPublisher.publishEvent(new InvitationSentEvent(invitation, group.getName()));
+        return new MessageResponse("Invitation sent successfully");
     }
 
     @Override
@@ -154,8 +160,6 @@ public class GroupServiceImpl implements GroupService {
         User member = groupUtil.findUser(groupMemberActionRequest.getUserHandle());
 
         Group group = groupUtil.findGroupById(groupMemberActionRequest.getGroupId());
-
-        groupUtil.checkLeaderPermission(group);
 
         UserGroupRole userRole = groupUtil.findUserRole(member, group);
 
@@ -174,8 +178,6 @@ public class GroupServiceImpl implements GroupService {
         User member = groupUtil.findUser(groupMemberActionRequest.getUserHandle());
 
         Group group = groupUtil.findGroupById(groupMemberActionRequest.getGroupId());
-
-        groupUtil.checkLeaderPermission(group);
 
         UserGroupRole userRole = groupUtil.findUserRole(member, group);
 
@@ -197,8 +199,6 @@ public class GroupServiceImpl implements GroupService {
 
         Group group = groupUtil.findGroupById(groupId);
 
-        groupUtil.checkLeaderPermission(group);
-
         UserGroupRole userRole = groupUtil.findUserRole(member, group);
         if (userRole.getRole() == GroupRole.OWNER) {
             throw new IllegalArgumentException("Cannot remove the group owner");
@@ -213,7 +213,6 @@ public class GroupServiceImpl implements GroupService {
     public MessageResponse updateGroupDetails(UpdateGroupRequest updateGroupRequest) {
 
         Group group = groupUtil.findGroupById(updateGroupRequest.getGroupId());
-        groupUtil.checkLeaderPermission(group);
 
         boolean updated = false;
 
@@ -264,8 +263,6 @@ public class GroupServiceImpl implements GroupService {
     public MessageResponse updateGroupPicture(UpdateGroupPictureRequest pictureRequest) {
         Group group = groupUtil.findGroupById(pictureRequest.getGroupId());
 
-        groupUtil.checkLeaderPermission(group);
-
         imageService.checkPictureType(pictureRequest.getPicture());
 
         try {
@@ -299,7 +296,6 @@ public class GroupServiceImpl implements GroupService {
     public MessageResponse deleteGroupPicture(Long groupId) {
         Group group = groupUtil.findGroupById(groupId);
 
-        groupUtil.checkLeaderPermission(group);
 
         String pictureUrl = group.getPictureUrl();
 

@@ -249,15 +249,11 @@ public class CodingEditorServiceImpl implements CodingEditorService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("user not found"));
 
-        if (request.isEnabled()) {
-            checkForActiveTemplate(userId, request.getLanguageId());
-        }
-
         CodeTemplate template = new CodeTemplate();
         template.setTemplateName(request.getTemplateName());
         template.setLanguageId(request.getLanguageId());
         template.setCode(request.getCode());
-        template.setEnabled(request.isEnabled());
+        template.setEnabled(false);
         template.setUser(user);
         template.setCreatedAndUpdatedAt(Instant.now());
 
@@ -341,7 +337,6 @@ public class CodingEditorServiceImpl implements CodingEditorService {
         template.setTemplateName(request.getTemplateName());
         template.setCode(request.getCode());
         template.setLanguageId(request.getLanguageId());
-        template.setEnabled(request.isEnabled());
         template.setCreatedAndUpdatedAt(Instant.now());
 
         templateRepository.save(template);
