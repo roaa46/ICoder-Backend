@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.Instant;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Configuration
@@ -26,21 +26,40 @@ public class DataInitializer {
         return args -> {
             log.info(">>>> Start Initializing");
 
-            RegisterRequest request = RegisterRequest.builder()
-                    .handle("roaazz")
-                    .nickname("Roaa Mohamed")
-                    .email("roaaamohamed66@gmail.com")
-                    .password(passwordEncoder.encode("Password@123"))
-                    .passwordConfirmation(passwordEncoder.encode("Password@123"))
-                    .build();
-            User user = userMapper.toEntity(request);
-            if (!userRepository.existsByHandle(user.getHandle())) {
-                userRepository.save(user);
-                log.info("User created successfully.");
-            }
-            else {
-                log.warn("User already exists.");
-            }
+            // Define initial users
+            List<RegisterRequest> initialUsers = List.of(
+                    createUserRequest("user1", "User One", "saaameh.0.1@gmail.com", "Password@123"),
+                    createUserRequest("user2", "User Two", "samshx606@gmail.com", "Password@123"),
+                    createUserRequest("user3", "User Three", "samshx404@gmail.com", "Password@123")
+            );
+
+            // Create users
+            initialUsers.forEach(this::createUserIfNotExists);
+
+            log.info(">>>> Initialization Complete");
         };
+    }
+
+    private RegisterRequest createUserRequest(String handle, String nickname, String email, String password) {
+        return RegisterRequest.builder()
+                .handle(handle)
+                .nickname(nickname)
+                .email(email)
+                .password(password)
+                .passwordConfirmation(password)
+                .build();
+    }
+
+    private void createUserIfNotExists(RegisterRequest request) {
+        if (userRepository.existsByHandle(request.getHandle())) {
+            log.info("User '{}' already exists, skipping.", request.getHandle());
+            return;
+        }
+
+        User user = userMapper.toEntity(request);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setVerified(true);
+        userRepository.save(user);
+        log.info("User '{}' created successfully.", request.getHandle());
     }
 }

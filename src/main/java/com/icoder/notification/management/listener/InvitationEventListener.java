@@ -1,10 +1,13 @@
 package com.icoder.notification.management.listener;
 
 import com.icoder.invitation.management.entity.Invitation;
+import com.icoder.notification.management.dto.NotificationResponse;
 import com.icoder.notification.management.events.InvitationSentEvent;
 import com.icoder.notification.management.entity.Notification;
+import com.icoder.notification.management.mapper.NotificationMapper;
 import com.icoder.notification.management.service.interfaces.EmailService;
 import com.icoder.notification.management.service.interfaces.NotificationService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -19,9 +22,11 @@ public class InvitationEventListener {
     private final NotificationService notificationService;
     private final EmailService emailService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final NotificationMapper notificationMapper;
 
     @Async
     @EventListener
+    @Transactional
     public void handleInvitationSentEvent(InvitationSentEvent event) {
         try {
             Invitation invitation = event.getInvitation();
@@ -29,12 +34,14 @@ public class InvitationEventListener {
             // Create notification in database
             Notification notification = notificationService.createNotification(invitation, event.getTargetName());
 
+            NotificationResponse notificationResponse = notificationMapper.toDTO(notification);
+
             // Send real-time notification via WebSocket
             String destination = "/topic/notifications";
             messagingTemplate.convertAndSendToUser(
                     invitation.getRecipient().getId().toString(),
                     destination,
-                    notification
+                    notificationResponse
             );
             log.info("WebSocket notification sent to user {}", invitation.getRecipient().getId());
 
