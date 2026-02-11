@@ -39,22 +39,26 @@ public class ResultCheckerService {
         for (Submission submission : pendingSubmissions) {
             try {
                 OnlineJudgeSubmissionProvider provider = getProvider(submission.getOnlineJudge());
-
                 SubmissionResult result = provider.checkVerdict(submission.getRemoteRunId(), submission.getBotAccount(), submission);
 
                 if (result.verdict() != submission.getVerdict()) {
                     submission.setVerdict(result.verdict());
+
                     if (submissionUtils.isFinalVerdict(result.verdict())) {
                         submission.setStatus(SubmissionStatus.COMPLETED);
                     }
+
                     submission.setUpdatedAt(java.time.Instant.now());
                     submission.setTimeUsage(result.timeUsage());
                     submission.setMemoryUsage(result.memoryUsage());
 
-
                     submissionRepository.saveAndFlush(submission);
-
                     log.info("SUCCESS: Submission {} updated to {}", submission.getId(), result.verdict());
+
+                    if (result.verdict() == SubmissionVerdict.ACCEPTED) {
+                        log.info("Triggering relation update for ACCEPTED submission {}", submission.getId());
+                        submissionUtils.updateRelationAsSolved(submission);
+                    }
                 }
             } catch (Exception e) {
                 log.error("Failed to check verdict for submission {}: {}", submission.getId(), e.getMessage());

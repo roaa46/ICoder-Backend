@@ -13,6 +13,7 @@ import com.icoder.submission.management.enums.SubmissionVerdict;
 import com.icoder.submission.management.repository.BotAccountRepository;
 import com.icoder.submission.management.repository.SubmissionRepository;
 import com.icoder.user.management.entity.User;
+import com.icoder.user.management.repository.UserRepository;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.options.Cookie;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class SubmissionUtils {
     private final ObjectMapper mapper = new ObjectMapper();
     private final ProblemUserRelationRepository relationRepository;
     private final ProblemRepository problemRepository;
+    private final UserRepository userRepository;
 
     public void handleFailure(Long id) {
         submissionRepository.findById(id).ifPresent(s -> {
@@ -113,23 +115,29 @@ public class SubmissionUtils {
         Long userId = submission.getUser().getId();
         Long problemId = submission.getProblem().getId();
 
-        relationRepository.findByUserIdAndProblemId(userId, problemId)
-                .ifPresentOrElse(relation -> {
-                    if (!relation.isSolved()) {
-                        relation.setSolved(true);
-                        relationRepository.saveAndFlush(relation);
+        log.info("Updating relation for User ID: {} and Problem ID: {}", userId, problemId);
 
-                        Problem problem = problemRepository.findById(problemId)
-                                .orElseThrow();
+        ProblemUserRelation relation = relationRepository.findByUserIdAndProblemId(userId, problemId)
+                .orElseGet(() -> {
+                    log.info("No existing relation found, creating new one for user {} and problem {}", userId, problemId);
+                    ProblemUserRelation newRelation = new ProblemUserRelation();
+                    newRelation.setUser(userRepository.getReferenceById(userId));
+                    newRelation.setProblem(problemRepository.getReferenceById(problemId));
+                    return newRelation;
+                });
 
-                        problem.setSolvedCount(problem.getSolvedCount() + 1);
-                        problemRepository.saveAndFlush(problem);
+        if (!relation.isSolved()) {
+            relation.setSolved(true);
+            relationRepository.saveAndFlush(relation);
 
-                        log.info("Problem {} marked as SOLVED for user {}. Total solved: {}",
-                                problem.getProblemCode(), submission.getUser().getHandle(), problem.getSolvedCount());
-                    } else {
-                        log.info("Problem {} was already solved by user {}", problemId, userId);
-                    }
-                }, () -> log.warn("Relation not found for User {} and Problem {}", userId, problemId));
+            problemRepository.findById(problemId).ifPresent(problem -> {
+                problem.setSolvedCount(problem.getSolvedCount() + 1);
+                problemRepository.saveAndFlush(problem);
+                log.info("Problem {} (ID: {}) solved count incremented to {}",
+                        problem.getProblemCode(), problemId, problem.getSolvedCount());
+            });
+        } else {
+            log.info("Problem already marked as solved for this user.");
+        }
     }
 }

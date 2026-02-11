@@ -78,7 +78,7 @@ public class SubmissionManagerService {
         submission.setStatus(SubmissionStatus.SUBMITTING);
         submissionRepository.save(submission);
 
-        this.processSubmission(submission);
+        processSubmission(submission);
     }
 
     private OnlineJudgeSubmissionProvider getProvider(OJudgeType type) {
