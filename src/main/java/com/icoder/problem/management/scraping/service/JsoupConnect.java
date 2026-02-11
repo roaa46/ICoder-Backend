@@ -3,6 +3,7 @@ package com.icoder.problem.management.scraping.service;
 import com.icoder.core.config.PlaywrightService;
 import com.icoder.core.exception.ScrapingException;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.WaitUntilState;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -60,23 +61,22 @@ public class JsoupConnect {
         try {
             log.info("Fetching HTML using Playwright for url: {}", url);
             String htmlContent = playwrightService.execute(page -> {
-                page.navigate(url);
+                page.navigate(url, new Page.NavigateOptions().setWaitUntil(WaitUntilState.NETWORKIDLE));
+
                 try {
-                    page.waitForSelector(".problem-statement", new Page.WaitForSelectorOptions().setTimeout(5000));
+                    page.waitForSelector(".problem-statement", new Page.WaitForSelectorOptions().setTimeout(10000));
                 } catch (Exception e) {
-                    log.debug("Standard selector not found, proceeding with raw content.");
+                    log.warn("Selector .problem-statement not found, checking if page redirected or blocked");
                 }
                 return page.content();
             });
 
-            if (htmlContent == null || htmlContent.isBlank()) {
-                throw new ScrapingException("Received empty HTML from browser");
+            if (htmlContent == null || htmlContent.contains("Redirecting...")) {
+                throw new ScrapingException("Cloudflare or Redirect detected");
             }
             return Jsoup.parse(htmlContent, url);
-        } catch (ScrapingException e) {
-            throw e;
         } catch (Exception e) {
-            log.error("Failed to process page content via browser for url={}", url, e);
+            log.error("Failed to process page content via browser: {}", e.getMessage());
             throw new ScrapingException("Failed to connect to remote page", e);
         }
     }

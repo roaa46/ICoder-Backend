@@ -17,12 +17,15 @@ public class PlaywrightService {
     @PostConstruct
     public void init() {
         playwright = Playwright.create();
-        browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+        browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
+                .setHeadless(true)
+                .setArgs(List.of("--disable-blink-features=AutomationControlled")));
     }
 
     public <T> T execute(java.util.function.Function<Page, T> action) {
         try (BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-                .setUserAgent("Mozilla/5.0 ..."))) {
+                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
+                .setViewportSize(1920, 1080))) {
 
             Page page = context.newPage();
             blockUnnecessaryResources(page);
