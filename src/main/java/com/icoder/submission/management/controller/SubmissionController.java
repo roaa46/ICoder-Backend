@@ -3,7 +3,6 @@ package com.icoder.submission.management.controller;
 import com.icoder.submission.management.dto.SubmissionCreateRequest;
 import com.icoder.submission.management.dto.SubmissionPageResponse;
 import com.icoder.submission.management.dto.SubmissionResponse;
-import com.icoder.submission.management.entity.Submission;
 import com.icoder.submission.management.service.interfaces.SubmissionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -16,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v2/submissions")
@@ -61,15 +59,13 @@ public class SubmissionController {
         SubmissionResponse submission = submissionService.getSubmissionById(id);
         return new ResponseEntity<>(submission, HttpStatus.OK);
     }
-}
+
     @PostMapping
     @Operation(summary = "Submit code", description = "Submit code solution for a problem")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<SubmissionResponse> submitCode(
             @Valid @RequestBody SubmissionCreateRequest request) {
-        SubmissionResponse response = SubmissionService.(request);
+        SubmissionResponse response = submissionService.submit(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 }
-
-
