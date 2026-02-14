@@ -3,7 +3,6 @@ package com.icoder.submission.management.repository;
 import com.icoder.problem.management.entity.Problem;
 import com.icoder.problem.management.enums.OJudgeType;
 import com.icoder.submission.management.entity.Submission;
-import com.icoder.submission.management.entity.Submission;
 import com.icoder.submission.management.enums.SubmissionVerdict;
 import com.icoder.user.management.entity.User;
 import org.springframework.data.domain.Page;
