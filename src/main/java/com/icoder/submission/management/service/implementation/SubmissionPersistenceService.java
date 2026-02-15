@@ -22,6 +22,7 @@ public class SubmissionPersistenceService {
     private final SubmissionRepository submissionRepository;
     private final BotAccountRepository accountRepository;
     private final SubmissionUtils submissionUtils;
+    private final SubmissionTaskPublisher submissionTaskPublisher;
 
     @Transactional
     public Submission prepareSubmission(Long submissionId) {
@@ -42,8 +43,8 @@ public class SubmissionPersistenceService {
 
         if (result.verdict() == SubmissionVerdict.FAILED) {
             submission.setStatus(SubmissionStatus.FAILED);
-        } else if (submissionUtils.isFinalVerdict(result.verdict())) {
-            submission.setStatus(SubmissionStatus.COMPLETED);
+        } else if (!submissionUtils.isFinalVerdict(result.verdict())) {
+            submissionTaskPublisher.publishCheckTask(submissionId);
         }
 
         submissionRepository.save(submission);

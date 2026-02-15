@@ -5,17 +5,18 @@ import com.icoder.submission.management.dto.SubmissionResult;
 import com.icoder.submission.management.entity.Submission;
 import com.icoder.submission.management.enums.SubmissionStatus;
 import com.icoder.submission.management.enums.SubmissionVerdict;
+import com.icoder.submission.management.events.SubmissionUpdatedEvent;
 import com.icoder.submission.management.provider.OnlineJudgeSubmissionProvider;
 import com.icoder.submission.management.repository.SubmissionRepository;
 import com.icoder.submission.management.utils.SubmissionUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
-import java.util.Set;
 
 @Service
 @Slf4j
@@ -25,44 +26,60 @@ public class ResultCheckerService {
     private final SubmissionRepository submissionRepository;
     private final List<OnlineJudgeSubmissionProvider> providers;
     private final SubmissionUtils submissionUtils;
+    private final SubmissionTaskPublisher submissionTaskPublisher;
+    private final ApplicationEventPublisher eventPublisher;
 
-    @Scheduled(fixedDelay = 30000)
     @Transactional
-    public void checkPendingSubmissions() {
-        Set<Submission> pendingSubmissions = submissionRepository
-                .findAllByVerdictIn(List.of(SubmissionVerdict.IN_QUEUE, SubmissionVerdict.PENDING, SubmissionVerdict.RUNNING));
+    public void checkSingleSubmission(Long submissionId) {
+        Submission submission = submissionRepository.findById(submissionId)
+                .orElse(null);
 
-        if (pendingSubmissions.isEmpty()) return;
+        if (submission == null) {
+            log.warn("Submission {} not found, skipping check", submissionId);
+            return;
+        }
 
-        log.info("Checking verdicts for {} pending submissions", pendingSubmissions.size());
+        if (submissionUtils.isFinalVerdict(submission.getVerdict())) {
+            log.info("Submission {} already has a final verdict: {}", submissionId, submission.getVerdict());
+            return;
+        }
 
-        for (Submission submission : pendingSubmissions) {
-            try {
-                OnlineJudgeSubmissionProvider provider = getProvider(submission.getOnlineJudge());
-                SubmissionResult result = provider.checkVerdict(submission.getRemoteRunId(), submission.getBotAccount(), submission);
+        try {
+            log.info("Checking verdict for submission {} on {}", submissionId, submission.getOnlineJudge());
 
-                if (result.verdict() != submission.getVerdict()) {
-                    submission.setVerdict(result.verdict());
+            OnlineJudgeSubmissionProvider provider = getProvider(submission.getOnlineJudge());
+            SubmissionResult result = provider.checkVerdict(submission.getRemoteRunId(), submission.getBotAccount(), submission);
 
-                    if (submissionUtils.isFinalVerdict(result.verdict())) {
-                        submission.setStatus(SubmissionStatus.COMPLETED);
-                    }
+            if (result.verdict() != submission.getVerdict()) {
+                submission.setVerdict(result.verdict());
 
-                    submission.setUpdatedAt(java.time.Instant.now());
-                    submission.setTimeUsage(result.timeUsage());
-                    submission.setMemoryUsage(result.memoryUsage());
-
-                    submissionRepository.saveAndFlush(submission);
-                    log.info("SUCCESS: Submission {} updated to {}", submission.getId(), result.verdict());
-
-                    if (result.verdict() == SubmissionVerdict.ACCEPTED) {
-                        log.info("Triggering relation update for ACCEPTED submission {}", submission.getId());
-                        submissionUtils.updateRelationAsSolved(submission);
-                    }
+                if (submissionUtils.isFinalVerdict(result.verdict())) {
+                    submission.setStatus(SubmissionStatus.COMPLETED);
                 }
-            } catch (Exception e) {
-                log.error("Failed to check verdict for submission {}: {}", submission.getId(), e.getMessage());
+
+                submission.setUpdatedAt(Instant.now());
+                submission.setTimeUsage(result.timeUsage());
+                submission.setMemoryUsage(result.memoryUsage());
+
+                submissionRepository.saveAndFlush(submission);
+
+                eventPublisher.publishEvent(new SubmissionUpdatedEvent(submission.getId(), submission.getVerdict()));
+
+                log.info("SUCCESS: Submission {} updated to {}", submissionId, result.verdict());
+
+                if (result.verdict() == SubmissionVerdict.ACCEPTED) {
+                    submissionUtils.updateRelationAsSolved(submission);
+                }
             }
+
+            if (!submissionUtils.isFinalVerdict(submission.getVerdict())) {
+                log.info("Submission {} still pending, rescheduling check...", submissionId);
+                submissionTaskPublisher.publishCheckTask(submissionId);
+            }
+
+        } catch (Exception e) {
+            log.error("Failed to check verdict for submission {}: {}", submissionId, e.getMessage());
+            submissionTaskPublisher.publishCheckTask(submissionId);
         }
     }
 
@@ -70,6 +87,6 @@ public class ResultCheckerService {
         return providers.stream()
                 .filter(p -> p.supports(type))
                 .findFirst()
-                .orElseThrow();
+                .orElseThrow(() -> new RuntimeException("No provider found for judge: " + type));
     }
 }
