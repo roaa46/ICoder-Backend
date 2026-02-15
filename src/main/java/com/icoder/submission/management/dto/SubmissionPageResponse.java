@@ -1,6 +1,7 @@
 package com.icoder.submission.management.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.icoder.core.utils.LowercaseEnumSerializer;
 import com.icoder.problem.management.enums.OJudgeType;
@@ -16,11 +17,15 @@ import java.time.Instant;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class SubmissionPageResponse {
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long id;
 
     private String userHandle;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    private Long userId;
 
     @JsonSerialize(using = LowercaseEnumSerializer.class)
     private OJudgeType onlineJudge;
@@ -36,7 +41,6 @@ public class SubmissionPageResponse {
 
     private String memoryUsage;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     private Instant submittedAt;
 
     private Boolean isOpen;

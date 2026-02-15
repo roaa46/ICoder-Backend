@@ -7,6 +7,7 @@ import com.icoder.submission.management.enums.SubmissionVerdict;
 import com.icoder.user.management.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -54,4 +55,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                                        Pageable pageable);
 
     Page<Submission> findAll(Pageable pageable);
+
+    Page<Submission> findAll(Specification<Submission> spec, Pageable pageable);
 }

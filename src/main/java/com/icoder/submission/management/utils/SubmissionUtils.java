@@ -2,10 +2,12 @@ package com.icoder.submission.management.utils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.icoder.coding.editor.utils.LanguageMatcher;
 import com.icoder.problem.management.entity.Problem;
 import com.icoder.problem.management.entity.ProblemUserRelation;
 import com.icoder.problem.management.repository.ProblemRepository;
 import com.icoder.problem.management.repository.ProblemUserRelationRepository;
+import com.icoder.submission.management.dto.LanguageOptionResponse;
 import com.icoder.submission.management.entity.BotAccount;
 import com.icoder.submission.management.entity.Submission;
 import com.icoder.submission.management.enums.SubmissionStatus;
@@ -146,47 +148,73 @@ public class SubmissionUtils {
         return parts[parts.length - 1];
     }
 
-    public String mapLanguageToCfId(String submissionLanguage) {
-        if (submissionLanguage == null) return "54";
+    public List<LanguageOptionResponse> getCsesLanguages() {
+        List<String> csesOptions = List.of(
+                "Assembly", "C++11", "C++17", "C++20",
+                "CPython2", "CPython3", "Haskell", "Java",
+                "Node.js", "Pascal", "PyPy2", "PyPy3",
+                "Ruby", "Rust", "Scala"
+        );
 
-        String lang = submissionLanguage.toLowerCase();
+        return csesOptions.stream()
+                .filter(lang -> !"plaintext".equals(LanguageMatcher.resolveMonacoName(lang)))
+                .map(lang -> LanguageOptionResponse.builder()
+                        .id(lang)
+                        .displayName(lang)
+                        .build())
+                .toList();
+    }
 
-        if (lang.contains("cpp") || lang.contains("c++")) {
-            return "91";
-        }
+    public List<LanguageOptionResponse> getCodeforcesLanguages() {
+        Map<Integer, String> cfRawData = Map.ofEntries(
+                Map.entry(79, "C# 10, .NET SDK 6.0"), Map.entry(96, "C# 13, .NET SDK 9"),
+                Map.entry(65, "C# 8, .NET Core 3.1"), Map.entry(9, "C# Mono 6.8"),
+                Map.entry(54, "GNU G++17 7.3.0"), Map.entry(89, "GNU G++20 13.2 (64 bit, winlibs)"),
+                Map.entry(91, "GNU G++23 14.2 (64 bit, msys2)"), Map.entry(43, "GNU GCC C11 5.1.0"),
+                Map.entry(87, "Java 21 64bit"), Map.entry(36, "Java 8 32bit"),
+                Map.entry(83, "Kotlin 1.7.20"), Map.entry(88, "Kotlin 1.9.21"),
+                Map.entry(99, "Kotlin 2.2.0"), Map.entry(20, "Scala 2.12.8"),
+                Map.entry(7, "Python 2.7.18"), Map.entry(31, "Python 3.13.2"),
+                Map.entry(40, "PyPy 2.7.13 (7.3.0)"), Map.entry(41, "PyPy 3.6.9 (7.3.0)"),
+                Map.entry(70, "PyPy 3.10 (7.3.15, 64bit)"), Map.entry(34, "JavaScript V8 4.8.0"),
+                Map.entry(55, "Node.js 15.8.0 (64bit)"), Map.entry(75, "Rust 1.89.0 (2021)"),
+                Map.entry(98, "Rust 1.89.0 (2024)"), Map.entry(32, "Go 1.22.2"),
+                Map.entry(6, "PHP 8.1.7"), Map.entry(67, "Ruby 3.2.2"),
+                Map.entry(4, "Free Pascal 3.2.2"), Map.entry(51, "PascalABC.NET 3.8.3"),
+                Map.entry(3, "Delphi 7"), Map.entry(12, "Haskell GHC 8.10.1"),
+                Map.entry(28, "D DMD32 v2.105.0"), Map.entry(97, "F# 9, .NET SDK 9"),
+                Map.entry(19, "OCaml 4.02.1"), Map.entry(13, "Perl 5.20.1")
+        );
 
-        if (lang.contains("python")) {
-            return "31";
-        }
+        return cfRawData.entrySet().stream()
+                .filter(entry -> !"plaintext".equals(LanguageMatcher.resolveMonacoName(entry.getValue())))
+                .sorted(Map.Entry.comparingByValue())
+                .map(entry -> LanguageOptionResponse.builder()
+                        .id(entry.getKey().toString())
+                        .displayName(entry.getValue())
+                        .build())
+                .toList();
+    }
 
-        if (lang.contains("java")) {
-            return "87";
-        }
+    public List<LanguageOptionResponse> getAtCoderLanguages() {
+        Map<Integer, String> atCoderRawData = Map.ofEntries(
+                Map.entry(6017, "C++23 (GCC 15.2.0)"), Map.entry(6116, "C++23 (Clang 21.1.0)"),
+                Map.entry(6014, "C23 (GCC 14.2.0)"), Map.entry(6054, "C++ IOI-Style (GCC 14.2.0)"),
+                Map.entry(6056, "Java 24 (OpenJDK 24.0.2)"), Map.entry(6062, "Kotlin (Kotlin/JVM 2.2.10)"),
+                Map.entry(6090, "Scala (Dotty 3.7.2)"), Map.entry(6082, "Python (CPython 3.13.7)"),
+                Map.entry(6083, "Python (PyPy 3.11-v7.3.20)"), Map.entry(6059, "JavaScript (Node.js 22.19.0)"),
+                Map.entry(6102, "TypeScript 5.9 (Node.js 22.19.0)"), Map.entry(6015, "C# 13.0 (.NET 9.0.8)"),
+                Map.entry(6088, "Rust (rustc 1.89.0)"), Map.entry(6051, "Go (go 1.25.1)"),
+                Map.entry(6077, "PHP (PHP 8.4.12)"), Map.entry(6087, "Ruby 3.4 (ruby 3.4.5)"),
+                Map.entry(6095, "Swift 6.2")
+        );
 
-        if (lang.contains("csharp") || lang.contains("c#")) {
-            return "96";
-        }
-
-        if (lang.contains("javascript") || lang.contains("node")) {
-            return "55";
-        }
-
-        if (lang.contains("rust")) {
-            return "98";
-        }
-
-        if (lang.contains("go")) {
-            return "32";
-        }
-
-        if (lang.contains("php")) {
-            return "6";
-        }
-
-        if (lang.equals("c")) {
-            return "43";
-        }
-
-        return "54";
+        return atCoderRawData.entrySet().stream()
+                .filter(entry -> !"plaintext".equals(LanguageMatcher.resolveMonacoName(entry.getValue())))
+                .map(entry -> LanguageOptionResponse.builder()
+                        .id(entry.getKey().toString())
+                        .displayName(entry.getValue())
+                        .build())
+                .toList();
     }
 }

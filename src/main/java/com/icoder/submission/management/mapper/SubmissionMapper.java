@@ -14,13 +14,14 @@ public interface SubmissionMapper {
 
     @Mapping(target = "problemCode", source = "submission.problem.problemCode")
     SubmissionCreateResponse toDTO(Submission submission);
+
     @Mapping(target = "userHandle", source = "submission.user.handle")
     @Mapping(target = "onlineJudge", source = "submission.onlineJudge")
     @Mapping(target = "submittedAt", source = "submission.submittedAt")
     @Mapping(target = "timeUsage", source = "submission.timeUsage", qualifiedByName = "integerToString")
     @Mapping(target = "memoryUsage", source = "submission.memoryUsage", qualifiedByName = "integerToString")
     @Mapping(target = "isOpen", source = "submission.opened")
-    SubmissionResponse toSubmissionResponse(com.icoder.submission.management.entity.Submission submission);
+    SubmissionResponse toSubmissionResponse(Submission submission);
 
     @Mapping(target = "problemCode", source = "submission.problem.problemCode")
     @Mapping(target = "userHandle", source = "submission.user.handle")
@@ -30,7 +31,7 @@ public interface SubmissionMapper {
     @Mapping(target = "memoryUsage", source = "submission.memoryUsage", qualifiedByName = "integerToString")
     @Mapping(target = "isOpen", source = "submission.opened")
     @Mapping(target = "solution", source = "submission.submissionCode")
-    OpenSubmissionResponse toOpenSubmissionResponse(com.icoder.submission.management.entity.Submission submission);
+    OpenSubmissionResponse toOpenSubmissionResponse(Submission submission);
 
     @Mapping(target = "problemCode", source = "problemCode")
     @Mapping(target = "userHandle", source = "userHandle")
@@ -39,7 +40,7 @@ public interface SubmissionMapper {
     @Mapping(target = "timeUsage", source = "submission.timeUsage", qualifiedByName = "integerToString")
     @Mapping(target = "memoryUsage", source = "submission.memoryUsage", qualifiedByName = "integerToString")
     @Mapping(target = "isOpen", source = "submission.opened")
-    SubmissionPageResponse toSubmissionPageResponse(com.icoder.submission.management.entity.Submission submission, String problemCode, String userHandle);
+    SubmissionPageResponse toSubmissionPageResponse(Submission submission, String problemCode, String userHandle, Long userId);
 
     @Named("integerToString")
     default String integerToString(Integer value) {
