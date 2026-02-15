@@ -11,7 +11,7 @@ import java.util.Optional;
 
 @Repository
 public interface BotAccountRepository extends JpaRepository<BotAccount, Long> {
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Lock(LockModeType.PESSIMISTIC_WRITE) // to handle race condition
     Optional<BotAccount> findFirstByJudgeTypeAndActiveTrueAndInUseFalseOrderByLastUsedAtAsc(OJudgeType type);
 
     boolean existsByUsernameAndJudgeType(String username, OJudgeType judgeType);

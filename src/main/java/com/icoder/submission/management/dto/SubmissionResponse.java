@@ -8,7 +8,6 @@ import com.icoder.problem.management.enums.OJudgeType;
 import com.icoder.submission.management.enums.SubmissionStatus;
 import com.icoder.submission.management.enums.SubmissionVerdict;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;

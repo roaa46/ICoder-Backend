@@ -5,18 +5,11 @@ import com.icoder.problem.management.enums.OJudgeType;
 import com.icoder.submission.management.dto.SubmissionResult;
 import com.icoder.submission.management.entity.BotAccount;
 import com.icoder.submission.management.entity.Submission;
-import com.icoder.submission.management.enums.SubmissionStatus;
-import com.icoder.submission.management.enums.SubmissionVerdict;
 import com.icoder.submission.management.provider.OnlineJudgeSubmissionProvider;
-import com.icoder.submission.management.repository.BotAccountRepository;
-import com.icoder.submission.management.repository.SubmissionRepository;
-import com.icoder.submission.management.utils.SubmissionUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -24,61 +17,26 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SubmissionManagerService {
     private final List<OnlineJudgeSubmissionProvider> providers;
-    private final BotAccountRepository accountRepository;
-    private final SubmissionRepository submissionRepository;
-    private final SubmissionUtils submissionUtils;
+    private final SubmissionPersistenceService submissionPersistenceService;
 
-    @Transactional
-    public void processSubmission(Submission submission) {
-        OnlineJudgeSubmissionProvider provider = getProvider(submission.getOnlineJudge());
-        BotAccount account = reserveAccount(submission.getOnlineJudge());
+    public void initAndProcess(Long submissionId) {
+        Submission submission = submissionPersistenceService.prepareSubmission(submissionId);
+
+        BotAccount account = submissionPersistenceService.reserveAccount(submission.getOnlineJudge());
 
         try {
             log.info("Executing submission {} using account {}", submission.getId(), account.getUsername());
-            submission.setBotAccount(account);
 
+            OnlineJudgeSubmissionProvider provider = getProvider(submission.getOnlineJudge());
             SubmissionResult result = provider.submit(submission, account);
 
-            submission.setRemoteRunId(result.remoteRunId());
-            submission.setVerdict(result.verdict());
-            submission.setTimeUsage(result.timeUsage());
-            submission.setMemoryUsage(result.memoryUsage());
-
-            if (result.verdict() == SubmissionVerdict.FAILED) {
-                submission.setStatus(SubmissionStatus.FAILED);
-            } else if (submissionUtils.isFinalVerdict(result.verdict())) {
-                submission.setStatus(SubmissionStatus.COMPLETED);
-            } else {
-                submission.setStatus(SubmissionStatus.SUBMITTING);
-            }
-
-            submission = submissionRepository.saveAndFlush(submission);
-
-            if (submission.getVerdict() == SubmissionVerdict.ACCEPTED) {
-                log.info("Submission {} is ACCEPTED, updating relation...", submission.getId());
-                submissionUtils.updateRelationAsSolved(submission);
-            }
-
-            log.info("Submission {} updated with Remote ID: {} and Verdict: {}",
-                    submission.getId(), submission.getRemoteRunId(), submission.getVerdict());
+            submissionPersistenceService.finalizeSubmission(submissionId, result, account);
 
         } catch (Exception e) {
-            log.error("Error during execution for submission {}: {}", submission.getId(), e.getMessage());
+            log.error("Error during execution for submission {}: {}", submissionId, e.getMessage());
+            submissionPersistenceService.handleProcessFailure(submissionId, account);
             throw e;
-        } finally {
-            releaseAccount(account);
         }
-    }
-
-    @Transactional
-    public void initAndProcess(Long submissionId) {
-        Submission submission = submissionRepository.findByIdWithProblem(submissionId)
-                .orElseThrow(() -> new ResourceNotFoundException("Submission not found with ID: " + submissionId));
-
-        submission.setStatus(SubmissionStatus.SUBMITTING);
-        submissionRepository.save(submission);
-
-        processSubmission(submission);
     }
 
     private OnlineJudgeSubmissionProvider getProvider(OJudgeType type) {
@@ -86,20 +44,5 @@ public class SubmissionManagerService {
                 .filter(p -> p.supports(type))
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("No provider found for judge: " + type));
-    }
-
-    private BotAccount reserveAccount(OJudgeType type) {
-        BotAccount account = accountRepository
-                .findFirstByJudgeTypeAndActiveTrueAndInUseFalseOrderByLastUsedAtAsc(type)
-                .orElseThrow(() -> new ResourceNotFoundException("No available bot accounts for " + type));
-
-        account.setInUse(true);
-        return accountRepository.save(account);
-    }
-
-    private void releaseAccount(BotAccount account) {
-        account.setInUse(false);
-        account.setLastUsedAt(Instant.now());
-        accountRepository.save(account);
     }
 }
