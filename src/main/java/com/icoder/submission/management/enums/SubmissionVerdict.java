@@ -10,5 +10,6 @@ public enum SubmissionVerdict {
     TIME_LIMIT_EXCEEDED,
     FAILED,
     RUNNING,
-    MEMORY_LIMIT_EXCEEDED
+    MEMORY_LIMIT_EXCEEDED,
+    FAILED_TO_SUBMIT
 }

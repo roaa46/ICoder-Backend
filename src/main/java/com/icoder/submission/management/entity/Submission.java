@@ -71,4 +71,10 @@ public class Submission {
         if (verdict == null)
             verdict = SubmissionVerdict.PENDING;
     }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = Instant.now();
+    }
 }
+
