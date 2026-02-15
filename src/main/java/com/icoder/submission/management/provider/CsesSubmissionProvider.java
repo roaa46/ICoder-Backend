@@ -53,62 +53,6 @@ public class CsesSubmissionProvider implements OnlineJudgeSubmissionProvider {
         });
     }
 
-    private SubmissionResult performUpload(Page page, String url, Path file, String[] settings, BotAccount account) {
-        page.navigate(url);
-
-        if (page.url().contains("login")) {
-            return new SubmissionResult(null, SubmissionVerdict.FAILED, null, null, "Session expired after navigation");
-        }
-
-        page.setInputFiles("input[name='file']", file);
-        page.selectOption("select[name='lang']", settings[0]); // langValue
-
-        if (page.locator("select[name='option']").isVisible()) {
-            page.selectOption("select[name='option']", settings[1]); // optionValue
-        }
-
-        page.click("input[type='submit']");
-        page.waitForURL("**/result/**");
-
-        submissionUtils.saveCookies(page.context(), account);
-        return new SubmissionResult(extractRemoteId(page.url()), SubmissionVerdict.IN_QUEUE, null, null, null);
-    }
-
-    private String[] determineLanguageSettings(String lang) {
-        // [langValue, optionValue]
-        if (lang.contains("C++")) return new String[]{"C++", lang};
-        if (lang.contains("Python")) return new String[]{"Python3", "CPython3"};
-        return new String[]{"C++", "C++11"}; // Default
-    }
-
-    private Path createTempSubmissionFile(String code, String lang) throws Exception {
-        String ext = lang.contains("Python") ? ".py" : ".cpp";
-        Path path = Files.createTempFile("sub-", ext);
-        Files.writeString(path, code);
-        return path;
-    }
-
-    private void cleanupTempFile(Path path) {
-        if (path != null) {
-            try {
-                Files.deleteIfExists(path);
-            } catch (Exception ignored) {
-            }
-        }
-    }
-
-    private void takeErrorScreenshot(Page page) {
-        try {
-            page.screenshot(new Page.ScreenshotOptions().setPath(java.nio.file.Paths.get("debug-error.png")));
-        } catch (Exception ignored) {
-        }
-    }
-
-    private void handleAuthentication(Page page, BotAccount account) {
-        submissionUtils.loadCookies(page.context(), account);
-        ensureLoggedIn(page, account);
-    }
-
     @Override
     public SubmissionResult checkVerdict(String remoteRunId, BotAccount account, Submission submission) {
         return playwrightService.execute(page -> {
@@ -194,8 +138,59 @@ public class CsesSubmissionProvider implements OnlineJudgeSubmissionProvider {
         }
     }
 
-    private String extractRemoteId(String url) {
-        String[] parts = url.split("/");
-        return parts[parts.length - 1];
+    private SubmissionResult performUpload(Page page, String url, Path file, String[] settings, BotAccount account) {
+        page.navigate(url);
+
+        if (page.url().contains("login")) {
+            return new SubmissionResult(null, SubmissionVerdict.FAILED, null, null, "Session expired after navigation");
+        }
+
+        page.setInputFiles("input[name='file']", file);
+        page.selectOption("select[name='lang']", settings[0]); // langValue
+
+        if (page.locator("select[name='option']").isVisible()) {
+            page.selectOption("select[name='option']", settings[1]); // optionValue
+        }
+
+        page.click("input[type='submit']");
+        page.waitForURL("**/result/**");
+
+        submissionUtils.saveCookies(page.context(), account);
+        return new SubmissionResult(submissionUtils.extractRemoteId(page.url()), SubmissionVerdict.IN_QUEUE, null, null, null);
+    }
+
+    private String[] determineLanguageSettings(String lang) {
+        // [langValue, optionValue]
+        if (lang.contains("C++")) return new String[]{"C++", lang};
+        if (lang.contains("Python")) return new String[]{"Python3", "CPython3"};
+        return new String[]{"C++", "C++11"}; // Default
+    }
+
+    private Path createTempSubmissionFile(String code, String lang) throws Exception {
+        String ext = lang.contains("Python") ? ".py" : ".cpp";
+        Path path = Files.createTempFile("sub-", ext);
+        Files.writeString(path, code);
+        return path;
+    }
+
+    private void cleanupTempFile(Path path) {
+        if (path != null) {
+            try {
+                Files.deleteIfExists(path);
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    private void takeErrorScreenshot(Page page) {
+        try {
+            page.screenshot(new Page.ScreenshotOptions().setPath(java.nio.file.Paths.get("debug-error.png")));
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void handleAuthentication(Page page, BotAccount account) {
+        submissionUtils.loadCookies(page.context(), account);
+        ensureLoggedIn(page, account);
     }
 }

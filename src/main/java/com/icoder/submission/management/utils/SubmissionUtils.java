@@ -140,4 +140,53 @@ public class SubmissionUtils {
             log.info("Problem already marked as solved for this user.");
         }
     }
+
+    public String extractRemoteId(String url) {
+        String[] parts = url.split("/");
+        return parts[parts.length - 1];
+    }
+
+    public String mapLanguageToCfId(String submissionLanguage) {
+        if (submissionLanguage == null) return "54";
+
+        String lang = submissionLanguage.toLowerCase();
+
+        if (lang.contains("cpp") || lang.contains("c++")) {
+            return "91";
+        }
+
+        if (lang.contains("python")) {
+            return "31";
+        }
+
+        if (lang.contains("java")) {
+            return "87";
+        }
+
+        if (lang.contains("csharp") || lang.contains("c#")) {
+            return "96";
+        }
+
+        if (lang.contains("javascript") || lang.contains("node")) {
+            return "55";
+        }
+
+        if (lang.contains("rust")) {
+            return "98";
+        }
+
+        if (lang.contains("go")) {
+            return "32";
+        }
+
+        if (lang.contains("php")) {
+            return "6";
+        }
+
+        if (lang.equals("c")) {
+            return "43";
+        }
+
+        return "54";
+    }
 }
