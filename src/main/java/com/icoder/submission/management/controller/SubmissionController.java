@@ -18,9 +18,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v2/submissions")
+@RequestMapping("/api/v1/submissions")
 @RequiredArgsConstructor
-@Tag(name = "Submission V2", description = "The endpoints related to submission operations (v2)")
+@Tag(name = "Submission V1", description = "The endpoints related to submission operations (v2)")
 public class SubmissionController {
     private final SubmissionService submissionService;
 
