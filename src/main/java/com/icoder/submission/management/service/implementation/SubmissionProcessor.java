@@ -3,6 +3,7 @@ package com.icoder.submission.management.service.implementation;
 import com.icoder.submission.management.utils.SubmissionUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.CompletableFuture;
@@ -14,6 +15,7 @@ public class SubmissionProcessor {
     private final SubmissionManagerService submissionManagerService;
     private final SubmissionUtils submissionUtils;
 
+    @Async("threadPoolTaskExecutor")
     public void process(Long submissionId) {
         log.info("Queuing submission ID: {} using CompletableFuture", submissionId);
 

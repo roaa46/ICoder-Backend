@@ -7,10 +7,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 
 @Repository
 public interface ContestRepository extends JpaRepository<Contest, Long>, JpaSpecificationExecutor<Contest> {
@@ -20,13 +22,17 @@ public interface ContestRepository extends JpaRepository<Contest, Long>, JpaSpec
 
     @Modifying
     @Transactional
-    @Query("UPDATE Contest c SET c.contestStatus = 'RUNNING' " +
-            "WHERE c.contestStatus = 'SCHEDULED' AND c.beginTime <= :now")
-    void startScheduledContests(Instant now);
+    @Query("UPDATE Contest c SET c.contestStatus = 'RUNNING' WHERE c.id IN :ids")
+    void startContestsByIds(@Param("ids") List<Long> ids);
 
     @Modifying
     @Transactional
-    @Query("UPDATE Contest c SET c.contestStatus = 'ENDED' " +
-            "WHERE c.contestStatus = 'RUNNING' AND c.endTime <= :now")
-    void endRunningContests(Instant now);
+    @Query("UPDATE Contest c SET c.contestStatus = 'ENDED' WHERE c.id IN :ids")
+    void endContestsByIds(@Param("ids") List<Long> ids);
+
+    @Query("SELECT c.id FROM Contest c WHERE c.contestStatus = 'SCHEDULED' AND c.beginTime <= :now")
+    List<Long> findIdsToStart(@Param("now") Instant now);
+
+    @Query("SELECT c.id FROM Contest c WHERE c.contestStatus = 'RUNNING' AND c.endTime <= :now")
+    List<Long> findIdsToEnd(@Param("now") Instant now);
 }

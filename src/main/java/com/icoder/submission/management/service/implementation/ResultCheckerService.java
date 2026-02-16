@@ -63,7 +63,7 @@ public class ResultCheckerService {
 
                 submissionRepository.saveAndFlush(submission);
 
-                eventPublisher.publishEvent(new SubmissionUpdatedEvent(submission.getId(), submission.getVerdict()));
+                eventPublisher.publishEvent(new SubmissionUpdatedEvent(submission.getId(), submission.getUser().getId(), submission.getVerdict()));
 
                 log.info("SUCCESS: Submission {} updated to {}", submissionId, result.verdict());
 

@@ -1,7 +1,7 @@
 package com.icoder.submission.management.listener;
 
+import com.icoder.core.service.implementaion.GeneralStreamServiceImpl;
 import com.icoder.submission.management.events.SubmissionUpdatedEvent;
-import com.icoder.submission.management.service.implementation.SubmissionStreamServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -10,10 +10,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SubmissionEventListener {
 
-    private final SubmissionStreamServiceImpl streamService;
+    private final GeneralStreamServiceImpl streamService;
 
     @EventListener
     public void handleSubmissionUpdate(SubmissionUpdatedEvent event) {
-        streamService.sendUpdate(event.submissionId(), event.verdict());
+        streamService.sendToUser(event.userId(), "SUBMISSION_RESULT", event);
     }
 }
