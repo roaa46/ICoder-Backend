@@ -1,9 +1,9 @@
 package com.icoder.notification.management.service.implementation;
 
+import com.icoder.core.config.EmailProperties;
 import com.icoder.notification.management.service.interfaces.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -14,29 +14,24 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class EmailServiceImp implements EmailService {
     private final JavaMailSender mailSender;
-
-    @Value("${app.frontend.url}")
-    private String frontendUrl;
-
-    @Value("${spring.mail.username:noreply@icoder.com}")
-    private String fromEmail;
+    private final EmailProperties emailProperties;
 
     @Override
     public void sendInvitationEmail(String to, String senderName, String targetName, String token) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
+            message.setFrom(emailProperties.getSenderEmail());
             message.setTo(to);
             message.setSubject("New Invitation to join " + targetName);
             message.setText(buildInvitationEmailBody(senderName, targetName, token));
 
             mailSender.send(message);
-            log.info("Invitation email sent successfully to {} for invitation token {}", to, token);
+            log.info("Invitation email sent successfully to: *** for invitation token: {}", token);
         } catch (MailException e) {
-            log.error("Failed to send invitation email to {}: {}", to, e.getMessage(), e);
+            log.error("Failed to send invitation email: {}", e.getMessage(), e);
             // Don't rethrow - we don't want email failures to break the invitation flow
         } catch (Exception e) {
-            log.error("Unexpected error sending email to {}: {}", to, e.getMessage(), e);
+            log.error("Unexpected error sending email: {}", e.getMessage(), e);
         }
     }
 
@@ -50,13 +45,14 @@ public class EmailServiceImp implements EmailService {
                         Click the link below to respond to this invitation:
                         %s/invite?token=%s
                         
-                        This invitation will expire in 24 hours.
+                        This invitation will expire in %d hours.
                         
                         If you didn't expect this invitation, you can safely ignore this email.
                         
                         Best regards,
                         The ICoder Team""",
-                senderName, targetName, frontendUrl, token
+                senderName, targetName, emailProperties.getFrontendUrl(), token,
+                emailProperties.getInvitationExpirationHours()
         );
     }
 }
