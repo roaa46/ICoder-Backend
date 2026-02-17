@@ -25,6 +25,7 @@ public class SubmissionController {
     private final SubmissionService submissionService;
 
     @GetMapping("/languages/{oj}")
+    @Operation(summary = "Get languages for online judge", description = "Retrieve list of languages supported by online judge")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<LanguageOptionResponse>> getLanguages(@PathVariable String oj) {
         return ResponseEntity.ok(submissionService.getLanguages(oj));
@@ -59,5 +60,34 @@ public class SubmissionController {
             @Valid @RequestBody SubmissionCreateRequest request) {
         SubmissionCreateResponse response = submissionService.submit(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/session")
+    @Operation(summary = "Add session id", description = "add session id to submit with user account")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<SessionSubmissionResponse> addSession(
+            @Valid @RequestBody SessionSubmissionRequest request) {
+        return new ResponseEntity<>(submissionService.addSessionId(request), HttpStatus.CREATED);
+    }
+
+    @PostMapping("/session/update")
+    @Operation(summary = "Update user session id", description = "update user session id to submit with user account")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<SessionSubmissionResponse> updateSession(@Valid @RequestBody SessionSubmissionRequest request) {
+        return new ResponseEntity<>(submissionService.updateSession(request), HttpStatus.CREATED);
+    }
+
+    @GetMapping("/session/{judgeType}")
+    @Operation(summary = "Get user session by judge type", description = "get ")
+    @PreAuthorize("isAuthenticated()")public ResponseEntity<SessionSubmissionResponse> getSession(@PathVariable String judgeType) {
+        return new ResponseEntity<>(submissionService.getSession(judgeType), HttpStatus.OK);
+    }
+
+    @DeleteMapping("/session/{id}")
+    @Operation(summary = "Delete user session user", description = "")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity deleteSession(@PathVariable Long id) {
+        submissionService.deleteSession(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

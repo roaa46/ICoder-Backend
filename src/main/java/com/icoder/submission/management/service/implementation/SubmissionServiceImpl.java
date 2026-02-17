@@ -40,6 +40,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     private final SubmissionMapper submissionMapper;
     private final SecurityUtils securityUtils;
     private final SubmissionUtils submissionUtils;
+    private final SubmissionPersistenceService submissionPersistenceService;
 
     public List<LanguageOptionResponse> getLanguages(String onlineJudge) {
         OJudgeType oJudgeType = OJudgeType.fromString(onlineJudge);
@@ -153,5 +154,34 @@ public class SubmissionServiceImpl implements SubmissionService {
         });
 
         return submissionMapper.toDTO(submission);
+    }
+
+    @Override
+    public SessionSubmissionResponse addSessionId(SessionSubmissionRequest request) {
+        User user = securityUtils.getCurrentUser();
+        Long id = submissionPersistenceService.saveUserSession(user, request);
+        return SessionSubmissionResponse.builder()
+                .id(id)
+                .build();
+    }
+
+    @Override
+    public SessionSubmissionResponse updateSession(SessionSubmissionRequest request) {
+        User user = securityUtils.getCurrentUser();
+        Long id = submissionPersistenceService.updateUserSession(user, request);
+        return SessionSubmissionResponse.builder()
+                .id(id)
+                .build();
+    }
+
+    @Override
+    public void deleteSession(Long id) {
+        submissionPersistenceService.deleteUserSession(id);
+    }
+
+    @Override
+    public SessionSubmissionResponse getSession(String judgeType) {
+        User user = securityUtils.getCurrentUser();
+        return submissionPersistenceService.getUserSession(user, OJudgeType.fromString(judgeType));
     }
 }

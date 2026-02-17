@@ -2,12 +2,12 @@ package com.icoder.submission.management.service.implementation;
 
 import com.icoder.core.exception.ResourceNotFoundException;
 import com.icoder.problem.management.enums.OJudgeType;
-import com.icoder.submission.management.dto.SessionSubmissionRequest;
 import com.icoder.submission.management.dto.SubmissionContext;
 import com.icoder.submission.management.dto.SubmissionCreateRequest;
 import com.icoder.submission.management.dto.SubmissionResult;
 import com.icoder.submission.management.entity.BotAccount;
 import com.icoder.submission.management.entity.Submission;
+import com.icoder.submission.management.enums.SubmissionMethod;
 import com.icoder.submission.management.provider.OnlineJudgeSubmissionProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,16 +24,10 @@ public class SubmissionManagerService {
 
     public void initAndProcess(Long submissionId, SubmissionCreateRequest request) {
         Submission submission = submissionPersistenceService.prepareSubmission(submissionId);
+        log.info("Submission {} prepared for execution", submissionId);
 
-        if (request instanceof SessionSubmissionRequest sessionReq) {
-            submissionPersistenceService.saveOrUpdateUserSession(
-                    submission.getUser(),
-                    request.getOnlineJudge(),
-                    sessionReq.getSessionId()
-            );
-        }
-
-        SubmissionContext context = prepareContext(request);
+        SubmissionContext context = prepareContext(request.getUserId(), request);
+        log.info("context prepared for submission {} with {}", submissionId, context);
 
         try {
             log.info("Preparing submission {} for execution", submissionId);
@@ -50,9 +44,9 @@ public class SubmissionManagerService {
         }
     }
 
-    private SubmissionContext prepareContext(SubmissionCreateRequest request) {
-        if (request instanceof SessionSubmissionRequest sessionReq) {
-            return new SubmissionContext(null, sessionReq.getSessionId());
+    private SubmissionContext prepareContext(Long userId, SubmissionCreateRequest request) {
+        if (request.getSubmissionMethod() == SubmissionMethod.SESSION) {
+            return new SubmissionContext(null, submissionPersistenceService.getUserSessionData(userId, request.getOnlineJudge()));
         }
         BotAccount account = submissionPersistenceService.reserveAccount(request.getOnlineJudge());
         return new SubmissionContext(account, null);

@@ -23,4 +23,12 @@ public interface SubmissionService {
     Integer getSolvedCount(String problemCode, com.icoder.problem.management.enums.OJudgeType onlineJudgeType);
 
     SubmissionCreateResponse submit(SubmissionCreateRequest request);
+
+    SessionSubmissionResponse addSessionId(SessionSubmissionRequest request);
+
+    SessionSubmissionResponse updateSession(SessionSubmissionRequest request);
+
+    void deleteSession(Long id);
+
+    SessionSubmissionResponse getSession(String judgeType);
 }
