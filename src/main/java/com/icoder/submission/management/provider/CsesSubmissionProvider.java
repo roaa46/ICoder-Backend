@@ -2,6 +2,7 @@ package com.icoder.submission.management.provider;
 
 import com.icoder.core.config.PlaywrightService;
 import com.icoder.problem.management.enums.OJudgeType;
+import com.icoder.submission.management.dto.SubmissionContext;
 import com.icoder.submission.management.dto.SubmissionResult;
 import com.icoder.submission.management.entity.BotAccount;
 import com.icoder.submission.management.entity.Submission;
@@ -33,17 +34,21 @@ public class CsesSubmissionProvider implements OnlineJudgeSubmissionProvider {
     }
 
     @Override
-    public SubmissionResult submit(Submission submission, BotAccount account) {
+    public SubmissionResult submit(Submission submission, SubmissionContext context) {
         return playwrightService.execute(page -> {
             Path tempFile = null;
             try {
-                handleAuthentication(page, account);
+                if (context.sessionId() != null) {
+                    submissionUtils.applyUserSession(page.context(), context.sessionId(), "cses.fi");
+                } else if (context.account() != null) {
+                    handleAuthentication(page, context.account());
+                }
 
                 String[] langSettings = determineLanguageSettings(submission.getLanguage());
                 tempFile = createTempSubmissionFile(submission.getSubmissionCode(), langSettings[0]);
 
                 String submitUrl = BASE_URL + "submit/" + submission.getProblem().getProblemCode() + "/";
-                return performUpload(page, submitUrl, tempFile, langSettings, account);
+                return performUpload(page, submitUrl, tempFile, langSettings, context.account());
             } catch (Exception e) {
                 takeErrorScreenshot(page);
                 return new SubmissionResult(null, SubmissionVerdict.FAILED, null, null, e.getMessage());
@@ -54,10 +59,15 @@ public class CsesSubmissionProvider implements OnlineJudgeSubmissionProvider {
     }
 
     @Override
-    public SubmissionResult checkVerdict(String remoteRunId, BotAccount account, Submission submission) {
+    public SubmissionResult checkVerdict(String remoteRunId, Submission submission) {
         return playwrightService.execute(page -> {
             try {
-                submissionUtils.loadCookies(page.context(), account);
+                if (submission.getBotAccount() != null) {
+                    submissionUtils.loadCookies(page.context(), submission.getBotAccount());
+                } else {
+                    String sessionId = submissionUtils.getUserSession(submission.getUser(), submission.getOnlineJudge());
+                    submissionUtils.applyUserSession(page.context(), sessionId, "cses.fi");
+                }
                 page.navigate(BASE_URL + "result/" + remoteRunId + "/");
 
                 page.waitForSelector(
@@ -155,7 +165,9 @@ public class CsesSubmissionProvider implements OnlineJudgeSubmissionProvider {
         page.click("input[type='submit']");
         page.waitForURL("**/result/**");
 
-        submissionUtils.saveCookies(page.context(), account);
+        if (account != null) {
+            submissionUtils.saveCookies(page.context(), account);
+        }
         return new SubmissionResult(submissionUtils.extractRemoteId(page.url()), SubmissionVerdict.IN_QUEUE, null, null, null);
     }
 

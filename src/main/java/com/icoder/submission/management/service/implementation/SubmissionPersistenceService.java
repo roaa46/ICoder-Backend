@@ -5,11 +5,14 @@ import com.icoder.problem.management.enums.OJudgeType;
 import com.icoder.submission.management.dto.SubmissionResult;
 import com.icoder.submission.management.entity.BotAccount;
 import com.icoder.submission.management.entity.Submission;
+import com.icoder.submission.management.entity.UserJudgeSession;
 import com.icoder.submission.management.enums.SubmissionStatus;
 import com.icoder.submission.management.enums.SubmissionVerdict;
 import com.icoder.submission.management.repository.BotAccountRepository;
 import com.icoder.submission.management.repository.SubmissionRepository;
+import com.icoder.submission.management.repository.UserJudgeSessionRepository;
 import com.icoder.submission.management.utils.SubmissionUtils;
+import com.icoder.user.management.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +26,7 @@ public class SubmissionPersistenceService {
     private final BotAccountRepository accountRepository;
     private final SubmissionUtils submissionUtils;
     private final SubmissionTaskPublisher submissionTaskPublisher;
+    private final UserJudgeSessionRepository sessionRepository;
 
     @Transactional
     public Submission prepareSubmission(Long submissionId) {
@@ -53,7 +57,8 @@ public class SubmissionPersistenceService {
             submissionUtils.updateRelationAsSolved(submission);
         }
 
-        releaseAccount(account);
+        if (account != null)
+            releaseAccount(account);
     }
 
     @Transactional
@@ -78,5 +83,19 @@ public class SubmissionPersistenceService {
         account.setInUse(false);
         account.setLastUsedAt(Instant.now());
         accountRepository.save(account);
+    }
+
+    @Transactional
+    public void saveOrUpdateUserSession(User user, OJudgeType judge, String sessionId) {
+        UserJudgeSession session = sessionRepository
+                .findByUserAndJudgeType(user, judge)
+                .orElseGet(() -> UserJudgeSession.builder()
+                        .user(user)
+                        .judgeType(judge)
+                        .build());
+
+        session.setSessionData(sessionId);
+        session.setLastUpdated(Instant.now());
+        sessionRepository.save(session);
     }
 }

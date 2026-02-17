@@ -15,7 +15,6 @@ import com.icoder.submission.management.repository.SubmissionRepository;
 import com.icoder.submission.management.service.interfaces.SubmissionService;
 import com.icoder.submission.management.utils.SubmissionUtils;
 import com.icoder.user.management.entity.User;
-import com.icoder.user.management.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -40,7 +39,6 @@ public class SubmissionServiceImpl implements SubmissionService {
     private final SubmissionProcessor submissionProcessor;
     private final SubmissionMapper submissionMapper;
     private final SecurityUtils securityUtils;
-    private final UserRepository userRepository;
     private final SubmissionUtils submissionUtils;
 
     public List<LanguageOptionResponse> getLanguages(String onlineJudge) {
@@ -150,7 +148,7 @@ public class SubmissionServiceImpl implements SubmissionService {
             @Override
             public void afterCommit() {
                 log.info("Transaction committed successfully. Starting processor for ID: {}", submissionId);
-                submissionProcessor.process(submissionId);
+                submissionProcessor.process(submissionId, request);
             }
         });
 

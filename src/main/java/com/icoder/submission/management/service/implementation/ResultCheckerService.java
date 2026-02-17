@@ -48,7 +48,7 @@ public class ResultCheckerService {
             log.info("Checking verdict for submission {} on {}", submissionId, submission.getOnlineJudge());
 
             OnlineJudgeSubmissionProvider provider = getProvider(submission.getOnlineJudge());
-            SubmissionResult result = provider.checkVerdict(submission.getRemoteRunId(), submission.getBotAccount(), submission);
+            SubmissionResult result = provider.checkVerdict(submission.getRemoteRunId(), submission);
 
             if (result.verdict() != submission.getVerdict()) {
                 submission.setVerdict(result.verdict());
