@@ -9,12 +9,16 @@ import com.icoder.group.management.repository.UserGroupRoleRepository;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 
-@Service
+/**
+ * Utility component for group-related operations.
+ * Encapsulates common group queries and validations.
+ */
+@Component
 @RequiredArgsConstructor
 public class GroupUtil {
     private final UserRepository userRepository;

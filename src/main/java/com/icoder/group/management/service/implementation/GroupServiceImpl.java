@@ -3,6 +3,7 @@ package com.icoder.group.management.service.implementation;
 import com.cloudinary.Cloudinary;
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.core.exception.ApiException;
+import com.icoder.core.config.StorageProperties;
 import com.icoder.core.utils.ImageService;
 import com.icoder.core.utils.SecurityUtils;
 import com.icoder.group.management.dto.*;
@@ -24,7 +25,6 @@ import com.icoder.notification.management.events.InvitationSentEvent;
 import com.icoder.user.management.entity.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -51,8 +51,7 @@ public class GroupServiceImpl implements GroupService {
     private final ImageService imageService;
     private final ApplicationEventPublisher eventPublisher;
     private final InvitationService invitationService;
-    @Value("${group.picture.folder}")
-    private String groupPictureFolder;
+    private final StorageProperties storageProperties;
 
     @Override
     public GroupResponse getGroupById(Long groupId) {
@@ -235,10 +234,10 @@ public class GroupServiceImpl implements GroupService {
 
         try {
             if (group.getPictureUrl() != null) {
-                imageService.deleteImageFromCloudinary(group.getPictureUrl(), groupPictureFolder);
+                imageService.deleteImageFromCloudinary(group.getPictureUrl(), storageProperties.getGroupPictureFolder());
             }
             Map<String, Object> uploadResult = cloudinary.uploader().upload(pictureRequest.getPicture().getBytes(),
-                    Map.of("folder", groupPictureFolder));
+                    Map.of("folder", storageProperties.getGroupPictureFolder()));
 
             String imageUrl = uploadResult.get("secure_url").toString();
             group.setPictureUrl(imageUrl);
@@ -263,7 +262,6 @@ public class GroupServiceImpl implements GroupService {
     public MessageResponse deleteGroupPicture(Long groupId) {
         Group group = groupUtil.findGroupById(groupId);
 
-
         String pictureUrl = group.getPictureUrl();
 
         if (pictureUrl == null || pictureUrl.isBlank()) {
@@ -274,7 +272,7 @@ public class GroupServiceImpl implements GroupService {
         groupRepository.save(group);
 
         try {
-            imageService.deleteImageFromCloudinary(pictureUrl, groupPictureFolder);
+            imageService.deleteImageFromCloudinary(pictureUrl, storageProperties.getGroupPictureFolder());
         } catch (Exception e) {
             log.warn("Failed to delete profile image from Cloudinary", e);
         }
