@@ -3,8 +3,10 @@ package com.icoder.submission.management.utils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icoder.coding.editor.utils.LanguageMatcher;
+import com.icoder.core.exception.ResourceNotFoundException;
 import com.icoder.problem.management.entity.Problem;
 import com.icoder.problem.management.entity.ProblemUserRelation;
+import com.icoder.problem.management.enums.OJudgeType;
 import com.icoder.problem.management.repository.ProblemRepository;
 import com.icoder.problem.management.repository.ProblemUserRelationRepository;
 import com.icoder.submission.management.dto.LanguageOptionResponse;
@@ -12,6 +14,7 @@ import com.icoder.submission.management.entity.BotAccount;
 import com.icoder.submission.management.entity.Submission;
 import com.icoder.submission.management.enums.SubmissionStatus;
 import com.icoder.submission.management.enums.SubmissionVerdict;
+import com.icoder.submission.management.provider.OnlineJudgeSubmissionProvider;
 import com.icoder.submission.management.repository.BotAccountRepository;
 import com.icoder.submission.management.repository.SubmissionRepository;
 import com.icoder.user.management.entity.User;
@@ -36,6 +39,7 @@ public class SubmissionUtils {
     private final ProblemUserRelationRepository relationRepository;
     private final ProblemRepository problemRepository;
     private final UserRepository userRepository;
+    private final List<OnlineJudgeSubmissionProvider> providers;
 
     public void handleFailure(Long id) {
         submissionRepository.findById(id).ifPresent(s -> {
@@ -216,5 +220,12 @@ public class SubmissionUtils {
                         .displayName(entry.getValue())
                         .build())
                 .toList();
+    }
+
+    public OnlineJudgeSubmissionProvider getProvider(OJudgeType type) {
+        return providers.stream()
+                .filter(p -> p.supports(type))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("No provider found for judge: " + type));
     }
 }

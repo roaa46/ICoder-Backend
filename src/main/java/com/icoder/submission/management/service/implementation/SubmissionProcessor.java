@@ -6,8 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.CompletableFuture;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -18,13 +16,12 @@ public class SubmissionProcessor {
     @Async("threadPoolTaskExecutor")
     public void process(Long submissionId) {
         log.info("Queuing submission ID: {} using CompletableFuture", submissionId);
-
-        CompletableFuture.runAsync(() -> submissionManagerService.initAndProcess(submissionId))
-                .thenRun(() -> log.info("Submission {} processed successfully.", submissionId))
-                .exceptionally(ex -> {
-                    log.error("Critical error in submission pipeline for ID {}: {}", submissionId, ex.getMessage());
-                    submissionUtils.handleFailure(submissionId);
-                    return null;
-                });
+        try {
+            submissionManagerService.initAndProcess(submissionId);
+            log.info("Submission {} processed successfully.", submissionId);
+        } catch (Exception ex) {
+            log.error("Critical error in submission pipeline for ID {}: {}", submissionId, ex.getMessage());
+            submissionUtils.handleFailure(submissionId);
+        }
     }
 }
