@@ -137,7 +137,7 @@ public class SubmissionServiceImpl implements SubmissionService {
                 .user(currentUser)
                 .status(SubmissionStatus.CREATED)
                 .verdict(SubmissionVerdict.PENDING)
-                .opened(false)
+                .opened(request.isOpened())
                 .build();
 
         submission = submissionRepository.save(submission);

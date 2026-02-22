@@ -30,6 +30,8 @@ public class SubmissionCreateRequest {
     @JsonDeserialize(using = UppercaseEnumDeserializer.class)
     private OJudgeType onlineJudge;
 
+    private boolean opened;
+
     @JsonDeserialize(using = UppercaseEnumDeserializer.class)
     private SubmissionMethod submissionMethod;
 
