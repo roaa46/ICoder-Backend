@@ -94,6 +94,7 @@ public class GroupServiceImpl implements GroupService {
 
         User owner = groupUtil.findCurrentUser();
         group.setOwnerId(owner.getId());
+        group.setOwnerHandle(owner.getHandle());
         UserGroupRole ownerRole = new UserGroupRole();
         ownerRole.setUser(owner);
         ownerRole.setGroup(group);

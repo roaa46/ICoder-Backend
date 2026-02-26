@@ -11,6 +11,7 @@ public interface GroupMapper {
     @Mapping(target = "code", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "ownerId" , ignore = true)
+    @Mapping(target = "ownerHandle", ignore = true)
     Group toEntity(CreateGroupRequest createGroupRequest);
 
     GroupResponse toDTO(Group group);
