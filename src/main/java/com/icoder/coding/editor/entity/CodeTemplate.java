@@ -7,6 +7,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 
@@ -15,10 +18,10 @@ import java.time.Instant;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "code_templates")
+@EntityListeners(AuditingEntityListener.class)
 public class CodeTemplate {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
@@ -38,5 +41,10 @@ public class CodeTemplate {
     private boolean enabled;
 
     @NotNull
-    private Instant createdAndUpdatedAt;
+    @CreatedDate
+    private Instant createdAt;
+
+    @NotNull
+    @LastModifiedDate
+    private Instant updatedAt;
 }

@@ -15,8 +15,8 @@ import java.util.List;
 @RequestMapping("/api/v1/coding/editor")
 @RequiredArgsConstructor
 public class CodingEditorController {
-    private final CodingEditorService codingEditorService;
     public static final int FINAL_STATUS_THRESHOLD = 3;
+    private final CodingEditorService codingEditorService;
 
     @GetMapping("/language")
     @Operation(
@@ -121,7 +121,7 @@ public class CodingEditorController {
                     "If 'force' is false and another template for the same language is already active, it returns a 409 Conflict. " +
                     "If 'force' is true, it deactivates the existing template and activates this one."
     )
-    public ResponseEntity<CodeTemplateResponse> toggleTemplate(@PathVariable Long id, @RequestParam boolean force){
+    public ResponseEntity<CodeTemplateResponse> toggleTemplate(@PathVariable Long id, @RequestParam boolean force) {
         return ResponseEntity.ok(codingEditorService.toggleTemplate(id, force));
     }
 
@@ -162,5 +162,14 @@ public class CodingEditorController {
     public ResponseEntity deleteTemplate(@PathVariable Long id) {
         codingEditorService.deleteTemplate(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/templates/active/{languageId}")
+    @Operation(
+            summary = "Retrieve enabled template with a specific language",
+            description = "Returns the details of an enabled single code template using language_id"
+    )
+    public ResponseEntity<CodeTemplateResponse> getActiveTemplate(@PathVariable Integer languageId) {
+        return ResponseEntity.ok(codingEditorService.getActiveTemplate(languageId));
     }
 }

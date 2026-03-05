@@ -23,6 +23,7 @@ public class CodeTemplateResponse {
     private Integer languageId;
     private String code;
     private boolean enabled;
-    private Instant createdAndUpdatedAt;
+    private Instant createdAt;
+    private Instant updatedAt;
     private String monacoName;
 }
