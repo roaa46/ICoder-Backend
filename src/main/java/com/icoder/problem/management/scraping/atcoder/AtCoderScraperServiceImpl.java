@@ -5,7 +5,7 @@ import com.icoder.problem.management.dto.*;
 import com.icoder.problem.management.enums.FormatType;
 import com.icoder.problem.management.enums.OJudgeType;
 import com.icoder.problem.management.scraping.service.CleanWithJsoup;
-import com.icoder.problem.management.scraping.service.JsoupConnect;
+import com.icoder.problem.management.utils.ProblemUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -20,19 +20,19 @@ import java.util.List;
 @Slf4j
 @Service
 public class AtCoderScraperServiceImpl implements AtCoderScraperService {
-    private final JsoupConnect jsoupConnect;
     private final CleanWithJsoup cleanWithJsoup;
+    private final ProblemUtils problemUtils;
 
-    public AtCoderScraperServiceImpl(JsoupConnect jsoupConnect, CleanWithJsoup cleanWithJsoup) {
-        this.jsoupConnect = jsoupConnect;
+    public AtCoderScraperServiceImpl(CleanWithJsoup cleanWithJsoup, ProblemUtils problemUtils) {
         this.cleanWithJsoup = cleanWithJsoup;
+        this.problemUtils = problemUtils;
     }
 
     @Override
     public ProblemResponse scrapMetadata(String url) {
         try {
             log.info("Extract metadata of: [{}]", url);
-            Document doc = jsoupConnect.connect(url);
+            Document doc = problemUtils.getDocument(url);
 
             String problemCode = url.substring(url.lastIndexOf("/") + 1);
 
@@ -65,7 +65,7 @@ public class AtCoderScraperServiceImpl implements AtCoderScraperService {
     public ProblemStatementResponse scrapProblemStatement(String url) {
         try {
             log.info("Extract statement of: [{}]", url);
-            Document doc = jsoupConnect.connect(url);
+            Document doc = problemUtils.getDocument(url);
 
             List<PropertyScrapeDTO> properties = extractProperties(doc);
             List<SectionScrapeDTO> sections = extractSections(doc);
