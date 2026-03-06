@@ -1,36 +1,26 @@
 package com.icoder.notification.management.service.implementation;
 
+import com.icoder.core.service.interfaces.MailSenderService;
 import com.icoder.notification.management.service.interfaces.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class EmailServiceImp implements EmailService {
-    private final JavaMailSender mailSender;
+    private final MailSenderService mailSenderService;
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
-    @Value("${spring.mail.username:noreply@icoder.com}")
-    private String fromEmail;
-
     @Override
     public void sendInvitationEmail(String to, String senderName, String targetName, String token) {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(to);
-            message.setSubject("New Invitation to join " + targetName);
-            message.setText(buildInvitationEmailBody(senderName, targetName, token));
-
-            mailSender.send(message);
+            mailSenderService.sendSimpleEmail(to, buildInvitationEmailBody(senderName, targetName, token));
             log.info("Invitation email sent successfully to {} for invitation token {}", to, token);
         } catch (MailException e) {
             log.error("Failed to send invitation email to {}: {}", to, e.getMessage(), e);
