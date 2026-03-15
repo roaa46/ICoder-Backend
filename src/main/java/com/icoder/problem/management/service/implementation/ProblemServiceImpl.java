@@ -118,8 +118,9 @@ public class ProblemServiceImpl implements ProblemService {
     public Page<ProblemResponse> getAllProblems(String oj, String code, String title, Pageable pageable) {
         Long currentUserId = securityUtils.getCurrentUserId();
 
+        OJudgeType ojType = (oj == null || oj.isBlank()) ? null : OJudgeType.fromString(oj);
         Specification<Problem> spec = new SpecBuilder<Problem>()
-                .with("onlineJudge", ":", OJudgeType.fromString(oj))
+                .with("onlineJudge", ":", ojType)
                 .with("problemCode", ":", code)
                 .with("problemTitle", ":", title)
                 .build();
