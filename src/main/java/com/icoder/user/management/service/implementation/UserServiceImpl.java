@@ -2,20 +2,23 @@ package com.icoder.user.management.service.implementation;
 
 import com.cloudinary.Cloudinary;
 import com.icoder.core.dto.MessageResponse;
+import com.icoder.core.dto.PictureUrlResponse;
+import com.icoder.core.exception.ApiException;
 import com.icoder.core.utils.ImageService;
 import com.icoder.core.utils.SecurityUtils;
-import com.icoder.core.dto.PictureUrlResponse;
-import com.icoder.user.management.enums.TokenType;
-import com.icoder.core.exception.ApiException;
 import com.icoder.core.utils.TokenHelper;
 import com.icoder.user.management.dto.auth.UpdateEmailRequest;
 import com.icoder.user.management.dto.user.UpdateUserProfileRequest;
 import com.icoder.user.management.dto.user.UserProfileRequest;
 import com.icoder.user.management.dto.user.UserProfileResponse;
 import com.icoder.user.management.entity.User;
+import com.icoder.user.management.enums.TokenType;
 import com.icoder.user.management.mapper.UserMapper;
 import com.icoder.user.management.repository.UserRepository;
-import com.icoder.user.management.service.interfaces.*;
+import com.icoder.user.management.service.interfaces.EmailVerificationService;
+import com.icoder.user.management.service.interfaces.JwtService;
+import com.icoder.user.management.service.interfaces.TokenService;
+import com.icoder.user.management.service.interfaces.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -141,7 +144,6 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(securityUtils.getCurrentUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        String contentType = file.getContentType();
         try {
             imageService.checkPictureType(file);
         } catch (IllegalStateException ex) {
