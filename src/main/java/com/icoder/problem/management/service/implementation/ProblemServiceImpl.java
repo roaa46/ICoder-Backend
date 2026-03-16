@@ -81,10 +81,7 @@ public class ProblemServiceImpl implements ProblemService {
                 throw new ScrapingException("Cannot get full statement of the problem.");
             }
 
-//            scraped.setProblemId(existingProblem.get().getId());
             scraped.setProblemCode(existingProblem.get().getProblemCode());
-//            scraped.setProblemLink(existingProblem.get().getProblemLink());
-//            scraped.setProblemTitle(existingProblem.get().getProblemTitle());
             scraped.setOnlineJudge(existingProblem.get().getOnlineJudge());
 
             return persistenceService.saveFullStatement(scraped, judgeType);
@@ -124,6 +121,7 @@ public class ProblemServiceImpl implements ProblemService {
                 .with("problemCode", ":", code)
                 .with("problemTitle", ":", title)
                 .build();
+        if (spec == null) spec = Specification.where(null);
 
         Page<Problem> problemsPage = problemRepository.findAll(spec, pageable);
 
