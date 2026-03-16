@@ -217,6 +217,7 @@ public class ContestServiceImpl implements ContestService {
                 .with("contestType", ":", type)
 
                 .build();
+        if (spec == null) spec = Specification.where(null);
 
         return contestRepository.findAll(spec, pageable)
                 .map(contestMapper::toContestResponse);
