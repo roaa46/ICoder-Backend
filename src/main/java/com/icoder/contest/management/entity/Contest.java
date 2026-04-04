@@ -21,8 +21,8 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "contests", indexes = {
-    @Index(name = "idx_contest_status_start", columnList = "contestStatus, beginTime"),
-    @Index(name = "idx_contest_status_end", columnList = "contestStatus, endTime")
+        @Index(name = "idx_contest_status_start", columnList = "contestStatus, beginTime"),
+        @Index(name = "idx_contest_status_end", columnList = "contestStatus, endTime")
 })
 public class Contest {
     @Id
