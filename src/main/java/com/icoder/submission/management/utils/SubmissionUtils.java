@@ -54,22 +54,92 @@ public class SubmissionUtils {
             try {
                 List<Map<String, Object>> cookieMaps = mapper.readValue(account.getCookies(), new TypeReference<>() {
                 });
-
-                for (Map<String, Object> map : cookieMaps) {
-                    context.addCookies(List.of(new Cookie((String) map.get("name"), (String) map.get("value"))
-                            .setDomain((String) map.get("domain"))
-                            .setPath((String) map.get("path"))
-                            .setExpires(((Number) map.get("expires")).doubleValue())
-                            .setHttpOnly((Boolean) map.get("httpOnly"))
-                            .setSecure((Boolean) map.get("secure"))
-                            .setSameSite(com.microsoft.playwright.options.SameSiteAttribute.valueOf((String) map.get("sameSite")))
-                    ));
-                }
+                addCookiesFromMaps(context, cookieMaps);
                 log.info("Cookies loaded successfully for: {}", account.getUsername());
             } catch (Exception e) {
                 log.error("Detailed Cookie Loading Error: {}", e.getMessage());
             }
         }
+    }
+
+    /**
+     * Restores cookies in the same JSON shape Playwright stores on {@link BotAccount} (user session flow).
+     */
+    public void loadCookiesFromJson(BrowserContext context, String cookiesJson) {
+        if (cookiesJson == null || cookiesJson.isBlank()) {
+            return;
+        }
+        try {
+            List<Map<String, Object>> cookieMaps = mapper.readValue(cookiesJson, new TypeReference<>() {
+            });
+            addCookiesFromMaps(context, cookieMaps);
+            log.info("Loaded {} cookies from judge session JSON", cookieMaps.size());
+        } catch (Exception e) {
+            log.error("Failed to parse session cookies JSON: {}", e.getMessage());
+        }
+    }
+
+    private void addCookiesFromMaps(BrowserContext context, List<Map<String, Object>> cookieMaps) {
+        for (Map<String, Object> map : cookieMaps) {
+            context.addCookies(List.of(cookieFromMap(map)));
+        }
+    }
+
+    private Cookie cookieFromMap(Map<String, Object> map) {
+        Cookie c = new Cookie((String) map.get("name"), (String) map.get("value"));
+        if (map.get("domain") != null) {
+            c.setDomain((String) map.get("domain"));
+        }
+        if (map.get("path") != null) {
+            c.setPath((String) map.get("path"));
+        }
+        if (map.get("expires") instanceof Number n) {
+            c.setExpires(n.doubleValue());
+        }
+        if (map.get("httpOnly") instanceof Boolean b) {
+            c.setHttpOnly(b);
+        }
+        if (map.get("secure") instanceof Boolean b) {
+            c.setSecure(b);
+        }
+        if (map.get("sameSite") instanceof String s) {
+            try {
+                c.setSameSite(com.microsoft.playwright.options.SameSiteAttribute.valueOf(s));
+            } catch (Exception ex) {
+                c.setSameSite(com.microsoft.playwright.options.SameSiteAttribute.LAX);
+            }
+        }
+        return c;
+    }
+
+    public String resolveCodeforcesProgramTypeId(String language) {
+        if (language == null || language.isBlank()) {
+            return "54";
+        }
+        String trimmed = language.trim();
+        if (trimmed.matches("\\d+")) {
+            return trimmed;
+        }
+        return getCodeforcesLanguages().stream()
+                .filter(opt -> opt.getDisplayName().equalsIgnoreCase(trimmed) || opt.getId().equalsIgnoreCase(trimmed))
+                .map(LanguageOptionResponse::getId)
+                .findFirst()
+                .orElse("54");
+    }
+
+    public String resolveAtCoderLanguageId(String language) {
+        if (language == null || language.isBlank()) {
+            return "6082";
+        }
+        String trimmed = language.trim();
+        if (trimmed.matches("\\d+")) {
+            return trimmed;
+        }
+        return getAtCoderLanguages().stream()
+                .filter(opt -> opt.getDisplayName().equalsIgnoreCase(trimmed) || opt.getId().equalsIgnoreCase(trimmed))
+                .map(LanguageOptionResponse::getId)
+                .findFirst()
+                .orElse("6082");
     }
 
     @Transactional
