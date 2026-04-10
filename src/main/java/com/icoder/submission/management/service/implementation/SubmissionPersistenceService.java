@@ -98,15 +98,17 @@ public class SubmissionPersistenceService {
 
     @Transactional
     public Long saveUserSession(User user, SessionSubmissionRequest request) {
-        UserJudgeSession session = UserJudgeSession.builder()
-                .user(user)
-                .judgeType(request.getOnlineJudge())
-                .build();
+        UserJudgeSession session = sessionRepository.findByUserAndJudgeType(user, request.getOnlineJudge())
+                .orElseGet(() -> UserJudgeSession.builder()
+                        .user(user)
+                        .judgeType(request.getOnlineJudge())
+                        .build());
 
         session.setSessionData(request.getSessionData());
         session.setLastUpdated(Instant.now());
         sessionRepository.save(session);
-        log.info("Session created for user {} with session id {}", user.getId(), session.getId());
+        log.info("Session {} for user {} with session id {}",
+                session.getId() == null ? "created" : "updated", user.getId(), session.getId());
         return session.getId();
     }
 
@@ -146,6 +148,11 @@ public class SubmissionPersistenceService {
     public String getUserSessionData(Long userId, OJudgeType judgeType) {
         User currentUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
-        return sessionRepository.findByUserAndJudgeType(currentUser, judgeType).get().getSessionData();
+        UserJudgeSession session = sessionRepository.findByUserAndJudgeType(currentUser, judgeType).orElseThrow(
+                () -> new ResourceNotFoundException("Session not found for user: " + userId + " and judge: " + judgeType)
+        );
+        String sessionData = session.getSessionData();
+        log.info("Session data {}  retrieved for user {}}", sessionData, userId);
+        return sessionData;
     }
 }

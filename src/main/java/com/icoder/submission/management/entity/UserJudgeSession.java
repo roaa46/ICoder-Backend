@@ -17,7 +17,7 @@ import java.time.Instant;
 @AllArgsConstructor
 public class UserJudgeSession {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)

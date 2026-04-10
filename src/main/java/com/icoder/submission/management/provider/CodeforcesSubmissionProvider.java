@@ -10,7 +10,6 @@ import com.icoder.submission.management.enums.SubmissionVerdict;
 import com.icoder.submission.management.utils.SubmissionUtils;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.LoadState;
-import com.microsoft.playwright.options.WaitForSelectorOptions;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -29,6 +28,43 @@ public class CodeforcesSubmissionProvider implements OnlineJudgeSubmissionProvid
     private final PlaywrightService playwrightService;
     private final SubmissionUtils submissionUtils;
 
+    private static String extractSubmissionId(String url) {
+        Matcher m = SUBMISSION_ID_IN_URL.matcher(url);
+        return m.find() ? m.group(1) : null;
+    }
+
+    private static SubmissionVerdict mapCodeforcesVerdict(String text) {
+        if (text == null) {
+            return SubmissionVerdict.PENDING;
+        }
+        String u = text.toUpperCase();
+        if (u.contains("ACCEPTED") || u.contains("ACCEPTED (OK)")) {
+            return SubmissionVerdict.ACCEPTED;
+        }
+        if (u.contains("WRONG ANSWER")) {
+            return SubmissionVerdict.WRONG_ANSWER;
+        }
+        if (u.contains("TIME LIMIT")) {
+            return SubmissionVerdict.TIME_LIMIT_EXCEEDED;
+        }
+        if (u.contains("MEMORY LIMIT")) {
+            return SubmissionVerdict.MEMORY_LIMIT_EXCEEDED;
+        }
+        if (u.contains("COMPILATION ERROR") || u.contains("COMPILER")) {
+            return SubmissionVerdict.COMPILATION_ERROR;
+        }
+        if (u.contains("RUNTIME ERROR") || u.contains("RUNTIME")) {
+            return SubmissionVerdict.RUNTIME_ERROR;
+        }
+        if (u.contains("JUDGING") || u.contains("IN QUEUE") || u.contains("PENDING") || u.contains("QUEUED")) {
+            return SubmissionVerdict.IN_QUEUE;
+        }
+        if (u.contains("SKIPPED") || u.contains("CHALLENGED")) {
+            return SubmissionVerdict.FAILED;
+        }
+        return SubmissionVerdict.PENDING;
+    }
+
     @Override
     public boolean supports(OJudgeType type) {
         return type == OJudgeType.CODEFORCES || type == OJudgeType.GYM;
@@ -45,12 +81,16 @@ public class CodeforcesSubmissionProvider implements OnlineJudgeSubmissionProvid
                 page.navigate(submitUrl, new Page.NavigateOptions().setTimeout(NAV_TIMEOUT_MS));
                 page.waitForLoadState(LoadState.DOMCONTENTLOADED);
 
+                log.info("CF submit URL after navigate: {}", page.url());
+                log.info("CF page title: {}", page.title());
+                log.info("CF page content snippet: {}", page.content().substring(0, Math.min(2000, page.content().length())));
+
                 if (page.url().contains("/enter")) {
                     return new SubmissionResult(null, SubmissionVerdict.FAILED, null, null, "Not logged in to Codeforces");
                 }
 
                 page.waitForSelector("select[name=submittedProblemIndex]",
-                        new WaitForSelectorOptions().setTimeout(30_000));
+                        new Page.WaitForSelectorOptions().setTimeout(30_000));
 
                 page.selectOption("select[name=submittedProblemIndex]", routing.problemIndex());
                 String programTypeId = submissionUtils.resolveCodeforcesProgramTypeId(submission.getLanguage());
@@ -89,7 +129,7 @@ public class CodeforcesSubmissionProvider implements OnlineJudgeSubmissionProvid
                 page.waitForLoadState(LoadState.DOMCONTENTLOADED);
 
                 page.waitForSelector(".submissionVerdict, .verdict-accepted, .verdict-rejected, .verdict-waiting",
-                        new WaitForSelectorOptions().setTimeout(25_000));
+                        new Page.WaitForSelectorOptions().setTimeout(25_000));
 
                 String verdictText = page.locator(".submissionVerdict").count() > 0
                         ? page.locator(".submissionVerdict").first().innerText().trim()
@@ -158,43 +198,6 @@ public class CodeforcesSubmissionProvider implements OnlineJudgeSubmissionProvid
         page.locator("input[type=submit].submit, input.submit[type=submit]").first().click();
         page.waitForLoadState(LoadState.NETWORKIDLE);
         submissionUtils.saveCookies(page.context(), account);
-    }
-
-    private static String extractSubmissionId(String url) {
-        Matcher m = SUBMISSION_ID_IN_URL.matcher(url);
-        return m.find() ? m.group(1) : null;
-    }
-
-    private static SubmissionVerdict mapCodeforcesVerdict(String text) {
-        if (text == null) {
-            return SubmissionVerdict.PENDING;
-        }
-        String u = text.toUpperCase();
-        if (u.contains("ACCEPTED") || u.contains("ACCEPTED (OK)")) {
-            return SubmissionVerdict.ACCEPTED;
-        }
-        if (u.contains("WRONG ANSWER")) {
-            return SubmissionVerdict.WRONG_ANSWER;
-        }
-        if (u.contains("TIME LIMIT")) {
-            return SubmissionVerdict.TIME_LIMIT_EXCEEDED;
-        }
-        if (u.contains("MEMORY LIMIT")) {
-            return SubmissionVerdict.MEMORY_LIMIT_EXCEEDED;
-        }
-        if (u.contains("COMPILATION ERROR") || u.contains("COMPILER")) {
-            return SubmissionVerdict.COMPILATION_ERROR;
-        }
-        if (u.contains("RUNTIME ERROR") || u.contains("RUNTIME")) {
-            return SubmissionVerdict.RUNTIME_ERROR;
-        }
-        if (u.contains("JUDGING") || u.contains("IN QUEUE") || u.contains("PENDING") || u.contains("QUEUED")) {
-            return SubmissionVerdict.IN_QUEUE;
-        }
-        if (u.contains("SKIPPED") || u.contains("CHALLENGED")) {
-            return SubmissionVerdict.FAILED;
-        }
-        return SubmissionVerdict.PENDING;
     }
 
     private record CfRouting(int contestId, String problemIndex, boolean gym) {

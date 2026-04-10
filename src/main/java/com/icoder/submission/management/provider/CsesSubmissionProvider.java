@@ -10,6 +10,7 @@ import com.icoder.submission.management.enums.SubmissionVerdict;
 import com.icoder.submission.management.utils.SubmissionUtils;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.TimeoutError;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,12 +22,11 @@ import java.nio.file.Path;
 @Component
 @RequiredArgsConstructor
 public class CsesSubmissionProvider implements OnlineJudgeSubmissionProvider {
+    private static final String BASE_URL = "https://cses.fi/problemset/";
+    private static final String RESULT_ROW_SELECTOR = "#status";
+    private static final String SUBMISSION_ROWS_SELECTOR = "table.wide tbody tr";
     private final PlaywrightService playwrightService;
     private final SubmissionUtils submissionUtils;
-
-    private static final String BASE_URL = "https://cses.fi/problemset/";
-    private static final String RESULT_ROW_SELECTOR = "tr:has-text('Result:') span.verdict";
-    private static final String SUBMISSION_ROWS_SELECTOR = "table.wide tbody tr";
 
     @Override
     public boolean supports(OJudgeType type) {
@@ -70,10 +70,12 @@ public class CsesSubmissionProvider implements OnlineJudgeSubmissionProvider {
                 }
                 page.navigate(BASE_URL + "result/" + remoteRunId + "/");
 
-                page.waitForSelector(
-                        RESULT_ROW_SELECTOR,
-                        new Page.WaitForSelectorOptions().setTimeout(10000)
-                );
+                try {
+                    page.waitForSelector("#status", new Page.WaitForSelectorOptions().setTimeout(5000));
+                } catch (TimeoutError e) {
+                    log.warn("Verdict not ready yet for ID: {}", remoteRunId);
+                    return new SubmissionResult(remoteRunId, SubmissionVerdict.IN_QUEUE, null, null, "Still pending...");
+                }
 
                 String verdictText = page.locator(
                         RESULT_ROW_SELECTOR
