@@ -119,7 +119,7 @@ public class ProblemServiceImpl implements ProblemService {
         Long currentUserId = securityUtils.getCurrentUserId();
 
         Specification<Problem> spec = new SpecBuilder<Problem>()
-                .with("onlineJudge", ":", OJudgeType.fromString(oj))
+                .with("onlineJudge", ":", oj != null ? OJudgeType.fromString(oj) : null)
                 .with("problemCode", ":", code)
                 .with("problemTitle", ":", title)
                 .build();
