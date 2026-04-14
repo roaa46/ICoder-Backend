@@ -2,6 +2,7 @@ package com.icoder.user.management.entity;
 
 import com.icoder.coding.editor.entity.CodeTemplate;
 import com.icoder.problem.management.entity.ProblemUserRelation;
+import com.icoder.group.management.entity.UserGroupRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -49,7 +50,10 @@ public class User {
     private int attemptedCount = 0;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<Token> tokens;
+    private List<Token> tokens = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<UserGroupRole> groupRoles = new HashSet<>();
 
     private Instant lastVerificationEmailSentAt;
 
@@ -62,3 +66,4 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<CodeTemplate> templates = new HashSet<>();
 }
+

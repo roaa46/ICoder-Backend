@@ -2,9 +2,10 @@ package com.icoder.user.management.service.implementation;
 
 import com.cloudinary.Cloudinary;
 import com.icoder.core.dto.MessageResponse;
+import com.icoder.core.dto.PictureUrlResponse;
+import com.icoder.core.config.StorageProperties;
 import com.icoder.core.utils.ImageService;
 import com.icoder.core.utils.SecurityUtils;
-import com.icoder.user.management.dto.user.PictureUrlResponse;
 import com.icoder.user.management.enums.TokenType;
 import com.icoder.core.exception.ApiException;
 import com.icoder.core.utils.TokenHelper;
@@ -19,7 +20,6 @@ import com.icoder.user.management.service.interfaces.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -43,8 +43,7 @@ public class UserServiceImpl implements UserService {
     private final Cloudinary cloudinary;
     private final SecurityUtils securityUtils;
     private final ImageService imageService;
-    @Value("${profile.picture.folder}")
-    private String profilePictureFolder;
+    private final StorageProperties storageProperties;
 
     @Override
     public UserProfileResponse getProfile(UserProfileRequest userProfileRequest) {
@@ -86,7 +85,7 @@ public class UserServiceImpl implements UserService {
 
         if (pictureUrl != null && !pictureUrl.isBlank()) {
             try {
-                imageService.deleteImageFromCloudinary(pictureUrl, profilePictureFolder);
+                imageService.deleteImageFromCloudinary(pictureUrl, storageProperties.getProfilePictureFolder());
             } catch (Exception e) {
                 log.warn("Failed to delete user image from Cloudinary during account deletion", e);
             }
@@ -150,13 +149,13 @@ public class UserServiceImpl implements UserService {
 
         try {
             if (user.getPictureUrl() != null) {
-                imageService.deleteImageFromCloudinary(user.getPictureUrl(), profilePictureFolder);
+                imageService.deleteImageFromCloudinary(user.getPictureUrl(), storageProperties.getProfilePictureFolder());
             }
 
             Map uploadResult = cloudinary.uploader().upload(
                     file.getBytes(),
                     Map.of(
-                            "folder", "users/profile-pictures",
+                            "folder", storageProperties.getProfilePictureFolder(),
                             "resource_type", "image"
                     )
             );
@@ -231,7 +230,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         try {
-            imageService.deleteImageFromCloudinary(pictureUrl, profilePictureFolder);
+            imageService.deleteImageFromCloudinary(pictureUrl, storageProperties.getProfilePictureFolder());
         } catch (Exception e) {
             log.warn("Failed to delete profile image from Cloudinary", e);
         }
