@@ -77,11 +77,20 @@ public class CsesSubmissionProvider implements OnlineJudgeSubmissionProvider {
                     return new SubmissionResult(remoteRunId, SubmissionVerdict.IN_QUEUE, null, null, "Still pending...");
                 }
 
-                String verdictText = page.locator(
-                        RESULT_ROW_SELECTOR
-                ).textContent().trim().toUpperCase();
+                String statusText = page.locator("#status").textContent().trim().toUpperCase();
 
-                log.debug("CSES Checker: RemoteID {} - Highly accurate verdict found: {}", remoteRunId, verdictText);
+                if (statusText.contains("PENDING") || statusText.contains("TESTING") || statusText.contains("COMPILING") || statusText.isEmpty()) {
+                    return new SubmissionResult(remoteRunId, SubmissionVerdict.IN_QUEUE, null, null, "Status: " + statusText);
+                }
+
+                Locator resultLocator = page.locator("xpath=//td[normalize-space()='Result:']/following-sibling::td");
+
+                String verdictText = statusText;
+                if (resultLocator.count() > 0) {
+                    verdictText = resultLocator.textContent().trim().toUpperCase();
+                }
+
+                log.debug("CSES Checker: RemoteID {} - Status: {}, Result: {}", remoteRunId, statusText, verdictText);
 
                 SubmissionVerdict verdict = mapCsesVerdict(verdictText);
 
@@ -119,18 +128,18 @@ public class CsesSubmissionProvider implements OnlineJudgeSubmissionProvider {
         return null;
     }
 
-
     private SubmissionVerdict mapCsesVerdict(String text) {
-        if (text.contains("READY") || text.contains("ACCEPTED")) return SubmissionVerdict.ACCEPTED;
+        if (text.contains("ACCEPTED")) return SubmissionVerdict.ACCEPTED;
         if (text.contains("WRONG ANSWER")) return SubmissionVerdict.WRONG_ANSWER;
         if (text.contains("TIME LIMIT EXCEEDED")) return SubmissionVerdict.TIME_LIMIT_EXCEEDED;
-        if (text.contains("MEMORY LIMIT EXCEEDED")) return SubmissionVerdict.MEMORY_LIMIT_EXCEEDED;
+        if (text.contains("MEMORY LIMIT EXCEEDED") || text.contains("OUTPUT LIMIT EXCEEDED"))
+            return SubmissionVerdict.MEMORY_LIMIT_EXCEEDED;
         if (text.contains("COMPILE ERROR")) return SubmissionVerdict.COMPILATION_ERROR;
         if (text.contains("RUNTIME ERROR")) return SubmissionVerdict.RUNTIME_ERROR;
-        if (text.contains("PENDING") || text.contains("TESTING") || text.isEmpty())
-            return SubmissionVerdict.IN_QUEUE;
 
-        return SubmissionVerdict.PENDING;
+        if (text.contains("READY")) return SubmissionVerdict.FAILED;
+
+        return SubmissionVerdict.IN_QUEUE;
     }
 
     private void ensureLoggedIn(Page page, BotAccount account) {
@@ -174,7 +183,6 @@ public class CsesSubmissionProvider implements OnlineJudgeSubmissionProvider {
     }
 
     private String[] determineLanguageSettings(String lang) {
-        // [langValue, optionValue]
         if (lang.contains("C++")) return new String[]{"C++", lang};
         if (lang.contains("Python")) return new String[]{"Python3", "CPython3"};
         return new String[]{"C++", "C++11"}; // Default
