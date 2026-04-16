@@ -58,4 +58,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long>, J
     Page<Submission> findAll(Pageable pageable);
 
     Page<Submission> findAll(Specification<Submission> spec, Pageable pageable);
+
+    boolean existsByUserIdAndContestIdAndProblemIdAndVerdictAndIdNot(Long user, Long contestId, Long problemId, SubmissionVerdict submissionVerdict, Long submissionId);
+
+    int countByUserIdAndContestIdAndProblemIdAndVerdictIn(Long userId, Long contestId, Long problemId, List<SubmissionVerdict> penaltyVerdicts);
 }

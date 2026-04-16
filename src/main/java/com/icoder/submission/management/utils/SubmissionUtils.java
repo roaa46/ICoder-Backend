@@ -3,12 +3,19 @@ package com.icoder.submission.management.utils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icoder.coding.editor.utils.LanguageMatcher;
+import com.icoder.contest.management.entity.Contest;
+import com.icoder.contest.management.enums.ContestStatus;
+import com.icoder.contest.management.repository.ContestProblemRelationRepository;
+import com.icoder.contest.management.repository.ContestRepository;
+import com.icoder.contest.management.repository.ContestUserRelationRepository;
+import com.icoder.core.exception.ResourceNotFoundException;
 import com.icoder.problem.management.entity.Problem;
 import com.icoder.problem.management.entity.ProblemUserRelation;
 import com.icoder.problem.management.enums.OJudgeType;
 import com.icoder.problem.management.repository.ProblemRepository;
 import com.icoder.problem.management.repository.ProblemUserRelationRepository;
 import com.icoder.submission.management.dto.LanguageOptionResponse;
+import com.icoder.submission.management.dto.SubmissionCreateRequest;
 import com.icoder.submission.management.entity.BotAccount;
 import com.icoder.submission.management.entity.Submission;
 import com.icoder.submission.management.entity.UserJudgeSession;
@@ -23,8 +30,10 @@ import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.options.Cookie;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -40,6 +49,9 @@ public class SubmissionUtils {
     private final ProblemRepository problemRepository;
     private final UserRepository userRepository;
     private final UserJudgeSessionRepository sessionRepository;
+    private final ContestRepository contestRepository;
+    private final ContestUserRelationRepository contestUserRelationRepository;
+    private final ContestProblemRelationRepository contestProblemRelationRepository;
 
     public void handleFailure(Long id) {
         submissionRepository.findById(id).ifPresent(s -> {
@@ -168,6 +180,31 @@ public class SubmissionUtils {
 
     public boolean isFinalVerdict(SubmissionVerdict v) {
         return v != SubmissionVerdict.IN_QUEUE && v != SubmissionVerdict.PENDING && v != SubmissionVerdict.RUNNING;
+    }
+
+    public Contest validateSubmissionWithinContest(SubmissionCreateRequest request, User currentUser, Problem problem) {
+        if (request.getContestId() != null) {
+            Contest contest = contestRepository.findById(request.getContestId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Contest not found"));
+
+            boolean isParticipant = contestUserRelationRepository
+                    .findByContestIdAndUserId(contest.getId(), currentUser.getId())
+                    .isPresent();
+            if (!isParticipant) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not participating in this contest");
+            }
+
+            if (contest.getContestStatus() == ContestStatus.SCHEDULED)
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Contest is not yet started");
+            boolean isProblemInContest = contestProblemRelationRepository
+                    .existsByContestIdAndProblemId(contest.getId(), problem.getId());
+
+            if (!isProblemInContest) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Problem does not belong to this contest");
+            }
+            return contest;
+        }
+        return null;
     }
 
     @Transactional

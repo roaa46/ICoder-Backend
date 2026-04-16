@@ -1,5 +1,6 @@
 package com.icoder.submission.management.entity;
 
+import com.icoder.contest.management.entity.Contest;
 import com.icoder.problem.management.entity.Problem;
 import com.icoder.problem.management.enums.OJudgeType;
 import com.icoder.submission.management.enums.SubmissionStatus;
@@ -60,6 +61,10 @@ public class Submission {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bot_account_id")
     private BotAccount botAccount;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "contest_id")
+    private Contest contest;
 
     // contest relation
 

@@ -24,4 +24,6 @@ public interface ContestService {
     Set<ProblemSetResponse> viewProblemSet(Long contestId);
 
     Page<ContestResponse> viewAllContests(String contestTitle, String groupName, ContestStatus status, ContestType type, Pageable pageable);
+
+    void updateContestStatistics(Long submissionId);
 }

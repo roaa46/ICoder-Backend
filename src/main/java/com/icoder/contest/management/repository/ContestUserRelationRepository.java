@@ -10,4 +10,6 @@ import java.util.Optional;
 @Repository
 public interface ContestUserRelationRepository extends JpaRepository<ContestUserRelation, Long> {
     Optional<ContestUserRelation> findByContestIdAndRole(Long contestId, ContestRole role);
+
+    Optional<ContestUserRelation> findByContestIdAndUserId(Long contestLd, Long userId);
 }

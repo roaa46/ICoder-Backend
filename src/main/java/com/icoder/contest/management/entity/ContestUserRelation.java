@@ -28,4 +28,12 @@ public class ContestUserRelation {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private ContestRole role;
+
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "integer default 0")
+    private Integer score = 0;
+
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "integer default 0")
+    private Integer penalty = 0;
 }

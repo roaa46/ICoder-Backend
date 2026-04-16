@@ -1,5 +1,6 @@
 package com.icoder.submission.management.service.implementation;
 
+import com.icoder.contest.management.service.interfaces.ContestService;
 import com.icoder.problem.management.enums.OJudgeType;
 import com.icoder.submission.management.dto.SubmissionResult;
 import com.icoder.submission.management.entity.Submission;
@@ -28,6 +29,7 @@ public class ResultCheckerService {
     private final SubmissionUtils submissionUtils;
     private final SubmissionTaskPublisher submissionTaskPublisher;
     private final ApplicationEventPublisher eventPublisher;
+    private final ContestService contestService;
 
     @Transactional
     public void checkSingleSubmission(Long submissionId) {
@@ -66,6 +68,12 @@ public class ResultCheckerService {
                 eventPublisher.publishEvent(new SubmissionUpdatedEvent(submission.getId(), submission.getUser().getId(), submission.getVerdict()));
 
                 log.info("SUCCESS: Submission {} updated to {}", submissionId, result.verdict());
+
+                if (submissionUtils.isFinalVerdict(result.verdict())) {
+                    log.info("Submission {} is final, updating statistics...", submissionId);
+                    contestService.updateContestStatistics(submission.getId());
+                    log.info("Statistics updated for submission {}", submissionId);
+                }
 
                 if (result.verdict() == SubmissionVerdict.ACCEPTED) {
                     submissionUtils.updateRelationAsSolved(submission);

@@ -11,6 +11,7 @@ import com.icoder.contest.management.enums.ContestRole;
 import com.icoder.contest.management.enums.ContestStatus;
 import com.icoder.contest.management.enums.ContestType;
 import com.icoder.contest.management.mapper.ContestMapper;
+import com.icoder.contest.management.repository.ContestProblemRelationRepository;
 import com.icoder.contest.management.repository.ContestRepository;
 import com.icoder.contest.management.repository.ContestUserRelationRepository;
 import com.icoder.contest.management.service.interfaces.ContestService;
@@ -21,6 +22,9 @@ import com.icoder.core.specification.SpecBuilder;
 import com.icoder.core.utils.SecurityUtils;
 import com.icoder.group.management.entity.Group;
 import com.icoder.group.management.repository.GroupRepository;
+import com.icoder.submission.management.entity.Submission;
+import com.icoder.submission.management.enums.SubmissionVerdict;
+import com.icoder.submission.management.repository.SubmissionRepository;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -47,6 +52,8 @@ public class ContestServiceImpl implements ContestService {
     private final ContestMapper contestMapper;
     private final UserRepository userRepository;
     private final ContestUserRelationRepository contestUserRelationRepository;
+    private final ContestProblemRelationRepository contestProblemRelationRepository;
+    private final SubmissionRepository submissionRepository;
 
     @Override
     @Transactional
@@ -220,5 +227,78 @@ public class ContestServiceImpl implements ContestService {
 
         return contestRepository.findAll(spec, pageable)
                 .map(contestMapper::toContestResponse);
+    }
+
+    @Transactional
+    @Override
+    public void updateContestStatistics(Long submissionId) {
+        Submission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Submission not found"));
+
+        if (submission.getContest() == null) {
+            log.warn("Early Return: Submission {} has no contest attached. It was submitted as normal practice.", submissionId);
+            return;
+        }
+
+        Contest contest = submission.getContest();
+
+        if (contest.getContestStatus() != ContestStatus.RUNNING) {
+            log.warn("Early Return: Contest {} status is {}. Statistics are only updated during RUNNING state.", contest.getId(), contest.getContestStatus());
+            return;
+        }
+
+        log.info("Proceeding to update statistics for Contest: {}, Problem: {}, User: {}", contest.getId(), submission.getProblem().getId(), submission.getUser().getId());
+
+        ContestProblemRelation problemRelation = contestProblemRelationRepository
+                .findByContestIdAndProblemId(contest.getId(), submission.getProblem().getId())
+                .orElseThrow();
+
+        ContestUserRelation userRelation = contestUserRelationRepository
+                .findByContestIdAndUserId(contest.getId(), submission.getUser().getId())
+                .orElseThrow();
+
+        problemRelation.setAttemptedCount(problemRelation.getAttemptedCount() + 1);
+
+        if (submission.getVerdict() == SubmissionVerdict.ACCEPTED) {
+
+            boolean alreadySolved = submissionRepository.existsByUserIdAndContestIdAndProblemIdAndVerdictAndIdNot(
+                    submission.getUser().getId(),
+                    contest.getId(),
+                    submission.getProblem().getId(),
+                    SubmissionVerdict.ACCEPTED,
+                    submission.getId()
+            );
+
+            if (!alreadySolved) {
+                problemRelation.setSolvedCount(problemRelation.getSolvedCount() + 1);
+
+                int weight = problemRelation.getProblemWeight() != null ? problemRelation.getProblemWeight() : 1;
+                int currentScore = userRelation.getScore() != null ? userRelation.getScore() : 0;
+                userRelation.setScore(currentScore + weight);
+
+                long minutesFromStart = Duration.between(contest.getBeginTime(), submission.getSubmittedAt()).toMinutes();
+
+                List<SubmissionVerdict> penaltyVerdicts = List.of(
+                        SubmissionVerdict.WRONG_ANSWER,
+                        SubmissionVerdict.RUNTIME_ERROR,
+                        SubmissionVerdict.TIME_LIMIT_EXCEEDED,
+                        SubmissionVerdict.MEMORY_LIMIT_EXCEEDED
+                );
+                int wrongSubmissionsCount = submissionRepository.countByUserIdAndContestIdAndProblemIdAndVerdictIn(
+                        submission.getUser().getId(),
+                        contest.getId(),
+                        submission.getProblem().getId(),
+                        penaltyVerdicts
+                );
+
+                int penaltyForThisProblem = (int) minutesFromStart + (wrongSubmissionsCount * 20);
+                int currentPenalty = userRelation.getPenalty() != null ? userRelation.getPenalty() : 0;
+                userRelation.setPenalty(currentPenalty + penaltyForThisProblem);
+                log.info("Penalty for user {}: {} minutes", submission.getUser().getId(), penaltyForThisProblem);
+            }
+        }
+
+        contestProblemRelationRepository.save(problemRelation);
+        contestUserRelationRepository.save(userRelation);
     }
 }

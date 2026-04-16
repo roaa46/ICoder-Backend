@@ -1,5 +1,6 @@
 package com.icoder.submission.management.service.implementation;
 
+import com.icoder.contest.management.entity.Contest;
 import com.icoder.core.exception.ResourceNotFoundException;
 import com.icoder.core.specification.SpecBuilder;
 import com.icoder.core.utils.SecurityUtils;
@@ -41,6 +42,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     private final SecurityUtils securityUtils;
     private final SubmissionUtils submissionUtils;
     private final SubmissionPersistenceService submissionPersistenceService;
+
 
     public List<LanguageOptionResponse> getLanguages(String onlineJudge) {
         OJudgeType oJudgeType = OJudgeType.fromString(onlineJudge);
@@ -129,6 +131,8 @@ public class SubmissionServiceImpl implements SubmissionService {
                         request.getProblemCode(), request.getOnlineJudge())
                 .orElseThrow(() -> new ResourceNotFoundException("Problem not found"));
 
+        Contest contest = submissionUtils.validateSubmissionWithinContest(request, currentUser, problem);
+
         Submission submission = Submission.builder()
                 .submissionCode(request.getCode())
                 .language(request.getLanguage())
@@ -138,10 +142,12 @@ public class SubmissionServiceImpl implements SubmissionService {
                 .status(SubmissionStatus.CREATED)
                 .verdict(SubmissionVerdict.PENDING)
                 .opened(request.isOpened())
+                .contest(contest)
                 .build();
 
         submission = submissionRepository.save(submission);
         log.info("Submission created with ID: {}", submission.getId());
+
         submissionUtils.updateUserProblemRelation(currentUser, problem);
 
         final Long submissionId = submission.getId();
