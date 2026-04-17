@@ -22,7 +22,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -101,11 +100,12 @@ public class SubmissionServiceImpl implements SubmissionService {
 
     @Override
     @Transactional
-    public boolean updateSubmissionOpen(Long submissionId, Authentication authentication) {
+    public boolean updateSubmissionOpen(Long submissionId) {
+        User currentUser = securityUtils.getCurrentUser();
+        log.info("Received request to update submission {} opened status", submissionId);
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Submission not found"));
 
-        User currentUser = securityUtils.getCurrentUser();
         if (!submission.getUser().getId().equals(currentUser.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only update your own submissions");
         }
@@ -113,11 +113,6 @@ public class SubmissionServiceImpl implements SubmissionService {
         submission.setOpened(!submission.isOpened());
         submissionRepository.save(submission);
         return submission.isOpened();
-    }
-
-    @Override
-    public Integer getSolvedCount(String problemCode, OJudgeType onlineJudgeType) {
-        return submissionRepository.getSolvedCount(problemCode, onlineJudgeType);
     }
 
     @Override

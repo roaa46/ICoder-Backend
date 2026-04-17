@@ -5,7 +5,6 @@ import com.icoder.submission.management.dto.*;
 import com.icoder.submission.management.entity.Submission;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
 
 import java.util.List;
 
@@ -18,9 +17,7 @@ public interface SubmissionService {
 
     SubmissionResponse save(Submission submission);
 
-    boolean updateSubmissionOpen(Long submissionId, Authentication authentication);
-
-    Integer getSolvedCount(String problemCode, com.icoder.problem.management.enums.OJudgeType onlineJudgeType);
+    boolean updateSubmissionOpen(Long submissionId);
 
     SubmissionCreateResponse submit(SubmissionCreateRequest request);
 

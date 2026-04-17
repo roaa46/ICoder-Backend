@@ -79,7 +79,8 @@ public class SubmissionController {
 
     @GetMapping("/session/{judgeType}")
     @Operation(summary = "Get user session by judge type", description = "get ")
-    @PreAuthorize("isAuthenticated()")public ResponseEntity<SessionSubmissionResponse> getSession(@PathVariable String judgeType) {
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<SessionSubmissionResponse> getSession(@PathVariable String judgeType) {
         return new ResponseEntity<>(submissionService.getSession(judgeType), HttpStatus.OK);
     }
 
@@ -89,5 +90,11 @@ public class SubmissionController {
     public ResponseEntity deleteSession(@PathVariable Long id) {
         submissionService.deleteSession(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PatchMapping("/{submissionId}/toogle-openness}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Boolean> toggleOpenness(@PathVariable @RequestParam Long submissionId) {
+        return new ResponseEntity<>(submissionService.updateSubmissionOpen(submissionId), HttpStatus.NO_CONTENT);
     }
 }
