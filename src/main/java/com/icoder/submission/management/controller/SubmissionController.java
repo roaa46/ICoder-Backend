@@ -20,7 +20,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/submissions")
 @RequiredArgsConstructor
-@Tag(name = "Submission V1", description = "The endpoints related to submission operations (v2)")
+@Tag(name = "submission-controller")
 public class SubmissionController {
     private final SubmissionService submissionService;
 
@@ -92,9 +92,9 @@ public class SubmissionController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @PatchMapping("/{submissionId}/toogle-openness}")
+    @PatchMapping("/{submissionId}/toogle-openness")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Boolean> toggleOpenness(@PathVariable @RequestParam Long submissionId) {
-        return new ResponseEntity<>(submissionService.updateSubmissionOpen(submissionId), HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(submissionService.updateSubmissionOpen(submissionId), HttpStatus.OK);
     }
 }

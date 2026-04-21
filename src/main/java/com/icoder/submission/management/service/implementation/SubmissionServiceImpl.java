@@ -1,5 +1,6 @@
 package com.icoder.submission.management.service.implementation;
 
+import com.icoder.activity.management.service.interfaces.ActivityLogService;
 import com.icoder.contest.management.entity.Contest;
 import com.icoder.core.exception.ResourceNotFoundException;
 import com.icoder.core.specification.SpecBuilder;
@@ -16,6 +17,10 @@ import com.icoder.submission.management.repository.SubmissionRepository;
 import com.icoder.submission.management.service.interfaces.SubmissionService;
 import com.icoder.submission.management.utils.SubmissionUtils;
 import com.icoder.user.management.entity.User;
+import com.icoder.user.management.repository.UserRepository;
+import java.sql.Date;
+import java.time.Instant;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -27,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.server.ResponseStatusException;
-
 import java.util.List;
 
 @Service
@@ -41,7 +45,8 @@ public class SubmissionServiceImpl implements SubmissionService {
     private final SecurityUtils securityUtils;
     private final SubmissionUtils submissionUtils;
     private final SubmissionPersistenceService submissionPersistenceService;
-
+    private final UserRepository userRepository;
+    private final ActivityLogService activityLogService;
 
     public List<LanguageOptionResponse> getLanguages(String onlineJudge) {
         OJudgeType oJudgeType = OJudgeType.fromString(onlineJudge);
@@ -145,11 +150,13 @@ public class SubmissionServiceImpl implements SubmissionService {
 
         submissionUtils.updateUserProblemRelation(currentUser, problem);
 
+        activityLogService.logSubmission(currentUser, submission.getId(), submission.getVerdict());
+
         final Long submissionId = submission.getId();
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                log.info("Transaction committed successfully. Starting processor for ID: {}", submissionId);
+                log.info("Transaction committed successfully. Starting processor for submission ID: {}", submissionId);
                 submissionProcessor.process(submissionId, request);
             }
         });
@@ -184,5 +191,15 @@ public class SubmissionServiceImpl implements SubmissionService {
     public SessionSubmissionResponse getSession(String judgeType) {
         User user = securityUtils.getCurrentUser();
         return submissionPersistenceService.getUserSession(user, OJudgeType.fromString(judgeType));
+    }
+
+    @Override
+    public List<Date> getDistinctAcceptedDates(Long userId) {
+        return List.of();
+    }
+
+    @Override
+    public Optional<Instant> getLastAcceptedDate(Long userId) {
+        return Optional.empty();
     }
 }
