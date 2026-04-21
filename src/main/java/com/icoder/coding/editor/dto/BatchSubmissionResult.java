@@ -1,4 +1,4 @@
-package com.icoder.user.management.dto.user;
+package com.icoder.coding.editor.dto;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -7,11 +7,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class PictureUrlResponse {
-    private String pictureUrl;
+public class BatchSubmissionResult {
+    private List<SubmissionResult> submissions;
 }
