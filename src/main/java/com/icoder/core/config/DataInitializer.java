@@ -41,7 +41,8 @@ public class DataInitializer {
             List<RegisterRequest> usersToCreate = List.of(
                     createRequest("roaazz", "roaa mohamed", "roaaamohamed66@gmail.com"),
                     createRequest("saam_03", "sam", "samshx404@gmail.com"),
-                    createRequest("roaa", "roaa2", "roaamohamedd60@gmail.com")
+                    createRequest("roaa", "roaa2", "roaamohamedd60@gmail.com"),
+                    createRequest("saif","Saif wael","sw1132000@gmail.com")
             );
 
             usersToCreate.forEach(this::saveUserIfNotExists);

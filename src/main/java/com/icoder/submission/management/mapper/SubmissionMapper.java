@@ -42,6 +42,7 @@ public interface SubmissionMapper {
     @Mapping(target = "isOpen", source = "submission.opened")
     SubmissionPageResponse toSubmissionPageResponse(Submission submission, String problemCode, String userHandle, Long userId);
 
+
     @Named("integerToString")
     default String integerToString(Integer value) {
         return value != null ? value.toString() : null;

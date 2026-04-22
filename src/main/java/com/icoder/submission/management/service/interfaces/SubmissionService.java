@@ -3,6 +3,9 @@ package com.icoder.submission.management.service.interfaces;
 
 import com.icoder.submission.management.dto.*;
 import com.icoder.submission.management.entity.Submission;
+import java.sql.Date;
+import java.time.Instant;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -28,4 +31,8 @@ public interface SubmissionService {
     void deleteSession(Long id);
 
     SessionSubmissionResponse getSession(String judgeType);
+
+    List<Date> getDistinctAcceptedDates(Long userId);
+
+    Optional<Instant> getLastAcceptedDate(Long userId);
 }
