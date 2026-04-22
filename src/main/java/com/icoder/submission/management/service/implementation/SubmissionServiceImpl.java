@@ -80,6 +80,7 @@ public class SubmissionServiceImpl implements SubmissionService {
                 .with("user.handle", ":", userHandle)
                 .with("language", ":", language)
                 .build();
+        if (spec == null) spec = Specification.where(null);
 
         Page<Submission> submissions = submissionRepository.findAll(spec, pageable);
         return submissions.map(submission -> submissionMapper.toSubmissionPageResponse(

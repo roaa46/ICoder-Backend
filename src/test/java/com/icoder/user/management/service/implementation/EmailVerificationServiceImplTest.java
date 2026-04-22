@@ -1,7 +1,6 @@
 package com.icoder.user.management.service.implementation;
 
 import com.icoder.core.exception.ApiException;
-import com.icoder.core.security.CustomUserDetails;
 import com.icoder.core.service.interfaces.MailSenderService;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.enums.TokenType;
@@ -9,6 +8,7 @@ import com.icoder.user.management.repository.UserRepository;
 import com.icoder.user.management.service.interfaces.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -21,8 +21,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -41,96 +40,215 @@ class EmailVerificationServiceImplTest {
     @InjectMocks
     private EmailVerificationServiceImpl emailVerificationService;
 
-    private User testUser;
+    private User user;
 
     @BeforeEach
     void setUp() {
-        String FRONTEND_URL = "http://localhost:3000";
-        ReflectionTestUtils.setField(emailVerificationService, "frontendUrl", FRONTEND_URL);
-
-        testUser = new User();
-        testUser.setId(1L);
-        testUser.setEmail("dev@example.com");
-        testUser.setNickname("JavaDev");
-        testUser.setHandle("jdev");
-        testUser.setVerified(false);
-    }
-
-    @Test
-    @DisplayName("Should send verification email successfully when no cooldown exists")
-    void sendVerificationEmail_Success() {
-        // Arrange
-        String mockToken = "mock-jwt-token";
-        when(jwtService.generateTokenWithCustomExpiration(anyMap(), any(CustomUserDetails.class), anyLong()))
-                .thenReturn(mockToken);
-
-        // Act
-        emailVerificationService.sendVerificationEmail(testUser);
-
-        // Assert
-        verify(mailSenderService).sendSimpleEmail(
-                eq("dev@example.com"),
-                argThat(body -> body.contains(mockToken) && body.contains("verify your email"))
+        ReflectionTestUtils.setField(
+                emailVerificationService,
+                "frontendUrl",
+                "http://localhost:3000"
         );
 
-        verify(userRepository).save(testUser);
-        assertThat(testUser.getLastVerificationEmailSentAt()).isNotNull();
+        user = new User();
+        user.setId(1L);
+        user.setHandle("testHandle");
+        user.setEmail("test@example.com");
+        user.setNickname("Test");
+        user.setPassword("hashedPassword");
+        user.setVerified(true);
+        user.setLastVerificationEmailSentAt(null);
     }
 
-    @Test
-    @DisplayName("Should throw ApiException when cooldown period is active")
-    void sendVerificationEmail_CooldownActive() {
-        // Arrange
-        testUser.setLastVerificationEmailSentAt(Instant.now().minus(2, ChronoUnit.MINUTES));
+    @Nested
+    @DisplayName("sendVerificationEmail()")
+    class SendVerificationEmailTests {
 
-        // Act & Assert
-        assertThatThrownBy(() -> emailVerificationService.sendVerificationEmail(testUser))
-                .isInstanceOf(ApiException.class)
-                .hasMessageContaining("Please wait");
+        @Test
+        @DisplayName("should send verification email and update timestamp")
+        void sendVerificationEmail_shouldSendEmailAndUpdateTimestamp() {
+            when(jwtService.generateTokenWithCustomExpiration(anyMap(), any(), eq(15 * 60 * 1000L)))
+                    .thenReturn("verification-token");
 
-        verifyNoInteractions(mailSenderService);
-        verify(userRepository, never()).save(any());
+            emailVerificationService.sendVerificationEmail(user);
+
+            verify(jwtService).generateTokenWithCustomExpiration(anyMap(), any(), eq(15 * 60 * 1000L));
+
+            ArgumentCaptor<String> recipientCaptor = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
+
+            verify(mailSenderService).sendSimpleEmail(recipientCaptor.capture(), bodyCaptor.capture());
+            verify(userRepository).save(user);
+
+            assertEquals("test@example.com", recipientCaptor.getValue());
+
+            String emailBody = bodyCaptor.getValue();
+            assertTrue(emailBody.contains("Hello Test"));
+            assertTrue(emailBody.contains("verify your email"));
+            assertTrue(emailBody.contains("http://localhost:3000/confirm-email?token=verification-token"));
+            assertTrue(emailBody.contains("15 minutes"));
+
+            assertNotNull(user.getLastVerificationEmailSentAt());
+        }
+
+        @Test
+        @DisplayName("should throw ApiException when verification email cooldown has not passed")
+        void sendVerificationEmail_shouldThrowApiException_whenCooldownNotPassed() {
+            user.setLastVerificationEmailSentAt(Instant.now().minus(2, ChronoUnit.MINUTES));
+
+            ApiException ex = assertThrows(
+                    ApiException.class,
+                    () -> emailVerificationService.sendVerificationEmail(user)
+            );
+
+            assertTrue(ex.getMessage().startsWith("Please wait"));
+            verifyNoInteractions(jwtService, mailSenderService);
+            verify(userRepository, never()).save(any());
+        }
     }
 
-    @Test
-    @DisplayName("Should send email update verification with custom claims")
-    @SuppressWarnings("unchecked")
-    void sendEmailUpdateVerificationEmail_Success() {
-        // Arrange
-        String newEmail = "new-office@example.com";
-        String mockToken = "update-token";
+    @Nested
+    @DisplayName("sendPasswordResetEmail()")
+    class SendPasswordResetEmailTests {
 
-        when(jwtService.generateTokenWithCustomExpiration(anyMap(), any(CustomUserDetails.class), anyLong()))
-                .thenReturn(mockToken);
+        @Test
+        @DisplayName("should send password reset email and update timestamp")
+        void sendPasswordResetEmail_shouldSendEmailAndUpdateTimestamp() {
+            when(jwtService.generateTokenWithCustomExpiration(anyMap(), any(), eq(5 * 60 * 1000L)))
+                    .thenReturn("reset-token");
 
-        // Act
-        emailVerificationService.sendEmailUpdateVerificationEmail(testUser, newEmail);
+            emailVerificationService.sendPasswordResetEmail(user);
 
-        // Assert
-        ArgumentCaptor<Map<String, Object>> claimsCaptor = ArgumentCaptor.forClass(Map.class);
-        verify(jwtService).generateTokenWithCustomExpiration(claimsCaptor.capture(), any(), anyLong());
+            verify(jwtService).generateTokenWithCustomExpiration(anyMap(), any(), eq(5 * 60 * 1000L));
 
-        assertThat(claimsCaptor.getValue()).containsEntry("newEmail", newEmail);
-        assertThat(claimsCaptor.getValue()).containsEntry("type", TokenType.EMAIL_UPDATE);
+            ArgumentCaptor<String> recipientCaptor = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
 
-        verify(mailSenderService).sendSimpleEmail(
-                eq(newEmail),
-                argThat(body -> body.contains("update the email address"))
-        );
+            verify(mailSenderService).sendSimpleEmail(recipientCaptor.capture(), bodyCaptor.capture());
+            verify(userRepository).save(user);
+
+            assertEquals(user.getEmail(), recipientCaptor.getValue());
+
+            String emailBody = bodyCaptor.getValue();
+            assertTrue(emailBody.contains("reset your password"));
+            assertTrue(emailBody.contains("http://localhost:3000/change-password?token=reset-token"));
+            assertTrue(emailBody.contains("5 minutes"));
+
+            assertNotNull(user.getLastVerificationEmailSentAt());
+        }
+
+        @Test
+        @DisplayName("should throw ApiException when password reset cooldown has not passed")
+        void sendPasswordResetEmail_shouldThrowApiException_whenCooldownNotPassed() {
+            user.setLastVerificationEmailSentAt(Instant.now().minus(1, ChronoUnit.MINUTES));
+
+            ApiException ex = assertThrows(
+                    ApiException.class,
+                    () -> emailVerificationService.sendPasswordResetEmail(user)
+            );
+
+            assertTrue(ex.getMessage().startsWith("Please wait"));
+            verifyNoInteractions(jwtService, mailSenderService);
+            verify(userRepository, never()).save(any());
+        }
     }
 
-    @Test
-    @DisplayName("Should propagate ApiException when mail sender service fails")
-    void sendEmail_WhenMailServiceThrows_ShouldPropagate() {
-        // Arrange
-        when(jwtService.generateTokenWithCustomExpiration(anyMap(), any(), anyLong())).thenReturn("token");
+    @Nested
+    @DisplayName("sendAccountDeletionEmail()")
+    class SendAccountDeletionEmailTests {
 
-        doThrow(new ApiException("Mail server error"))
-                .when(mailSenderService).sendSimpleEmail(anyString(), anyString());
+        @Test
+        @DisplayName("should send account deletion email and update timestamp")
+        void sendAccountDeletionEmail_shouldSendEmailAndUpdateTimestamp() {
+            when(jwtService.generateTokenWithCustomExpiration(anyMap(), any(), eq(10 * 60 * 1000L)))
+                    .thenReturn("deletion-token");
 
-        // Act & Assert
-        assertThatThrownBy(() -> emailVerificationService.sendPasswordResetEmail(testUser))
-                .isInstanceOf(ApiException.class)
-                .hasMessageContaining("Mail server error");
+            emailVerificationService.sendAccountDeletionEmail(user);
+
+            verify(jwtService).generateTokenWithCustomExpiration(anyMap(), any(), eq(10 * 60 * 1000L));
+
+            ArgumentCaptor<String> recipientCaptor = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
+
+            verify(mailSenderService).sendSimpleEmail(recipientCaptor.capture(), bodyCaptor.capture());
+            verify(userRepository).save(user);
+
+            assertEquals(user.getEmail(), recipientCaptor.getValue());
+
+            String emailBody = bodyCaptor.getValue();
+            assertTrue(emailBody.contains("confirm deletion of your account"));
+            assertTrue(emailBody.contains("http://localhost:3000/landing-page?token=deletion-token"));
+            assertTrue(emailBody.contains("10 minutes"));
+
+            assertNotNull(user.getLastVerificationEmailSentAt());
+        }
+
+        @Test
+        @DisplayName("should throw ApiException when account deletion cooldown has not passed")
+        void sendAccountDeletionEmail_shouldThrowApiException_whenCooldownNotPassed() {
+            user.setLastVerificationEmailSentAt(Instant.now().minus(5, ChronoUnit.MINUTES));
+
+            ApiException ex = assertThrows(
+                    ApiException.class,
+                    () -> emailVerificationService.sendAccountDeletionEmail(user)
+            );
+
+            assertTrue(ex.getMessage().startsWith("Please wait"));
+            verifyNoInteractions(jwtService, mailSenderService);
+            verify(userRepository, never()).save(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("sendEmailUpdateVerificationEmail()")
+    class SendEmailUpdateVerificationEmailTests {
+
+        @Test
+        @DisplayName("should send email update verification email to new email and update timestamp")
+        void sendEmailUpdateVerificationEmail_shouldSendEmailToNewEmailAndUpdateTimestamp() {
+            String newEmail = "new@example.com";
+
+            when(jwtService.generateTokenWithCustomExpiration(anyMap(), any(), eq(15 * 60 * 1000L)))
+                    .thenReturn("email-update-token");
+
+            emailVerificationService.sendEmailUpdateVerificationEmail(user, newEmail);
+
+            ArgumentCaptor<Map<String, Object>> claimsCaptor = ArgumentCaptor.forClass(Map.class);
+            verify(jwtService).generateTokenWithCustomExpiration(claimsCaptor.capture(), any(), eq(15 * 60 * 1000L));
+
+            Map<String, Object> claims = claimsCaptor.getValue();
+            assertEquals(newEmail, claims.get("newEmail"));
+            assertEquals(TokenType.EMAIL_UPDATE, claims.get("type"));
+
+            ArgumentCaptor<String> recipientCaptor = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
+
+            verify(mailSenderService).sendSimpleEmail(recipientCaptor.capture(), bodyCaptor.capture());
+            verify(userRepository).save(user);
+
+            assertEquals(newEmail, recipientCaptor.getValue());
+
+            String emailBody = bodyCaptor.getValue();
+            assertTrue(emailBody.contains("update the email address of your account"));
+            assertTrue(emailBody.contains("http://localhost:3000/profile?token=email-update-token"));
+            assertTrue(emailBody.contains("15 minutes"));
+
+            assertNotNull(user.getLastVerificationEmailSentAt());
+        }
+
+        @Test
+        @DisplayName("should throw ApiException when email update cooldown has not passed")
+        void sendEmailUpdateVerificationEmail_shouldThrowApiException_whenCooldownNotPassed() {
+            user.setLastVerificationEmailSentAt(Instant.now().minus(2, ChronoUnit.MINUTES));
+
+            ApiException ex = assertThrows(
+                    ApiException.class,
+                    () -> emailVerificationService.sendEmailUpdateVerificationEmail(user, "new@example.com")
+            );
+
+            assertTrue(ex.getMessage().startsWith("Please wait"));
+            verifyNoInteractions(jwtService, mailSenderService);
+            verify(userRepository, never()).save(any());
+        }
     }
 }

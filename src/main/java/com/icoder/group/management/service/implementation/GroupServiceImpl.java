@@ -58,10 +58,10 @@ public class GroupServiceImpl implements GroupService {
     private final ImageService imageService;
     private final ApplicationEventPublisher eventPublisher;
     private final InvitationService invitationService;
-    @Value("${group.picture.folder}")
-    private String groupPictureFolder;
     private final ContestRepository contestRepository;
     private final ContestMapper contestMapper;
+    @Value("${group.picture.folder}")
+    private String groupPictureFolder;
 
     @Override
     public GroupResponse getGroupById(Long groupId) {
@@ -323,6 +323,7 @@ public class GroupServiceImpl implements GroupService {
                 .with("group.id", ":", groupId)
 
                 .build();
+        if (spec == null) spec = Specification.where(null);
 
         return contestRepository.findAll(spec, pageable)
                 .map(contestMapper::toGroupContestDto);
