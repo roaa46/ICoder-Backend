@@ -1,7 +1,6 @@
 package com.icoder.activity.management.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.AllArgsConstructor;
@@ -9,19 +8,19 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@NoArgsConstructor
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class StreakResponse {
+public class ActivityGridResponse {
+    private LocalDate date;
+
     @JsonFormat(shape = JsonFormat.Shape.STRING)
-    private int currentStreak;
+    private long acceptedCount;
+
     @JsonFormat(shape = JsonFormat.Shape.STRING)
-    private int maxStreak;
-    private Instant lastAcceptedAt;
-    private String todayUtc;
+    private long attemptedCount;
 }

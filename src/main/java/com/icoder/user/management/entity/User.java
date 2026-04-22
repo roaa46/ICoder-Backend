@@ -1,5 +1,6 @@
 package com.icoder.user.management.entity;
 
+import com.icoder.activity.management.entity.ActivityLog;
 import com.icoder.coding.editor.entity.CodeTemplate;
 import com.icoder.group.management.entity.UserGroupRole;
 import com.icoder.problem.management.entity.ProblemUserRelation;
@@ -68,5 +69,11 @@ public class User {
             orphanRemoval = true,
             fetch = FetchType.LAZY)
     private Set<CodeTemplate> templates = new HashSet<>();
+
+    @OneToMany(mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
+    private List<ActivityLog> activityLogs = new ArrayList<>();
 }
 

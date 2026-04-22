@@ -2,6 +2,8 @@ package com.icoder.activity.management.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.icoder.activity.management.enums.ActivityType;
 import com.icoder.core.utils.LowercaseEnumSerializer;
@@ -18,8 +20,8 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class ActivityLogResponse {
-
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long id;
 
@@ -35,7 +37,5 @@ public class ActivityLogResponse {
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long entityId;
 
-    //    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     private Instant createdAt;
-
 }

@@ -1,49 +1,26 @@
 package com.icoder.activity.management.service.implementation;
 
 import com.icoder.activity.management.dto.StreakResponse;
+import com.icoder.activity.management.repository.ActivityLogRepository;
 import com.icoder.activity.management.service.interfaces.StreakService;
 import com.icoder.core.utils.SecurityUtils;
-import com.icoder.submission.management.service.interfaces.SubmissionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Date;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
-import java.util.HashSet;
+import java.time.ZoneId;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class StreakServiceImpl implements StreakService {
-
-    private final SubmissionService submissionService;
+    private final ActivityLogRepository activityLogRepository;
     private final SecurityUtils securityUtils;
 
-    @Override
-    @Transactional(readOnly = true)
-    public StreakResponse getMyStreak() {
-        Long userId = securityUtils.getCurrentUserId();
-        List<Date> sqlDates = submissionService.getDistinctAcceptedDates(userId);
-        Set<LocalDate> acceptedDays = new HashSet<>();
-        for (Date d : sqlDates) {
-            acceptedDays.add(d.toLocalDate());
-        }
-        LocalDate todayUtc = LocalDate.now(ZoneOffset.UTC);
-        int current = computeCurrentStreak(acceptedDays, todayUtc);
-        int longest = computeLongestStreak(acceptedDays);
-        Optional<Instant> lastAccepted = submissionService.getLastAcceptedDate(userId);
-        return StreakResponse.builder()
-                .currentStreakDays(current)
-                .longestStreakDays(longest)
-                .lastAcceptedAt(lastAccepted.orElse(null))
-                .todayUtc(todayUtc.toString())
-                .build();
-    }
     static int computeCurrentStreak(Set<LocalDate> acceptedDays, LocalDate todayUtc) {
         int streak = 0;
         LocalDate d = todayUtc;
@@ -54,7 +31,7 @@ public class StreakServiceImpl implements StreakService {
         return streak;
     }
 
-    static int computeLongestStreak(Set<LocalDate> acceptedDays) {
+    static int computeMaxStreak(Set<LocalDate> acceptedDays) {
         if (acceptedDays.isEmpty()) {
             return 0;
         }
@@ -70,5 +47,27 @@ public class StreakServiceImpl implements StreakService {
             longest = Math.max(longest, run);
         }
         return longest;
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public StreakResponse getUserStreak(String timezone) {
+        Long userId = securityUtils.getCurrentUserId();
+        ZoneId zoneId = ZoneId.of(timezone);
+        LocalDate today = LocalDate.now(zoneId);
+
+        List<Instant> activityInstants = activityLogRepository.findAllActivityInstantsByUserId(userId);
+
+        Set<LocalDate> activityDates = activityInstants.stream()
+                .map(instant -> instant.atZone(zoneId).toLocalDate())
+                .collect(Collectors.toSet());
+
+        int currentStreak = computeCurrentStreak(activityDates, today);
+        int maxStreak = computeMaxStreak(activityDates);
+
+        return StreakResponse.builder()
+                .currentStreak(currentStreak)
+                .maxStreak(maxStreak)
+                .build();
     }
 }
