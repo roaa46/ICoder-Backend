@@ -1,12 +1,10 @@
 package com.icoder.contest.management.controller;
 
-import com.icoder.contest.management.dto.ContestDetailsResponse;
-import com.icoder.contest.management.dto.ContestResponse;
-import com.icoder.contest.management.dto.CreateContestRequest;
-import com.icoder.contest.management.dto.ProblemSetResponse;
+import com.icoder.contest.management.dto.*;
 import com.icoder.contest.management.enums.ContestStatus;
 import com.icoder.contest.management.enums.ContestType;
 import com.icoder.contest.management.service.interfaces.ContestService;
+import com.icoder.contest.management.service.interfaces.LeaderboardService;
 import com.icoder.core.dto.MessageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,10 +12,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.SortDefault;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.util.List;
 import java.util.Set;
 
 @RestController
@@ -25,6 +26,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class ContestController {
     private final ContestService contestService;
+    private final LeaderboardService leaderboardService;
 
     @PostMapping
     @PreAuthorize(value = "isAuthenticated()")
@@ -66,5 +68,15 @@ public class ContestController {
             @RequestParam(required = false) ContestType type,
             @SortDefault(sort = "beginTime", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(contestService.viewAllContests(title, groupName, status, type, pageable));
+    }
+
+    @GetMapping("{contestId}/leaderboard")
+    public ResponseEntity<List<LeaderboardRowResponse>> getLeaderboard(@PathVariable Long contestId) {
+        return ResponseEntity.ok(leaderboardService.getLeaderboard(contestId));
+    }
+
+    @GetMapping(value = "{contestId}/leaderboard/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamLeaderboard(@PathVariable Long contestId) {
+        return leaderboardService.subscribeToLeaderboard(contestId);
     }
 }

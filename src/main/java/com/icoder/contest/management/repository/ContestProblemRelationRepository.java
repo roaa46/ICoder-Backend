@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -17,4 +18,6 @@ public interface ContestProblemRelationRepository extends JpaRepository<ContestP
     boolean existsByContestIdAndProblemId(Long contestId, Long problemId);
 
     Optional<ContestProblemRelation> findByContestIdAndProblemId(Long contestId, Long problemId);
+
+    List<ContestProblemRelation> findByContestId(Long contestId);
 }

@@ -295,6 +295,12 @@ public class ContestServiceImpl implements ContestService {
                 int currentPenalty = userRelation.getPenalty() != null ? userRelation.getPenalty() : 0;
                 userRelation.setPenalty(currentPenalty + penaltyForThisProblem);
                 log.info("Penalty for user {}: {} minutes", submission.getUser().getId(), penaltyForThisProblem);
+
+                if (problemRelation.getFirstAcceptedSubmission() == null) {
+                    problemRelation.setFirstAcceptedSubmission(submission);
+                    log.info("First Accepted recorded for problem {} by user {}",
+                            problemRelation.getId(), submission.getUser().getId());
+                }
             }
         }
 

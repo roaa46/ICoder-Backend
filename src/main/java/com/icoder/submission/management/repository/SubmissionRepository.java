@@ -2,6 +2,7 @@ package com.icoder.submission.management.repository;
 
 import com.icoder.problem.management.entity.Problem;
 import com.icoder.problem.management.enums.OJudgeType;
+import com.icoder.submission.management.dto.SubmissionSummary;
 import com.icoder.submission.management.entity.Submission;
 import com.icoder.submission.management.enums.SubmissionVerdict;
 import com.icoder.user.management.entity.User;
@@ -62,4 +63,10 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long>, J
     boolean existsByUserIdAndContestIdAndProblemIdAndVerdictAndIdNot(Long user, Long contestId, Long problemId, SubmissionVerdict submissionVerdict, Long submissionId);
 
     int countByUserIdAndContestIdAndProblemIdAndVerdictIn(Long userId, Long contestId, Long problemId, List<SubmissionVerdict> penaltyVerdicts);
+
+    @Query("SELECT s.id as id, s.user.id as userId, s.problem.id as problemId, " +
+            "s.verdict as verdict, s.submittedAt as createdAt " +
+            "FROM Submission s WHERE s.contest.id = :contestId " +
+            "ORDER BY s.submittedAt ASC")
+    List<SubmissionSummary> findAllByContestIdOrderByCreatedAtAsc(@Param("contestId") Long contestId);
 }
