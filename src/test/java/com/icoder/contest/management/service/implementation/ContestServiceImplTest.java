@@ -20,6 +20,8 @@ import com.icoder.core.exception.ResourceNotFoundException;
 import com.icoder.core.utils.SecurityUtils;
 import com.icoder.group.management.entity.Group;
 import com.icoder.group.management.repository.GroupRepository;
+import com.icoder.problem.management.entity.Problem;
+import com.icoder.submission.management.repository.SubmissionRepository;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,10 +40,7 @@ import org.springframework.security.access.AccessDeniedException;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -70,6 +69,9 @@ class ContestServiceImplTest {
 
     @Mock
     private ContestUserRelationRepository contestUserRelationRepository;
+
+    @Mock
+    private SubmissionRepository submissionRepository;
 
     @InjectMocks
     private ContestServiceImpl contestService;
@@ -376,8 +378,19 @@ class ContestServiceImplTest {
     class ViewProblemSetTests {
 
         @Test
-        @DisplayName("should return full problem set for coordinator")
+        @DisplayName("should return full problem set for coordinator and set solved status")
         void viewProblemSet_shouldReturnFullProblemSet_forCoordinator() {
+            Problem problemA = new Problem();
+            problemA.setId(1L);
+            problemA.setProblemTitle("Problem A");
+
+            Problem problemB = new Problem();
+            problemB.setId(2L);
+            problemB.setProblemTitle("Problem B");
+
+            relation1.setProblem(problemA);
+            relation2.setProblem(problemB);
+
             ProblemSetResponse response1 = new ProblemSetResponse();
             response1.setTitle("Problem A");
             response1.setOrigin("Codeforces");
@@ -388,8 +401,13 @@ class ContestServiceImplTest {
 
             contest.setProblemRelation(new LinkedHashSet<>(Set.of(relation1, relation2)));
 
-            when(contestRepository.findById(100L)).thenReturn(Optional.of(contest));
+            // 2. Update the repository method mock
+            when(contestRepository.findByIdWithGroupAndProblems(100L)).thenReturn(Optional.of(contest));
             when(securityUtils.getCurrentUserId()).thenReturn(10L);
+
+            // 3. Mock the new submission repository call (Let's simulate that Problem A is solved)
+            when(submissionRepository.findSolvedProblemIdsByUserIdAndContestId(10L, 100L)).thenReturn(Set.of(1L));
+
             when(contestUtils.isUserContestCoordinator(10L, group)).thenReturn(true);
             when(contestUtils.checkIfContestRunning(contest)).thenReturn(true);
             when(contestMapper.toProblemSetResponse(relation1)).thenReturn(response1);
@@ -398,21 +416,32 @@ class ContestServiceImplTest {
             Set<ProblemSetResponse> result = contestService.viewProblemSet(100L);
 
             assertEquals(2, result.size());
-            assertTrue(result.stream().anyMatch(r -> "Problem A".equals(r.getTitle())));
-            assertTrue(result.stream().anyMatch(r -> "Problem B".equals(r.getTitle())));
+
+            // Assertions include the solved status
+            assertTrue(result.stream().anyMatch(r -> "Problem A".equals(r.getTitle()) && r.isSolved()));
+            assertTrue(result.stream().anyMatch(r -> "Problem B".equals(r.getTitle()) && !r.isSolved()));
         }
 
         @Test
-        @DisplayName("should hide title and origin when contest is running and user is not coordinator")
+        @DisplayName("should hide origin when contest is running and user is not coordinator")
         void viewProblemSet_shouldHideFields_whenRunningAndNotCoordinator() {
+            Problem problemA = new Problem();
+            problemA.setId(1L);
+            problemA.setProblemTitle("Problem A");
+            relation1.setProblem(problemA);
+
             ProblemSetResponse response = new ProblemSetResponse();
             response.setTitle("Problem A");
             response.setOrigin("Codeforces");
 
             contest.setProblemRelation(new LinkedHashSet<>(Set.of(relation1)));
 
-            when(contestRepository.findById(100L)).thenReturn(Optional.of(contest));
+            when(contestRepository.findByIdWithGroupAndProblems(100L)).thenReturn(Optional.of(contest));
             when(securityUtils.getCurrentUserId()).thenReturn(10L);
+
+            // Mock submission repository (User hasn't solved anything)
+            when(submissionRepository.findSolvedProblemIdsByUserIdAndContestId(10L, 100L)).thenReturn(Collections.emptySet());
+
             when(contestUtils.isUserContestCoordinator(10L, group)).thenReturn(false);
             when(contestUtils.checkIfContestRunning(contest)).thenReturn(true);
             when(contestMapper.toProblemSetResponse(relation1)).thenReturn(response);
@@ -422,7 +451,8 @@ class ContestServiceImplTest {
             assertEquals(1, result.size());
 
             ProblemSetResponse item = result.iterator().next();
-            assertNull(item.getTitle());
+
+            assertNotNull(item.getTitle());
             assertNull(item.getOrigin());
 
             verify(contestUtils).validateAccessWithRole(contest, false);

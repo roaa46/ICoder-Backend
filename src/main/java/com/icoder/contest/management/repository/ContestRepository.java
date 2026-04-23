@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ContestRepository extends JpaRepository<Contest, Long>, JpaSpecificationExecutor<Contest> {
@@ -35,4 +36,11 @@ public interface ContestRepository extends JpaRepository<Contest, Long>, JpaSpec
 
     @Query("SELECT c.id FROM Contest c WHERE c.contestStatus = 'RUNNING' AND c.endTime <= :now")
     List<Long> findIdsToEnd(@Param("now") Instant now);
+
+    @Query("SELECT c FROM Contest c " +
+            "LEFT JOIN FETCH c.group " +
+            "LEFT JOIN FETCH c.problemRelation pr " +
+            "LEFT JOIN FETCH pr.problem " +
+            "WHERE c.id = :contestId")
+    Optional<Contest> findByIdWithGroupAndProblems(@Param("contestId") Long contestId);
 }

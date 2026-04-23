@@ -190,10 +190,11 @@ public class ContestServiceImpl implements ContestService {
 
     @Override
     public Set<ProblemSetResponse> viewProblemSet(Long contestId) {
-        Contest contest = contestRepository.findById(contestId)
+        Contest contest = contestRepository.findByIdWithGroupAndProblems(contestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Contest not found with id: " + contestId));
 
         Long userId = securityUtils.getCurrentUserId();
+        Set<Long> solvedProblemIds = submissionRepository.findSolvedProblemIdsByUserIdAndContestId(userId, contestId);
         boolean isCoordinator = contestUtils.isUserContestCoordinator(userId, contest.getGroup());
         contestUtils.validateAccessWithRole(contest, isCoordinator);
 
@@ -202,10 +203,12 @@ public class ContestServiceImpl implements ContestService {
         return contest.getProblemRelation().stream()
                 .map(relation -> {
                     ProblemSetResponse response = contestMapper.toProblemSetResponse(relation);
+                    response.setSolved(solvedProblemIds.contains(relation.getProblem().getId()));
                     if (isContestRunning && !isCoordinator) {
-                        response.setTitle(null);
                         response.setOrigin(null);
                     }
+                    String title = relation.getProblem().getProblemTitle();
+                    response.setTitle(relation.getProblemAlias() != null && !relation.getProblemAlias().isEmpty() ? response.getProblemAlias() : title);
                     return response;
                 }).collect(Collectors.toSet());
     }

@@ -69,4 +69,12 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long>, J
             "FROM Submission s WHERE s.contest.id = :contestId " +
             "ORDER BY s.submittedAt ASC")
     List<SubmissionSummary> findAllByContestIdOrderByCreatedAtAsc(@Param("contestId") Long contestId);
+
+    @Query("SELECT s.problem.id FROM Submission s " +
+            "WHERE s.user.id = :userId " +
+            "AND s.contest.id = :contestId " +
+            "AND s.verdict = 'ACCEPTED'")
+    Set<Long> findSolvedProblemIdsByUserIdAndContestId(
+            @Param("userId") Long userId,
+            @Param("contestId") Long contestId);
 }

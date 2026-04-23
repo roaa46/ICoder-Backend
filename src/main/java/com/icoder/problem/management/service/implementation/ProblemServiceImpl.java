@@ -115,29 +115,34 @@ public class ProblemServiceImpl implements ProblemService {
     public Page<ProblemResponse> getAllProblems(String oj, String code, String title, Pageable pageable) {
         Long currentUserId = securityUtils.getCurrentUserId();
 
+        OJudgeType judgeType = (oj != null && !oj.trim().isEmpty()) ? OJudgeType.fromString(oj) : null;
+
         Specification<Problem> spec = new SpecBuilder<Problem>()
-                .with("onlineJudge", ":", OJudgeType.fromString(oj))
+                .with("onlineJudge", ":", judgeType)
                 .with("problemCode", ":", code)
                 .with("problemTitle", ":", title)
                 .build();
 
         Page<Problem> problemsPage = problemRepository.findAll(spec, pageable);
 
+        if (problemsPage.isEmpty()) {
+            return problemsPage.map(problem -> problemMapper.toResponseDTO(problem, null));
+        }
+
         List<Problem> problems = problemsPage.getContent();
         List<ProblemUserRelation> relations =
                 relationRepository.findByUserIdAndProblemIn(currentUserId, problems);
+
         Map<Long, ProblemUserRelation> solvedStatusMap = relations.stream()
                 .collect(Collectors.toMap(
                         relation -> relation.getProblem().getId(),
                         relation -> relation
                 ));
 
-        Page<ProblemResponse> responsePage = problemsPage.map(problem -> {
+        return problemsPage.map(problem -> {
             ProblemUserRelation relation = solvedStatusMap.get(problem.getId());
             return problemMapper.toResponseDTO(problem, relation);
         });
-
-        return responsePage;
     }
 
     /// get all attempted problems

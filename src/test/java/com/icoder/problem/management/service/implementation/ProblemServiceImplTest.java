@@ -422,12 +422,12 @@ class ProblemServiceImplTest {
 
             doReturn(problemPage)
                     .when(problemRepository)
-                    .findAll(any(Specification.class), any(Pageable.class));
+                    .findAll(nullable(Specification.class), any(Pageable.class));
 
             when(relationRepository.findByUserIdAndProblemIn(anyLong(), anyList()))
                     .thenReturn(List.of());
 
-            when(problemMapper.toResponseDTO(any(), any()))
+            when(problemMapper.toResponseDTO(any(), nullable(ProblemUserRelation.class)))
                     .thenReturn(problemResponse);
 
             Page<ProblemResponse> result = problemService.getAllProblems(null, null, null, pageable);
