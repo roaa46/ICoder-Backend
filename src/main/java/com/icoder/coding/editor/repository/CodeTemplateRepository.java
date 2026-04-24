@@ -3,6 +3,7 @@ package com.icoder.coding.editor.repository;
 import com.icoder.coding.editor.entity.CodeTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -12,8 +13,10 @@ import java.util.Optional;
 
 @Repository
 public interface CodeTemplateRepository extends JpaRepository<CodeTemplate, Long> {
+    @EntityGraph(attributePaths = "user")
     Optional<CodeTemplate> findByIdAndUserId(Long id, Long userId);
 
+    @EntityGraph(attributePaths = "user")
     Page<CodeTemplate> findAllByUserId(Long userId, Pageable pageable);
 
     boolean existsByUserIdAndLanguageIdAndEnabledTrue(Long userId, Integer languageId);
