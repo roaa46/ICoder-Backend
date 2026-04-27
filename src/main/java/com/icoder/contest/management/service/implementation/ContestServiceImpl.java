@@ -190,10 +190,11 @@ public class ContestServiceImpl implements ContestService {
 
     @Override
     public Set<ProblemSetResponse> viewProblemSet(Long contestId) {
-        Contest contest = contestRepository.findById(contestId)
+        Contest contest = contestRepository.findByIdWithGroupAndProblems(contestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Contest not found with id: " + contestId));
 
         Long userId = securityUtils.getCurrentUserId();
+        Set<Long> solvedProblemIds = submissionRepository.findSolvedProblemIdsByUserIdAndContestId(userId, contestId);
         boolean isCoordinator = contestUtils.isUserContestCoordinator(userId, contest.getGroup());
         contestUtils.validateAccessWithRole(contest, isCoordinator);
 
@@ -202,10 +203,12 @@ public class ContestServiceImpl implements ContestService {
         return contest.getProblemRelation().stream()
                 .map(relation -> {
                     ProblemSetResponse response = contestMapper.toProblemSetResponse(relation);
+                    response.setSolved(solvedProblemIds.contains(relation.getProblem().getId()));
                     if (isContestRunning && !isCoordinator) {
-                        response.setTitle(null);
                         response.setOrigin(null);
                     }
+                    String title = relation.getProblem().getProblemTitle();
+                    response.setTitle(relation.getProblemAlias() != null && !relation.getProblemAlias().isEmpty() ? response.getProblemAlias() : title);
                     return response;
                 }).collect(Collectors.toSet());
     }
@@ -224,6 +227,7 @@ public class ContestServiceImpl implements ContestService {
                 .with("contestType", ":", type)
 
                 .build();
+        if (spec == null) spec = Specification.where(null);
 
         return contestRepository.findAll(spec, pageable)
                 .map(contestMapper::toContestResponse);
@@ -295,6 +299,12 @@ public class ContestServiceImpl implements ContestService {
                 int currentPenalty = userRelation.getPenalty() != null ? userRelation.getPenalty() : 0;
                 userRelation.setPenalty(currentPenalty + penaltyForThisProblem);
                 log.info("Penalty for user {}: {} minutes", submission.getUser().getId(), penaltyForThisProblem);
+
+                if (problemRelation.getFirstAcceptedSubmission() == null) {
+                    problemRelation.setFirstAcceptedSubmission(submission);
+                    log.info("First Accepted recorded for problem {} by user {}",
+                            problemRelation.getId(), submission.getUser().getId());
+                }
             }
         }
 

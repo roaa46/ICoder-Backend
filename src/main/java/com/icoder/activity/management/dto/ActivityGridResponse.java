@@ -1,7 +1,6 @@
-package com.icoder.contest.management.dto;
+package com.icoder.activity.management.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.AllArgsConstructor;
@@ -9,23 +8,19 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class ProblemSetResponse {
+public class ActivityGridResponse {
+    private LocalDate date;
+
     @JsonFormat(shape = JsonFormat.Shape.STRING)
-    private Long id;
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private String problemAlias;
-    private int solvedCount;
-    private int attemptedCount;
-    private String title;
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private String origin;
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private long acceptedCount;
+
     @JsonFormat(shape = JsonFormat.Shape.STRING)
-    private Long problemId;
-    private boolean solved;
+    private long attemptedCount;
 }

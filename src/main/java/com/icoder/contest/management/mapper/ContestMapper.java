@@ -31,7 +31,6 @@ public interface ContestMapper {
     ContestDetailsResponse toContestDetailsDto(Contest contest);
 
     @Mapping(target = "id", source = "problem.id")
-    @Mapping(target = "title", source = "problem.problemTitle")
     @Mapping(target = "origin", source = "problem.problemLink")
     ProblemSetResponse toProblemSetResponse(ContestProblemRelation relation);
 

@@ -1,8 +1,8 @@
 package com.icoder.user.management.service.implementation;
 
-import com.icoder.user.management.enums.TokenType;
 import com.icoder.user.management.entity.Token;
 import com.icoder.user.management.entity.User;
+import com.icoder.user.management.enums.TokenType;
 import com.icoder.user.management.repository.TokenRepository;
 import com.icoder.user.management.service.interfaces.TokenService;
 import jakarta.servlet.http.Cookie;
@@ -41,10 +41,10 @@ public class TokenServiceImpl implements TokenService {
 
     @Transactional
     @Override
-    public void saveUserToken(User savedUser, String refreshToken) {
+    public void saveUserToken(User savedUser, String jwtToken) {
         Token token = Token.builder()
                 .user(savedUser)
-                .token(refreshToken)
+                .token(jwtToken)
                 .tokenType(TokenType.BEARER)
                 .isExpired(false)
                 .isRevoked(false)

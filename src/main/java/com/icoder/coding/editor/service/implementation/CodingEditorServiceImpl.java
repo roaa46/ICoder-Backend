@@ -22,7 +22,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -146,7 +145,7 @@ public class CodingEditorServiceImpl implements CodingEditorService {
                 .block();
     }
 
-        private SubmissionResult getRawResult(String token) {
+    private SubmissionResult getRawResult(String token) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/submissions/{token}")
                         .queryParam("base64_encoded", "true")
@@ -246,8 +245,7 @@ public class CodingEditorServiceImpl implements CodingEditorService {
     @Override
     public CodeTemplateResponse addTemplate(CodeTemplateRequest request) {
         Long userId = securityUtils.getCurrentUserId();
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("user not found"));
+        User user = userRepository.getReferenceById(userId);
 
         CodeTemplate template = new CodeTemplate();
         template.setTemplateName(request.getTemplateName());

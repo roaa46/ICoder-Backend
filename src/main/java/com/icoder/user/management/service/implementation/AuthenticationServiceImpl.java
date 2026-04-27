@@ -3,8 +3,8 @@ package com.icoder.user.management.service.implementation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icoder.core.dto.MessageResponse;
 import com.icoder.core.exception.ApiException;
-import com.icoder.core.utils.SecurityUtils;
 import com.icoder.core.security.CustomUserDetails;
+import com.icoder.core.utils.SecurityUtils;
 import com.icoder.core.utils.TokenHelper;
 import com.icoder.core.utils.ValidatePasswordChange;
 import com.icoder.user.management.dto.auth.*;
@@ -81,7 +81,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 new UsernamePasswordAuthenticationToken(request.getHandle(), request.getPassword())
         );
         User user = userRepository.findByHandle(request.getHandle())
-                .orElseThrow(() -> new UsernameNotFoundException("user not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         String jwtToken = jwtService.generateToken(new CustomUserDetails(
                 user.getId(),
                 user.getHandle(),
@@ -188,7 +188,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new ApiException("Verification link has expired");
         }
         validatePasswordChange.validatePasswordChange(request);
-        var result = tokenHelper.validateAndExtract(request.getToken());
+        TokenHelper.ValidatedTokenResult result = tokenHelper.validateAndExtract(request.getToken());
         result.user().setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(result.user());
         refreshSecurityContext(result.user());

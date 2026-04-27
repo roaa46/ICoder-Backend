@@ -4,5 +4,5 @@ import com.icoder.activity.management.dto.StreakResponse;
 
 public interface StreakService {
 
-    StreakResponse getMyStreak();
+    StreakResponse getUserStreak(String timezone);
 }

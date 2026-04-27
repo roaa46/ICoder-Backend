@@ -1,6 +1,7 @@
 package com.icoder.contest.management.entity;
 
 import com.icoder.problem.management.entity.Problem;
+import com.icoder.submission.management.entity.Submission;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -30,4 +31,8 @@ public class ContestProblemRelation {
 
     private int solvedCount = 0;
     private int attemptedCount = 0;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "first_accepted_submission_id")
+    private Submission firstAcceptedSubmission;
 }
