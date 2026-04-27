@@ -28,7 +28,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
-import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -253,7 +252,6 @@ public class CodingEditorServiceImpl implements CodingEditorService {
         template.setCode(request.getCode());
         template.setEnabled(false);
         template.setUser(user);
-        template.setCreatedAndUpdatedAt(Instant.now());
 
         templateRepository.save(template);
 
@@ -290,7 +288,11 @@ public class CodingEditorServiceImpl implements CodingEditorService {
         }
 
         templateRepository.save(template);
-        return mapper.toDTO(template);
+        
+        CodeTemplateResponse response = mapper.toDTO(template);
+        enhanceTemplateResponse(response, template.getLanguageId());
+
+        return response;
     }
 
     @Override
@@ -313,7 +315,7 @@ public class CodingEditorServiceImpl implements CodingEditorService {
     @Transactional(readOnly = true)
     public Page<CodeTemplateResponse> getTemplates(int page) {
         Long userId = securityUtils.getCurrentUserId();
-        Pageable pageable = PageRequest.of(page, 5, Sort.by("createdAndUpdatedAt").descending()); // 5 templates per page
+        Pageable pageable = PageRequest.of(page, 5, Sort.by("updatedAt").descending()); // 5 templates per page
 
         return templateRepository.findAllByUserId(userId, pageable)
                 .map(template -> {
@@ -321,6 +323,22 @@ public class CodingEditorServiceImpl implements CodingEditorService {
                     enhanceTemplateResponse(dto, template.getLanguageId());
                     return dto;
                 });
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CodeTemplateResponse getActiveTemplate(Integer languageId) {
+        Long userId = securityUtils.getCurrentUserId();
+
+        CodeTemplate template = templateRepository.findByUser_IdAndLanguageIdAndEnabledTrue(userId, languageId)
+                .orElseThrow(() -> new TemplateException("Template not found"));
+
+        CodeTemplateResponse response = mapper.toDTO(template);
+
+        response.setLanguageId(template.getLanguageId());
+        enhanceTemplateResponse(response, template.getLanguageId());
+
+        return response;
     }
 
     @Override
@@ -335,7 +353,6 @@ public class CodingEditorServiceImpl implements CodingEditorService {
         template.setTemplateName(request.getTemplateName());
         template.setCode(request.getCode());
         template.setLanguageId(request.getLanguageId());
-        template.setCreatedAndUpdatedAt(Instant.now());
 
         templateRepository.save(template);
 
