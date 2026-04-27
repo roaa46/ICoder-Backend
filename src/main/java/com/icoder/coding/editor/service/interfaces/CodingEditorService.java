@@ -24,8 +24,6 @@ public interface CodingEditorService {
 
     CodeTemplateResponse getTemplate(Long templateId);
 
-    CodeTemplateResponse getActiveTemplate(Integer languageId);
-
     Page<CodeTemplateResponse> getTemplates(int page);
 
     CodeTemplateResponse editTemplate(Long templateId, CodeTemplateRequest request);

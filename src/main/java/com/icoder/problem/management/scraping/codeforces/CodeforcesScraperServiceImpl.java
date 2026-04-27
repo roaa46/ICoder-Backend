@@ -5,7 +5,7 @@ import com.icoder.problem.management.dto.*;
 import com.icoder.problem.management.enums.FormatType;
 import com.icoder.problem.management.enums.OJudgeType;
 import com.icoder.problem.management.scraping.service.CleanWithJsoup;
-import com.icoder.problem.management.utils.ProblemUtils;
+import com.icoder.problem.management.scraping.service.JsoupConnect;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -20,12 +20,13 @@ import java.util.List;
 @Slf4j
 @Service
 public class CodeforcesScraperServiceImpl implements CodeforcesScraperService {
-    private final CleanWithJsoup cleanWithJsoup;
-    private final ProblemUtils problemUtils;
 
-    public CodeforcesScraperServiceImpl(CleanWithJsoup cleanWithJsoup, ProblemUtils problemUtils) {
+    private final JsoupConnect jsoupConnect;
+    private final CleanWithJsoup cleanWithJsoup;
+
+    public CodeforcesScraperServiceImpl(JsoupConnect jsoupConnect, CleanWithJsoup cleanWithJsoup) {
+        this.jsoupConnect = jsoupConnect;
         this.cleanWithJsoup = cleanWithJsoup;
-        this.problemUtils = problemUtils;
     }
 
     // ================= METADATA =================
@@ -33,7 +34,7 @@ public class CodeforcesScraperServiceImpl implements CodeforcesScraperService {
     public ProblemResponse scrapMetadata(String url) {
         try {
             log.info("Extract metadata of: [{}]", url);
-            Document doc = problemUtils.getDocument(url);
+            Document doc = jsoupConnect.connect(url);
 
             Element titleEl = doc.selectFirst(".problem-statement .title");
             if (titleEl == null) {
@@ -72,7 +73,7 @@ public class CodeforcesScraperServiceImpl implements CodeforcesScraperService {
     public ProblemStatementResponse scrapProblemStatement(String url) {
         try {
             log.info("Extract statement of: [{}]", url);
-            Document doc = problemUtils.getDocument(url);
+            Document doc = jsoupConnect.connect(url);
 
             Element root = doc.selectFirst(".problem-statement");
             if (root == null) {

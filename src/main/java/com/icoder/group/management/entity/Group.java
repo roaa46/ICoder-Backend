@@ -48,10 +48,8 @@ public class Group {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = true)
     private Long ownerId;
-    @Column(nullable = false, updatable = false)
-    private String ownerHandle;
 
     @Formula("(SELECT COUNT(*) FROM user_group_roles ugr WHERE ugr.group_id = id)")
     private Long groupMembersCount;

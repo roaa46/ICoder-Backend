@@ -19,8 +19,6 @@ public interface CodeTemplateRepository extends JpaRepository<CodeTemplate, Long
     @EntityGraph(attributePaths = "user")
     Page<CodeTemplate> findAllByUserId(Long userId, Pageable pageable);
 
-    Optional<CodeTemplate> findByUser_IdAndLanguageIdAndEnabledTrue(Long userId, Integer languageId);
-
     boolean existsByUserIdAndLanguageIdAndEnabledTrue(Long userId, Integer languageId);
 
     @Modifying

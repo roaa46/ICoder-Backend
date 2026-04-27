@@ -32,5 +32,4 @@ public class GroupResponse {
     private Long groupMembersCount;
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long ownerId;
-    private String ownerHandle;
 }
