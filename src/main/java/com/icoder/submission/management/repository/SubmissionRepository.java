@@ -62,4 +62,14 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long>, J
     boolean existsByUserIdAndContestIdAndProblemIdAndVerdictAndIdNot(Long user, Long contestId, Long problemId, SubmissionVerdict submissionVerdict, Long submissionId);
 
     int countByUserIdAndContestIdAndProblemIdAndVerdictIn(Long userId, Long contestId, Long problemId, List<SubmissionVerdict> penaltyVerdicts);
+
+    @Query("SELECT s FROM Submission s " +
+            "JOIN FETCH s.problem " +
+            "WHERE s.user.id = :userId " +
+            "AND s.verdict IS NOT NULL " +
+            "AND s.verdict <> com.icoder.submission.management.enums.SubmissionVerdict.PENDING " +
+            "AND s.verdict <> com.icoder.submission.management.enums.SubmissionVerdict.RUNNING " +
+            "AND s.verdict <> com.icoder.submission.management.enums.SubmissionVerdict.IN_QUEUE")
+    List<Submission> findCompletedSubmissionsByUserId(@Param("userId") Long userId);
+
 }
