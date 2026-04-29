@@ -1,10 +1,105 @@
+version: '3.8'
+
 services:
-  icoder:
+  # 1. PostgreSQL Database
+  icoder_db:
+    image: postgres:15-alpine
+    container_name: icoder_pg_sql
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: icoder_db
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - icoder-postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - icoder-net
+    restart: unless-stopped
+
+  # 2. pgAdmin
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: icoder_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@icoder.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    networks:
+      - icoder-net
+    depends_on:
+      - icoder_db
+    restart: unless-stopped
+
+  # 3. RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: icoder_rabbitmq
+    ports:
+      - "5672:5672"   # RabbitMQ broker port
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - icoder-rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - icoder-net
+    restart: unless-stopped
+
+  # 4. Redis
+  redis:
+    image: redis:alpine
+    container_name: icoder_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - icoder-redis-data:/data
+    networks:
+      - icoder-net
+    restart: unless-stopped
+
+  # 5. MailDev
+  mail-dev:
+    image: maildev/maildev
+    container_name: icoder_mail_dev
+    ports:
+      - "1080:1080"
+      - "1025:1025"
+    networks:
+      - icoder-net
+    restart: unless-stopped
+
+  # 6. ICoder Backend Service
+  icoder-backend:
     build: .
     container_name: icoder-backend-container
+    depends_on:
+      - icoder_db
+      - rabbitmq
+      - redis
     ports:
       - "9090:9090"
-    restart: unless-stopped
     volumes:
       - ./uploads:/app/uploads
       - ./env.properties:/app/env.properties
+    environment:
+      - DB_URL=jdbc:postgresql://icoder_db:5432/icoder_db
+      - RABBITMQ_HOST=rabbitmq
+      - REDIS_HOST=redis
+      - MAIL_HOST=mail-dev
+      - MAIL_PORT=1025
+    networks:
+      - icoder-net
+    restart: unless-stopped
+
+networks:
+  icoder-net:
+    driver: bridge
+
+volumes:
+  icoder-postgres-data:
+  icoder-rabbitmq-data:
+  icoder-redis-data:
