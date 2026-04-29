@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,6 +27,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
     private final TokenRepository tokenRepository;
+    private final RedisTemplate<String, String> redisTemplate;
 
     @Override
     protected void doFilterInternal(
@@ -48,7 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-/* ----- Helpers ----- */
+    /* ----- Helpers ----- */
 
     private boolean shouldSkipFilter(HttpServletRequest request) {
         String path = request.getServletPath();
@@ -88,10 +90,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isTokenValidInSystem(String token, UserDetails userDetails) {
-        return tokenRepository.findByToken(token)
+        String redisKey = "jwt:token:" + token;
+
+        String cachedStatus = redisTemplate.opsForValue().get(redisKey);
+
+        if ("REVOKED".equals(cachedStatus)) {
+            return false;
+        } else if ("VALID".equals(cachedStatus)) {
+            return jwtService.isTokenValid(token, userDetails);
+        }
+
+        boolean isDbValid = tokenRepository.findByToken(token)
                 .map(t -> !t.isExpired() && !t.isRevoked())
-                .orElse(false)
-                && jwtService.isTokenValid(token, userDetails);
+                .orElse(false);
+
+        if (isDbValid) {
+            java.time.Duration ttl = jwtService.getRemainingTime(token);
+
+            if (!ttl.isZero()) {
+                redisTemplate.opsForValue().set(redisKey, "VALID", ttl);
+            } else {
+                isDbValid = false;
+            }
+        }
+
+        return isDbValid && jwtService.isTokenValid(token, userDetails);
     }
 
     private void setSecurityContext(UserDetails userDetails, HttpServletRequest request) {

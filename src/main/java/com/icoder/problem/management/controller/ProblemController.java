@@ -7,6 +7,7 @@ import com.icoder.problem.management.service.interfaces.ProblemService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -37,8 +38,9 @@ public class ProblemController {
 
     @GetMapping("/recrawl/{judge_type}/{problem_code}")
     @Operation(summary = "Fetch a specific problem", description = "Fetches a specific problem statement by its online judge and problem code (requires login)")
+    @CachePut(value = "problem_statement", key = "#p0 + ':' + #p1")
     public ResponseEntity<ProblemStatementResponse> fetchProblem(@PathVariable("judge_type") String source,
-                                                               @PathVariable("problem_code") String code) {
+                                                                 @PathVariable("problem_code") String code) {
         return ResponseEntity.ok(problemService.getProblemStatement(source, code));
     }
 

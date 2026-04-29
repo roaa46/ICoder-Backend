@@ -23,6 +23,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.CacheManager;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -46,6 +47,7 @@ public class UserServiceImpl implements UserService {
     private final Cloudinary cloudinary;
     private final SecurityUtils securityUtils;
     private final ImageService imageService;
+    private final CacheManager cacheManager;
     @Value("${profile.picture.folder}")
     private String profilePictureFolder;
 
@@ -114,6 +116,11 @@ public class UserServiceImpl implements UserService {
         }
 
         userRepository.save(user);
+
+        var cache = cacheManager.getCache("user_profile");
+        if (cache != null) {
+            cache.evict(user.getHandle());
+        }
         return new MessageResponse("Your data has been successfully changed");
     }
 
