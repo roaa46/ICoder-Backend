@@ -19,7 +19,8 @@ import lombok.Setter;
         @UniqueConstraint(columnNames = {"user_id", "group_id"})
 })
 public class UserGroupRole extends BaseEntity<Long> {
-    @EmbeddedId
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_group_roles_seq")
     Long id;
 
     @JoinColumn(name = "user_id", nullable = false)
