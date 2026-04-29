@@ -300,6 +300,7 @@ public class GroupServiceImpl implements GroupService {
         String pictureUrl = group.getPictureUrl();
 
         if (pictureUrl == null || pictureUrl.isBlank()) {
+            log.warn("Group {} does not have a profile picture", groupId);
             throw new ApiException("Group does not have a profile picture");
         }
 
