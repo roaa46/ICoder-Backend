@@ -7,16 +7,19 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
+import java.time.Duration;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+@Slf4j
 @Service
 public class JwtServiceImpl implements JwtService {
     @Value("${jwt.secret}")
@@ -91,6 +94,19 @@ public class JwtServiceImpl implements JwtService {
     @Override
     public boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
+    }
+
+    @Override
+    public Duration getRemainingTime(String token) {
+        try {
+            Date expiration = extractClaim(token, Claims::getExpiration);
+            long remainingMillis = expiration.getTime() - System.currentTimeMillis();
+
+            return remainingMillis > 0 ? Duration.ofMillis(remainingMillis) : Duration.ZERO;
+        } catch (Exception e) {
+            log.error("Error calculating remaining time: {}", e.getMessage());
+            return Duration.ZERO;
+        }
     }
 
     private Date extractExpiration(String token) {
