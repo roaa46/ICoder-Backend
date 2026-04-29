@@ -19,6 +19,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -34,6 +35,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthenticationServiceImpl implements AuthenticationService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -50,18 +52,21 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public MessageResponse register(RegisterRequest request, HttpServletResponse response) {
         if (userRepository.existsByEmail(request.getEmail())) {
+            log.error("Email already exists: {}", request.getEmail());
             throw new ApiException(
                     "Email is already used",
                     Map.of("field", "email", "value", request.getEmail())
             );
         }
         if (userRepository.existsByHandle(request.getHandle())) {
+            log.error("Handle already exists: {}", request.getHandle());
             throw new ApiException(
                     "Handle is already taken",
                     Map.of("field", "handle", "value", request.getHandle())
             );
         }
         if (!request.getPassword().equals(request.getPasswordConfirmation())) {
+            log.error("New password and confirmation password do not match");
             throw new ApiException(
                     "New password and confirmation password do not match",
                     Map.of("field", "password_confirmation")
@@ -72,6 +77,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setCreatedAt(Instant.now());
         userRepository.save(user);
+        log.info("User registered successfully: {}", user.getHandle());
         return new MessageResponse("Account created successfully! Please verify your email before logging in.");
     }
 
@@ -99,6 +105,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         tokenService.addTokenCookies(response, jwtToken, refreshJwtToken);
 
+        log.info("User logged in successfully: {} with id: {}", user.getHandle(), user.getId());
         return LoginResponse.builder()
                 .userId(user.getId())
                 .accessToken(jwtToken)
@@ -156,6 +163,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid token"));
         user.setVerified(true);
         userRepository.save(user);
+        log.info("Email verified successfully for user: {}", user.getHandle());
         return new MessageResponse("Email verified successfully! You can now log in");
     }
 
@@ -165,10 +173,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .orElseThrow(() -> new ApiException("User not found"));
 
         if (user.isVerified()) {
+            log.warn("User {} attempted to resend verification email", user.getHandle());
             throw new ApiException("Email is already verified");
         }
 
         emailVerificationService.sendVerificationEmail(user);
+        log.info("Verification email sent to user: {}", user.getHandle());
         return new MessageResponse("Verification email sent, please check your email");
     }
 
@@ -178,6 +188,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ApiException("No user found with this email"));
         emailVerificationService.sendPasswordResetEmail(user);
+        log.info("Password reset link sent to user: {}", user.getHandle());
         return new MessageResponse("Password change link is sent to your email");
     }
 
@@ -185,6 +196,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public MessageResponse resetPassword(ResetPasswordRequest request) {
         if (jwtService.isTokenExpired(request.getToken())) {
+            log.error("Password reset token has expired");
             throw new ApiException("Verification link has expired");
         }
         validatePasswordChange.validatePasswordChange(request);
@@ -192,6 +204,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         result.user().setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(result.user());
         refreshSecurityContext(result.user());
+        log.info("Password reset successfully for user: {}", result.user().getHandle());
         return new MessageResponse("Password has been reset successfully");
     }
 
@@ -206,6 +219,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         user.setPassword(encodedNewPassword);
         userRepository.save(user);
         refreshSecurityContext(user);
+        log.info("Password changed successfully for user: {}", user.getHandle());
         return new MessageResponse("Password changed successfully");
     }
 
