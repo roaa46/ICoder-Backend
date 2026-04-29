@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,6 +46,7 @@ public class AuthenticationController {
             summary = "User logout",
             description = "Invalidates the user's session and clears authentication cookies."
     )
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
         logoutServiceImpl.logout(request, response, authentication);
         return ResponseEntity.noContent().build();
@@ -100,6 +102,7 @@ public class AuthenticationController {
             summary = "Change authenticated user's password",
             description = "Allows an authenticated user to change their password by providing the old and new passwords."
     )
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         return ResponseEntity.ok(authenticationService.changePassword(request));
     }
