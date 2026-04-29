@@ -39,7 +39,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ghcr.io/roaa46/icoder-backend
           tags: |
             type=raw,value=latest
             type=sha
