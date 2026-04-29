@@ -9,6 +9,7 @@ import com.icoder.user.management.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -58,6 +59,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long>, J
 
     Page<Submission> findAll(Pageable pageable);
 
+    @EntityGraph(attributePaths = {"problem", "user"})
     Page<Submission> findAll(Specification<Submission> spec, Pageable pageable);
 
     boolean existsByUserIdAndContestIdAndProblemIdAndVerdictAndIdNot(Long user, Long contestId, Long problemId, SubmissionVerdict submissionVerdict, Long submissionId);
