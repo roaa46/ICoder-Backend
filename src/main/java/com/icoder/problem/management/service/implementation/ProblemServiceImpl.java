@@ -18,6 +18,7 @@ import com.icoder.problem.management.service.interfaces.ProblemService;
 import com.icoder.user.management.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -43,6 +44,7 @@ public class ProblemServiceImpl implements ProblemService {
 
     ///  get problem metadata
     @Override
+    @Cacheable(value = "problem_metadata", key = "#p0 + ':' + #p1")
     public ProblemResponse getProblemMetadata(String source, String code) {
         OJudgeType judgeType = OJudgeType.fromString(source);
 
@@ -62,6 +64,7 @@ public class ProblemServiceImpl implements ProblemService {
     ///  get a problem statement
     @Override
     @Transactional
+    @Cacheable(value = "problem_metadata", key = "#p0 + ':' + #p1")
     public ProblemStatementResponse getProblemStatement(String source, String code) {
         try {
             OJudgeType judgeType = OJudgeType.fromString(source);

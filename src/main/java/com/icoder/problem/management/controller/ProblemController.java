@@ -7,12 +7,12 @@ import com.icoder.problem.management.service.interfaces.ProblemService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.SortDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,7 +24,6 @@ public class ProblemController {
     @GetMapping("/{judge_type}/{problem_code}/metadata")
     @Operation(summary = "Get metadata of a specific problem", description = "Returns a specific problem metadata by its online judge and problem code " +
             "(e.g., problem title, problem link, contest title, ...) (requires login)")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ProblemResponse> getProblemMetadata(@PathVariable("judge_type") String source,
                                                               @PathVariable("problem_code") String code) {
         return ResponseEntity.ok(problemService.getProblemMetadata(source, code));
@@ -32,7 +31,6 @@ public class ProblemController {
 
     @GetMapping("/{judge_type}/{problem_code}")
     @Operation(summary = "Get a specific problem", description = "Returns a specific problem statement by its online judge and problem code (requires login)")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ProblemStatementResponse> getProblem(@PathVariable("judge_type") String source,
                                                                @PathVariable("problem_code") String code) {
         return ResponseEntity.ok(problemService.getProblemStatement(source, code));
@@ -40,7 +38,7 @@ public class ProblemController {
 
     @GetMapping("/recrawl/{judge_type}/{problem_code}")
     @Operation(summary = "Fetch a specific problem", description = "Fetches a specific problem statement by its online judge and problem code (requires login)")
-    @PreAuthorize("isAuthenticated()")
+    @CachePut(value = "problem_statement", key = "#p0 + ':' + #p1")
     public ResponseEntity<ProblemStatementResponse> fetchProblem(@PathVariable("judge_type") String source,
                                                                  @PathVariable("problem_code") String code) {
         return ResponseEntity.ok(problemService.getProblemStatement(source, code));
@@ -51,7 +49,6 @@ public class ProblemController {
             summary = "Get all problems with optional filters",
             description = "Returns a paginated list of problems. You can optionally filter by OJ, code, or title. Supports sorting and pagination (requires login)"
     )
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<ProblemResponse>> getAllProblems(
             @RequestParam(value = "online_judge", required = false) String onlineJudge,
             @RequestParam(value = "problemCode", required = false) String problemCode,
@@ -69,7 +66,6 @@ public class ProblemController {
             summary = "Get all problems without filters",
             description = "Returns a paginated list of problems sorted DESC according to fetched time (requires login)"
     )
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<ProblemResponse>> resetFilters(
             @SortDefault(sort = "fetchedAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
@@ -82,7 +78,6 @@ public class ProblemController {
             summary = "Update favorite status of a problem",
             description = "Adds or removes a problem from user's favorites (requires login)"
     )
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity updateFavorite(@Valid @RequestBody FavoriteRequest request) {
         problemService.setFavorite(request);
         return ResponseEntity.accepted().build();
@@ -93,7 +88,6 @@ public class ProblemController {
             summary = "Get all favorite problems",
             description = "Returns a paginated list of favorite problems sorted DESC according to fetched time (requires login)"
     )
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<ProblemResponse>> getFavoriteProblems(Pageable pageable) {
         Page<ProblemResponse> response = problemService.getFavorites(pageable);
         return ResponseEntity.ok(response);
@@ -104,7 +98,6 @@ public class ProblemController {
             summary = "Get all solved problems",
             description = "Returns a paginated list of solved problems sorted DESC according to fetched time (requires login)"
     )
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<ProblemResponse>> getSolvedProblems(Pageable pageable) {
         Page<ProblemResponse> response = problemService.getSolved(pageable);
         return ResponseEntity.ok(response);
@@ -115,7 +108,6 @@ public class ProblemController {
             summary = "Get all attempted problems",
             description = "Returns a paginated list of attempted problems sorted DESC according to fetched time (requires login)"
     )
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<ProblemResponse>> getAttemptedProblems(Pageable pageable) {
         Page<ProblemResponse> response = problemService.getAttempted(pageable);
         return ResponseEntity.ok(response);

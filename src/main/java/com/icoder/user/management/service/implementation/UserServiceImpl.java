@@ -23,6 +23,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.CacheManager;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -46,6 +47,7 @@ public class UserServiceImpl implements UserService {
     private final Cloudinary cloudinary;
     private final SecurityUtils securityUtils;
     private final ImageService imageService;
+    private final CacheManager cacheManager;
     @Value("${profile.picture.folder}")
     private String profilePictureFolder;
 
@@ -62,7 +64,6 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         emailVerificationService.sendAccountDeletionEmail(user);
-        log.info("Account deletion request sent for user: {}", user.getHandle());
         return new MessageResponse("A confirmation email has been sent to your email.");
     }
 
@@ -71,14 +72,12 @@ public class UserServiceImpl implements UserService {
     public MessageResponse confirmAccountDeletion(String token) {
 
         if (jwtService.isTokenExpired(token)) {
-            log.error("Account deletion token has expired");
             throw new ApiException("Verification link has expired");
         }
 
         TokenHelper.ValidatedTokenResult result = tokenHelper.validateAndExtract(token);
 
         if (!"ACCOUNT_DELETION".equals(result.type())) {
-            log.error("Invalid token type for account deletion");
             throw new ApiException("Invalid token type for account deletion");
         }
 
@@ -98,7 +97,6 @@ public class UserServiceImpl implements UserService {
             }
         }
 
-        log.info("User account deleted: userId={}", user.getId());
         return new MessageResponse("Your account has been successfully deleted");
     }
 
@@ -114,12 +112,15 @@ public class UserServiceImpl implements UserService {
         boolean isUpdated = applyProfileChanges(user, request);
 
         if (!isUpdated) {
-            log.warn("No changes were made to user profile");
             throw new ApiException("You must change at least one field");
         }
 
         userRepository.save(user);
-        log.info("User profile updated: userId={}", user.getId());
+
+        var cache = cacheManager.getCache("user_profile");
+        if (cache != null) {
+            cache.evict(user.getHandle());
+        }
         return new MessageResponse("Your data has been successfully changed");
     }
 
@@ -153,7 +154,6 @@ public class UserServiceImpl implements UserService {
         try {
             imageService.checkPictureType(file);
         } catch (IllegalStateException ex) {
-            log.error("Invalid file type: {}", ex.getMessage());
             throw new ApiException(ex.getMessage());
         }
 
@@ -175,11 +175,9 @@ public class UserServiceImpl implements UserService {
             user.setPictureUrl(imageUrl);
             userRepository.save(user);
 
-            log.info("Profile picture uploaded successfully for user: {}", user.getHandle());
             return new MessageResponse("Your profile picture has been successfully changed");
 
         } catch (IOException e) {
-            log.error("Failed to upload profile picture", e);
             throw new IllegalStateException("Failed to upload profile picture", e);
         }
     }
@@ -200,14 +198,12 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         validateCurrentPassword(request.getCurrentPassword(), user.getPassword());
         if (userRepository.existsByEmail(request.getNewEmail())) {
-            log.error("Email already exists: {}", request.getNewEmail());
             throw new ApiException(
                     "Email is already used",
                     Map.of("field", "email", "value", request.getNewEmail())
             );
         }
         emailVerificationService.sendEmailUpdateVerificationEmail(user, request.getNewEmail());
-        log.info("Email update request sent for user: {}", user.getHandle());
         return new MessageResponse("Verification link sent to new email.");
     }
 
@@ -215,19 +211,16 @@ public class UserServiceImpl implements UserService {
     @Override
     public MessageResponse confirmEmailUpdate(String token) {
         if (jwtService.isTokenExpired(token)) {
-            log.error("Email update token has expired");
             throw new ApiException("Verification link has expired");
         }
         var result = tokenHelper.validateAndExtract(token);
         TokenType tokenType = TokenType.valueOf(result.type());
         if (tokenType != TokenType.EMAIL_UPDATE) {
-            log.error("Invalid token type for email update");
             throw new IllegalStateException("Invalid token type");
         }
         String newEmail = jwtService.extractClaim(token, claims -> (String) claims.get("newEmail"));
         result.user().setEmail(newEmail);
         userRepository.save(result.user());
-        log.info("Email updated successfully for user: {}", result.user().getHandle());
         return new MessageResponse("Email updated successfully.");
     }
 
@@ -240,7 +233,6 @@ public class UserServiceImpl implements UserService {
 
         String pictureUrl = user.getPictureUrl();
         if (pictureUrl == null || pictureUrl.isBlank()) {
-            log.warn("User {} does not have a profile picture", user.getHandle());
             throw new ApiException("User does not have a profile picture");
         }
 
@@ -253,7 +245,6 @@ public class UserServiceImpl implements UserService {
             log.warn("Failed to delete profile image from Cloudinary", e);
         }
 
-        log.info("Profile picture deleted successfully for user: {}", user.getHandle());
         return new MessageResponse("Your profile picture has been successfully deleted");
     }
 

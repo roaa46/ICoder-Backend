@@ -1,5 +1,6 @@
 package com.icoder.problem.management.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.icoder.core.exception.OnlineJudgeException;
 
 public enum OJudgeType {
@@ -8,6 +9,7 @@ public enum OJudgeType {
     AT_CODER,
     CSES;
 
+    @JsonCreator
     public static OJudgeType fromString(String value) {
         if (value == null || value.trim().isBlank()) {
             throw new OnlineJudgeException("onlineJudge cannot be null or empty");
