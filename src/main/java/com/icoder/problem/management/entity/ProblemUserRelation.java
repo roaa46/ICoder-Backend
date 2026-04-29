@@ -1,8 +1,12 @@
 package com.icoder.problem.management.entity;
 
+import com.icoder.core.entity.BaseEntity;
 import com.icoder.user.management.entity.User;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
@@ -13,7 +17,7 @@ import lombok.*;
         uniqueConstraints = @UniqueConstraint(
                 columnNames = {"user_id", "problem_id"}
         ))
-public class ProblemUserRelation {
+public class ProblemUserRelation extends BaseEntity<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)

@@ -1,5 +1,6 @@
 package com.icoder.submission.management.entity;
 
+import com.icoder.core.entity.BaseEntity;
 import com.icoder.problem.management.enums.OJudgeType;
 import com.icoder.user.management.entity.User;
 import jakarta.persistence.*;
@@ -15,7 +16,7 @@ import java.time.Instant;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserJudgeSession {
+public class UserJudgeSession extends BaseEntity<Long> {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;

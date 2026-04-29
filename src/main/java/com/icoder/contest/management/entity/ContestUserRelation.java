@@ -1,6 +1,7 @@
 package com.icoder.contest.management.entity;
 
 import com.icoder.contest.management.enums.ContestRole;
+import com.icoder.core.entity.BaseEntity;
 import com.icoder.user.management.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -12,7 +13,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "contest_user_relations")
-public class ContestUserRelation {
+public class ContestUserRelation extends BaseEntity<Long> {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;

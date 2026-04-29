@@ -1,10 +1,14 @@
 package com.icoder.group.management.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.icoder.core.entity.BaseEntity;
 import com.icoder.group.management.enums.GroupRole;
 import com.icoder.user.management.entity.User;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @AllArgsConstructor
@@ -14,9 +18,8 @@ import lombok.*;
 @Table(name = "user_group_roles", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"user_id", "group_id"})
 })
-public class UserGroupRole {
-    @Id
-    @GeneratedValue
+public class UserGroupRole extends BaseEntity<Long> {
+    @EmbeddedId
     Long id;
 
     @JoinColumn(name = "user_id", nullable = false)

@@ -1,18 +1,23 @@
 package com.icoder.notification.management.entity;
 
+import com.icoder.core.entity.BaseEntity;
 import com.icoder.notification.management.enums.NotificationType;
 import com.icoder.user.management.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.Instant;
 
 @Entity
 @Table(name = "notifications")
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class Notification {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class Notification extends BaseEntity<Long> {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)

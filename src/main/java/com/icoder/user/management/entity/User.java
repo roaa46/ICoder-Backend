@@ -2,6 +2,7 @@ package com.icoder.user.management.entity;
 
 import com.icoder.activity.management.entity.ActivityLog;
 import com.icoder.coding.editor.entity.CodeTemplate;
+import com.icoder.core.entity.BaseEntity;
 import com.icoder.group.management.entity.UserGroupRole;
 import com.icoder.problem.management.entity.ProblemUserRelation;
 import jakarta.persistence.*;
@@ -20,7 +21,7 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "users")
-public class User {
+public class User extends BaseEntity<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
