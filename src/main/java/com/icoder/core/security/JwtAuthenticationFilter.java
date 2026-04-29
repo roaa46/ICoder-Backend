@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -23,9 +24,17 @@ import java.util.Arrays;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    private static final AntPathMatcher pathMatcher = new AntPathMatcher();
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
     private final TokenRepository tokenRepository;
+
+    @Override
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+        String path = request.getServletPath();
+        return Arrays.stream(SecurityConstants.PUBLIC_URLS)
+                .anyMatch(pattern -> pathMatcher.match(pattern, path));
+    }
 
     @Override
     protected void doFilterInternal(
@@ -33,11 +42,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-
-        if (shouldSkipFilter(request)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
 
         String jwtToken = resolveToken(request);
 
@@ -48,16 +52,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-/* ----- Helpers ----- */
-
-    private boolean shouldSkipFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
-        return path.equals("/api/v1/auth/login") ||
-                path.equals("/api/v1/auth/register") ||
-                path.equals("/api/v1/auth/verify") ||
-                path.startsWith("/api/v1/auth/password/forget") ||
-                path.startsWith("/api/v1/auth/password/reset");
-    }
 
     private String resolveToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
@@ -100,5 +94,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authToken);
     }
-
 }

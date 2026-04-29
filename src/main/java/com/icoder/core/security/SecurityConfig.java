@@ -34,6 +34,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final DaoAuthenticationProvider authenticationProvider;
     private final LogoutHandler logoutHandler;
+
     @Value("${alloowed.origins}")
     private String allowedOrigins;
 
@@ -46,52 +47,9 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        /// --------- auth ---------
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/auth/verify").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/verify/send").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/password/forget").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/password/reset").permitAll()
-                        .requestMatchers(HttpMethod.PATCH, "/api/v1/auth/password").authenticated()
+                        /// --------- Apply Public Paths ---------
+                        .requestMatchers(SecurityConstants.PUBLIC_URLS).permitAll()
 
-
-                        /// --------- users ---------
-                        .requestMatchers(HttpMethod.POST, "/api/v1/users/email/confirm").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/users/delete/confirm").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/users").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/users/delete/request").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/users/update").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/users/email/request-update").authenticated()
-                        .requestMatchers("/api/v1/users/profile-picture/**").authenticated()
-
-
-                        ///  --------- problems ---------
-                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/*/*/metadata").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/*/*").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/recrawl/*/*").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/problems").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/reset-filters").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/problems").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/attempted").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/favorites").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/problems/solved").authenticated()
-
-
-                        ///  --------- editor ---------
-                        .requestMatchers("/api/v1/coding/editor/language", "/api/v1/coding/editor/languages").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/coding/editor/submissions/*", "/api/v1/coding/editor/submissions/batch").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/coding/editor/submissions", "/api/v1/coding/editor/submissions/batch").authenticated()
-                        .requestMatchers("/api/v1/coding/editor/templates/**").authenticated()
-
-
-
-                        /// --------- swagger ---------
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-
-                        .requestMatchers("/uploads/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .userDetailsService(userDetailsService)
