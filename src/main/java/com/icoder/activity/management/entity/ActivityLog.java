@@ -1,10 +1,12 @@
 package com.icoder.activity.management.entity;
 
 import com.icoder.activity.management.enums.ActivityType;
+import com.icoder.core.entity.BaseEntity;
 import com.icoder.submission.management.enums.SubmissionVerdict;
 import com.icoder.user.management.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.Instant;
 
 @Entity
@@ -14,7 +16,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "activity_logs")
-public class ActivityLog {
+public class ActivityLog extends BaseEntity<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)

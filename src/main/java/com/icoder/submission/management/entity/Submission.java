@@ -1,6 +1,7 @@
 package com.icoder.submission.management.entity;
 
 import com.icoder.contest.management.entity.Contest;
+import com.icoder.core.entity.BaseEntity;
 import com.icoder.problem.management.entity.Problem;
 import com.icoder.problem.management.enums.OJudgeType;
 import com.icoder.submission.management.enums.SubmissionStatus;
@@ -18,7 +19,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "submissions")
-public class Submission {
+public class Submission extends BaseEntity<Long> {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;

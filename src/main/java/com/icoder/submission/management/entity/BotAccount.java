@@ -1,5 +1,6 @@
 package com.icoder.submission.management.entity;
 
+import com.icoder.core.entity.BaseEntity;
 import com.icoder.problem.management.enums.OJudgeType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,7 +16,7 @@ import java.time.Instant;
 @Table(name = "bot_accounts", indexes = {
         @Index(name = "idx_account_lookup", columnList = "judgeType, inUse, active, lastUsedAt")
 })
-public class BotAccount {
+public class BotAccount extends BaseEntity<Long> {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;

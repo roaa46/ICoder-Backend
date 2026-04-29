@@ -1,5 +1,6 @@
 package com.icoder.problem.management.entity;
 
+import com.icoder.core.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,7 +16,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "sections")
-public class ProblemSection {
+public class ProblemSection extends BaseEntity<Long> {
     @Id
     @GeneratedValue
     private Long id;

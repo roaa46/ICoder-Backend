@@ -1,19 +1,22 @@
 package com.icoder.invitation.management.entity;
 
+import com.icoder.core.entity.BaseEntity;
 import com.icoder.invitation.management.enums.InvitationStatus;
 import com.icoder.invitation.management.enums.InvitationType;
 import com.icoder.user.management.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.Instant;
 
 @Entity
 @Table(name = "invitations")
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Invitation {
+public class Invitation extends BaseEntity<Long> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
