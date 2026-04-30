@@ -44,7 +44,7 @@ public class ProblemServiceImpl implements ProblemService {
 
     ///  get problem metadata
     @Override
-    @Cacheable(value = "problem_metadata", key = "#p0 + ':' + #p1")
+    @Cacheable(value = "problem_metadata", key = "#source + ':' + #code")
     public ProblemResponse getProblemMetadata(String source, String code) {
         OJudgeType judgeType = OJudgeType.fromString(source);
 
@@ -64,7 +64,7 @@ public class ProblemServiceImpl implements ProblemService {
     ///  get a problem statement
     @Override
     @Transactional
-    @Cacheable(value = "problem_metadata", key = "#p0 + ':' + #p1")
+    @Cacheable(value = "problem_statement", key = "#source + ':' + #code")
     public ProblemStatementResponse getProblemStatement(String source, String code) {
         try {
             OJudgeType judgeType = OJudgeType.fromString(source);
