@@ -3,6 +3,7 @@ package com.icoder.contest.management.entity;
 import com.icoder.contest.management.enums.ContestOpenness;
 import com.icoder.contest.management.enums.ContestStatus;
 import com.icoder.contest.management.enums.ContestType;
+import com.icoder.core.entity.BaseEntity;
 import com.icoder.group.management.entity.Group;
 import com.icoder.submission.management.entity.Submission;
 import jakarta.persistence.*;
@@ -25,7 +26,7 @@ import java.util.Set;
         @Index(name = "idx_contest_status_start", columnList = "contestStatus, beginTime"),
         @Index(name = "idx_contest_status_end", columnList = "contestStatus, endTime")
 })
-public class Contest {
+public class Contest extends BaseEntity<Long> {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;

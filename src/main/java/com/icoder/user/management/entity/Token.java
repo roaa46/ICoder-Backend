@@ -1,5 +1,6 @@
 package com.icoder.user.management.entity;
 
+import com.icoder.core.entity.BaseEntity;
 import com.icoder.user.management.enums.TokenType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -15,7 +16,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "tokens")
-public class Token {
+public class Token extends BaseEntity<Long> {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;

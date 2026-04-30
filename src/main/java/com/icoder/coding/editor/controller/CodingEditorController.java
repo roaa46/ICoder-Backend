@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -15,8 +16,8 @@ import java.util.List;
 @RequestMapping("/api/v1/coding/editor")
 @RequiredArgsConstructor
 public class CodingEditorController {
-    private final CodingEditorService codingEditorService;
     public static final int FINAL_STATUS_THRESHOLD = 3;
+    private final CodingEditorService codingEditorService;
 
     @GetMapping("/language")
     @Operation(
@@ -43,6 +44,7 @@ public class CodingEditorController {
             summary = "Submit a single code snippet for execution",
             description = "Accepts the source code, language ID, and standard input (stdin). A unique token is returned to poll for results (requires login)"
     )
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<TokenResponse> submitCode(@RequestBody SubmissionRequest request) {
         return ResponseEntity.ok(codingEditorService.submitCode(request));
     }
@@ -56,6 +58,7 @@ public class CodingEditorController {
                     "2. If it returns **200 OK**, the execution is complete (regardless of whether the result is 'Accepted', 'Wrong Answer', or 'Error'). \n\n" +
                     "**Note:** Use the `status.id` to distinguish between 'Processing' (< 3) and 'Final' states (>= 3)."
     )
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<SubmissionResult> getResult(@PathVariable String token) {
         SubmissionResult result = codingEditorService.processAndGetResult(token);
 
@@ -71,6 +74,7 @@ public class CodingEditorController {
             summary = "Submit multiple test cases for a single code snippet in a batch",
             description = "Processes a batch request containing source code and multiple test inputs (input/expected output). Returns a list of tokens, one for each submitted test case (requires login)"
     )
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<TokenResponse>> batchedSubmitCode(@RequestBody BatchRunRequest request) {
         return ResponseEntity.ok(codingEditorService.submitBatchCode(request));
     }
@@ -85,6 +89,7 @@ public class CodingEditorController {
                     "2. If it returns **200 OK**, all submissions have finished execution (regardless of whether results are 'Accepted', 'Wrong Answer', or 'Error'). \n\n" +
                     "**Note:** Use the `status.id` to distinguish between 'Processing' (< 3) and 'Final' states (>= 3)."
     )
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<BatchSubmissionResult> getBatchResults(@RequestParam List<String> tokens) {
 
         BatchSubmissionResult results = codingEditorService.processAndGetBatchResults(tokens);
@@ -104,6 +109,7 @@ public class CodingEditorController {
             summary = "Add a new code template",
             description = "Creates a new code template and returns its details along with the resource location (requires login)"
     )
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity addTemplate(@RequestBody CodeTemplateRequest request) {
 
         CodeTemplateResponse response =
@@ -121,7 +127,8 @@ public class CodingEditorController {
                     "If 'force' is false and another template for the same language is already active, it returns a 409 Conflict. " +
                     "If 'force' is true, it deactivates the existing template and activates this one."
     )
-    public ResponseEntity<CodeTemplateResponse> toggleTemplate(@PathVariable Long id, @RequestParam boolean force){
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<CodeTemplateResponse> toggleTemplate(@PathVariable Long id, @RequestParam boolean force) {
         return ResponseEntity.ok(codingEditorService.toggleTemplate(id, force));
     }
 
@@ -130,6 +137,7 @@ public class CodingEditorController {
             summary = "Retrieve a code template by ID",
             description = "Returns the details of a single code template using its unique ID (requires login)"
     )
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CodeTemplateResponse> getTemplate(@PathVariable Long id) {
         return ResponseEntity.ok(codingEditorService.getTemplate(id));
     }
@@ -139,6 +147,7 @@ public class CodingEditorController {
             summary = "Retrieve all code templates",
             description = "Returns a paginated list of all code templates (requires login)"
     )
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<CodeTemplateResponse>> getAllTemplates(
             @RequestParam(defaultValue = "0") int page) {
         Page<CodeTemplateResponse> templates = codingEditorService.getTemplates(page);
@@ -150,6 +159,7 @@ public class CodingEditorController {
             summary = "Update an existing code template",
             description = "Updates the details of a code template using its ID and returns the updated template (requires login)"
     )
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CodeTemplateResponse> editTemplate(@PathVariable Long id, @RequestBody CodeTemplateRequest request) {
         return ResponseEntity.ok(codingEditorService.editTemplate(id, request));
     }
@@ -159,6 +169,7 @@ public class CodingEditorController {
             summary = "Delete a code template",
             description = "Deletes the code template identified by the given ID (requires login)"
     )
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity deleteTemplate(@PathVariable Long id) {
         codingEditorService.deleteTemplate(id);
         return ResponseEntity.noContent().build();

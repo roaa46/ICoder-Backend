@@ -37,6 +37,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -273,7 +274,7 @@ public class SubmissionUtils {
                         .id(lang)
                         .displayName(lang)
                         .build())
-                .toList();
+                .collect(Collectors.toCollection(java.util.ArrayList::new));
     }
 
     public List<LanguageOptionResponse> getCodeforcesLanguages() {
@@ -304,7 +305,7 @@ public class SubmissionUtils {
                         .id(entry.getKey().toString())
                         .displayName(entry.getValue())
                         .build())
-                .toList();
+                .collect(Collectors.toCollection(java.util.ArrayList::new));
     }
 
     public List<LanguageOptionResponse> getAtCoderLanguages() {
@@ -326,7 +327,7 @@ public class SubmissionUtils {
                         .id(entry.getKey().toString())
                         .displayName(entry.getValue())
                         .build())
-                .toList();
+                .collect(Collectors.toCollection(java.util.ArrayList::new));
     }
 
     public void applyUserSession(BrowserContext browserContext, String sessionId, String domain) {

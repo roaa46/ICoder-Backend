@@ -1,5 +1,6 @@
 package com.icoder.problem.management.entity;
 
+import com.icoder.core.entity.BaseEntity;
 import com.icoder.problem.management.enums.FormatType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -13,7 +14,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "contents")
-public class SectionContent {
+public class SectionContent extends BaseEntity<Long> {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;

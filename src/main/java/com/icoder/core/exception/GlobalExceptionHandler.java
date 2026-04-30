@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(SubmissionException.class)
     public ResponseEntity<ErrorResponse> handleSubmissionException(SubmissionException ex, HttpServletRequest request) {
-        log.error("API Exception");
+        log.error("Submission Exception");
         HttpStatus status = resolveStatus(ex);
         return buildErrorResponse(status, ex.getMessage(), request.getRequestURI(), ex.getDetails());
     }
@@ -37,6 +37,7 @@ public class GlobalExceptionHandler {
         HttpStatus status = resolveStatus(ex);
         return buildErrorResponse(status, ex.getMessage(), request.getRequestURI(), ex.getDetails());
     }
+
     @ExceptionHandler(TemplateException.class)
     public ResponseEntity<ErrorResponse> handleTemplateException(TemplateException ex, HttpServletRequest request) {
         log.error("Template Exception");

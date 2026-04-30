@@ -2,10 +2,14 @@ package com.icoder.group.management.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.icoder.contest.management.entity.Contest;
+import com.icoder.core.entity.BaseEntity;
 import com.icoder.group.management.enums.ContestCoordinatorType;
 import com.icoder.group.management.enums.Visibility;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.Formula;
 
 import java.time.Instant;
@@ -18,10 +22,10 @@ import java.util.Set;
 @Getter
 @Setter
 @Table(name = "groups")
-public class Group {
+public class Group extends BaseEntity<Long> {
     @Id
     @GeneratedValue
-    private long id;
+    private Long id;
 
     @Column(nullable = false, updatable = false, unique = true)
     private String code;

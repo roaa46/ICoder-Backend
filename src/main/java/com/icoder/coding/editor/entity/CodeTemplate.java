@@ -1,5 +1,6 @@
 package com.icoder.coding.editor.entity;
 
+import com.icoder.core.entity.BaseEntity;
 import com.icoder.user.management.entity.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -16,7 +17,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "code_templates")
-public class CodeTemplate {
+public class CodeTemplate extends BaseEntity<Long> {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;

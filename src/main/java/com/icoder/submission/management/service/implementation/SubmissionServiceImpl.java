@@ -18,6 +18,7 @@ import com.icoder.submission.management.utils.SubmissionUtils;
 import com.icoder.user.management.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -42,6 +43,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     private final SubmissionUtils submissionUtils;
     private final SubmissionPersistenceService submissionPersistenceService;
 
+    @Cacheable(value = "languages", key = "#onlineJudge")
     public List<LanguageOptionResponse> getLanguages(String onlineJudge) {
         OJudgeType oJudgeType = OJudgeType.fromString(onlineJudge);
         return switch (oJudgeType) {

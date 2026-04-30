@@ -1,10 +1,9 @@
-FROM maven:3.9.1-eclipse-temurin-17 AS build
+FROM mcr.microsoft.com/playwright/java:v1.40.0-jammy
+
 WORKDIR /app
-COPY pom.xml .
-COPY src ./src
-RUN mvn clean package -DskipTests
-FROM eclipse-temurin:17-jre
-WORKDIR /app
-COPY --from=build /app/target/ICoder-0.0.1-SNAPSHOT.jar app.jar
+
+COPY target/ICoder-0.0.1-SNAPSHOT.jar app.jar
+
 EXPOSE 9090
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+
+ENTRYPOINT ["java", "-jar", "app.jar"]

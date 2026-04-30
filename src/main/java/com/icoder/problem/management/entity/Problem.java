@@ -1,5 +1,6 @@
 package com.icoder.problem.management.entity;
 
+import com.icoder.core.entity.BaseEntity;
 import com.icoder.problem.management.enums.OJudgeType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -23,7 +24,7 @@ import java.util.Set;
                 columnNames = {"problemCode", "onlineJudge"}
         )
 )
-public class Problem {
+public class Problem extends BaseEntity<Long> {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;

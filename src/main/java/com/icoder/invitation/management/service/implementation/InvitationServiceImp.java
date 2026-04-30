@@ -31,7 +31,7 @@ public class InvitationServiceImp implements InvitationService {
 
     @Override
     @Transactional
-    public Invitation sendGroupInvitation(Long groupId, User sender, User recipient){
+    public Invitation sendGroupInvitation(Long groupId, User sender, User recipient) {
         boolean hasPendingInvitation = invitationRepository.existsPendingInvitation(
                 groupId,
                 InvitationType.GROUP,
@@ -77,7 +77,7 @@ public class InvitationServiceImp implements InvitationService {
 
         // Check if invitation is expired
         if (invitation.getExpiryDate().isBefore(Instant.now())) {
-            log.info("Attempted to use expired invitation: token={}, expiryDate={}",
+            log.warn("Attempted to use expired invitation: token={}, expiryDate={}",
                     request.getToken(), invitation.getExpiryDate());
             invitation.setStatus(InvitationStatus.REJECTED);
             invitationRepository.save(invitation);
@@ -87,7 +87,7 @@ public class InvitationServiceImp implements InvitationService {
         Group group = groupUtil.findGroupById(invitation.getTargetId());
 
         // Handle the response
-        if(request.getResponse().equals(InvitationResponse.ACCEPTED)){
+        if (request.getResponse().equals(InvitationResponse.ACCEPTED)) {
             groupUtil.addUserToGroup(invitation.getRecipient(), group);
             invitation.setStatus(InvitationStatus.ACCEPTED);
             invitationRepository.save(invitation);

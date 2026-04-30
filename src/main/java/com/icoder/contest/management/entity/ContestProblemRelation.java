@@ -1,5 +1,6 @@
 package com.icoder.contest.management.entity;
 
+import com.icoder.core.entity.BaseEntity;
 import com.icoder.problem.management.entity.Problem;
 import com.icoder.submission.management.entity.Submission;
 import jakarta.persistence.*;
@@ -12,7 +13,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "contest_problem_relations")
-public class ContestProblemRelation {
+public class ContestProblemRelation extends BaseEntity<Long> {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;

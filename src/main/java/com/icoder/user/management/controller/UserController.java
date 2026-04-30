@@ -1,8 +1,8 @@
 package com.icoder.user.management.controller;
 
 import com.icoder.core.dto.MessageResponse;
-import com.icoder.user.management.dto.auth.UpdateEmailRequest;
 import com.icoder.core.dto.PictureUrlResponse;
+import com.icoder.user.management.dto.auth.UpdateEmailRequest;
 import com.icoder.user.management.dto.user.UpdateUserProfileRequest;
 import com.icoder.user.management.dto.user.UserProfileRequest;
 import com.icoder.user.management.dto.user.UserProfileResponse;
@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -36,6 +37,7 @@ public class UserController {
             summary = "Request account deletion",
             description = "Initiates the account deletion process by sending a confirmation link to the user's email."
     )
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse> requestAccountDeletion() {
         return ResponseEntity.ok(userService.requestAccountDeletion());
     }
@@ -54,6 +56,7 @@ public class UserController {
             summary = "Update user profile",
             description = "Allows the authenticated user to update their profile details. Requires current password verification."
     )
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse> updateProfile(
             @Valid @RequestBody UpdateUserProfileRequest request) {
         return ResponseEntity.ok(userService.updateProfile(request));
@@ -64,6 +67,7 @@ public class UserController {
             summary = "View profile picture",
             description = "View profile picture for the authenticated user."
     )
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PictureUrlResponse> viewProfilePicture(@RequestParam String handle) {
         return ResponseEntity.ok(userService.viewProfilePicture(handle));
     }
@@ -73,6 +77,7 @@ public class UserController {
             summary = "Update profile picture",
             description = "Uploads and sets a new profile picture for the authenticated user. Only accepts image file types (PNG, JPEG, JPG, GIF)."
     )
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse> updateProfilePicture(@RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(userService.uploadProfilePicture(file));
     }
@@ -82,6 +87,7 @@ public class UserController {
             summary = "Delete profile picture",
             description = "Removes the current profile picture of the authenticated user."
     )
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse> deleteProfilePicture() {
         return ResponseEntity.ok(userService.deleteProfilePicture());
     }
@@ -91,6 +97,7 @@ public class UserController {
             summary = "Request email update",
             description = "Initiates the email update process by sending a verification link to the new email address. Requires current password verification."
     )
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse> requestEmailUpdate(@Valid @RequestBody UpdateEmailRequest request) {
         return ResponseEntity.ok(userService.requestEmailUpdate(request));
     }
