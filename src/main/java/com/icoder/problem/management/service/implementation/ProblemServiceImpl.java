@@ -64,7 +64,7 @@ public class ProblemServiceImpl implements ProblemService {
     ///  get a problem statement
     @Override
     @Transactional
-    @Cacheable(value = "problem_metadata", key = "#p0 + ':' + #p1")
+    @Cacheable(value = "problem_statement", key = "#p0 + ':' + #p1")
     public ProblemStatementResponse getProblemStatement(String source, String code) {
         try {
             OJudgeType judgeType = OJudgeType.fromString(source);
