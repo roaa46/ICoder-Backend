@@ -365,18 +365,19 @@ class UserServiceImplTest {
         @Test
         @DisplayName("should update changed fields and save user")
         void updateProfile_shouldSaveUser_whenFieldsChanged() {
-            updateUserProfileRequest.setCurrentPassword("plainPassword");
-            user.setPassword("hashedPassword");
-
             when(securityUtils.getCurrentUserId()).thenReturn(1L);
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
             when(passwordEncoder.matches("plainPassword", "hashedPassword")).thenReturn(true);
+
             when(cacheManager.getCache("user_profile")).thenReturn(cache);
 
             MessageResponse response = userService.updateProfile(updateUserProfileRequest);
 
             assertEquals("Your data has been successfully changed", response.getMessage());
+            assertEquals("New Roaa", user.getNickname());
+
             verify(userRepository).save(user);
+            verify(cache).evict(user.getHandle());
         }
     }
 
