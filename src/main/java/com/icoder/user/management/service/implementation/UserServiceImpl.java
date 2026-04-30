@@ -24,10 +24,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -52,6 +55,7 @@ public class UserServiceImpl implements UserService {
     private String profilePictureFolder;
 
     @Override
+    @Cacheable(value = "user_profile", key = "#userProfileRequest.handle")
     public UserProfileResponse getProfile(UserProfileRequest userProfileRequest) {
         User user = userRepository.findByHandle(userProfileRequest.getHandle())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
@@ -108,19 +112,27 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         validateCurrentPassword(request.getCurrentPassword(), user.getPassword());
-
+        String oldHandle = user.getHandle();
         boolean isUpdated = applyProfileChanges(user, request);
-
         if (!isUpdated) {
             throw new ApiException("You must change at least one field");
         }
-
         userRepository.save(user);
 
-        var cache = cacheManager.getCache("user_profile");
-        if (cache != null) {
-            cache.evict(user.getHandle());
-        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                var cache = cacheManager.getCache("user_profile");
+                if (cache != null) {
+                    cache.evict(user.getHandle());
+
+                    if (!user.getHandle().equals(oldHandle)) {
+                        cache.evict(oldHandle);
+                    }
+                }
+            }
+        });
+
         return new MessageResponse("Your data has been successfully changed");
     }
 

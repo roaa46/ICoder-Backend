@@ -34,6 +34,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -368,16 +370,25 @@ class UserServiceImplTest {
             when(securityUtils.getCurrentUserId()).thenReturn(1L);
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
             when(passwordEncoder.matches("plainPassword", "hashedPassword")).thenReturn(true);
-
             when(cacheManager.getCache("user_profile")).thenReturn(cache);
 
-            MessageResponse response = userService.updateProfile(updateUserProfileRequest);
+            TransactionSynchronizationManager.initSynchronization();
 
-            assertEquals("Your data has been successfully changed", response.getMessage());
-            assertEquals("New Roaa", user.getNickname());
+            try {
+                MessageResponse response = userService.updateProfile(updateUserProfileRequest);
 
-            verify(userRepository).save(user);
-            verify(cache).evict(user.getHandle());
+                TransactionSynchronizationManager.getSynchronizations()
+                        .forEach(TransactionSynchronization::afterCommit);
+
+                assertEquals("Your data has been successfully changed", response.getMessage());
+                assertEquals("New Roaa", user.getNickname());
+
+                verify(userRepository).save(user);
+                verify(cache).evict(user.getHandle());
+
+            } finally {
+                TransactionSynchronizationManager.clear();
+            }
         }
     }
 
