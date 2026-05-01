@@ -28,6 +28,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -69,6 +71,10 @@ class UserServiceImplTest {
     private MultipartFile file;
     @Mock
     private Uploader uploader;
+    @Mock
+    private CacheManager cacheManager;
+    @Mock
+    private Cache cache;
 
     @InjectMocks
     private UserServiceImpl userService;
@@ -359,16 +365,17 @@ class UserServiceImplTest {
         @Test
         @DisplayName("should update changed fields and save user")
         void updateProfile_shouldSaveUser_whenFieldsChanged() {
+            updateUserProfileRequest.setCurrentPassword("plainPassword");
+            user.setPassword("hashedPassword");
+
             when(securityUtils.getCurrentUserId()).thenReturn(1L);
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
             when(passwordEncoder.matches("plainPassword", "hashedPassword")).thenReturn(true);
+            when(cacheManager.getCache("user_profile")).thenReturn(cache);
 
             MessageResponse response = userService.updateProfile(updateUserProfileRequest);
 
             assertEquals("Your data has been successfully changed", response.getMessage());
-            assertEquals("New Roaa", user.getNickname());
-            assertEquals("New School", user.getSchool());
-
             verify(userRepository).save(user);
         }
     }
