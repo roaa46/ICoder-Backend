@@ -32,6 +32,10 @@
         <lombok.version>1.18.32</lombok.version>
     </properties>
     <dependencies>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
         <!--        Redis-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
