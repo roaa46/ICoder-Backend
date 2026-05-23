@@ -27,10 +27,10 @@ public class AiSummaryService {
     public String generateSummary(UserStatsDto stats) {
         try {
             String statsJson = objectMapper.writeValueAsString(stats);
-            String prompt    = buildPrompt(statsJson);
+            String prompt = buildPrompt(statsJson);
 
             Map<String, Object> requestBody = Map.of(
-                    "model", "llama3-8b-8192",
+                    "model", "llama-3.3-70b-versatile",
                     "messages", List.of(
                             Map.of("role", "system",
                                     "content", "You are an elite Competitive Programming Coach."),
@@ -40,17 +40,33 @@ public class AiSummaryService {
                     "max_tokens", 1000
             );
 
-            Map response = webClient.post()
+            // Print exactly what we are sending
+            System.out.println("=== SENDING TO GROQ ===");
+            System.out.println("API Key starts with: " + groqApiKey.substring(0, 10));
+            System.out.println("Model: llama3-8b-8192");
+
+            String response = webClient.post()
                     .uri("/chat/completions")
                     .header("Authorization", "Bearer " + groqApiKey)
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(requestBody)
                     .retrieve()
-                    .bodyToMono(Map.class)
+                    .onStatus(status -> status.isError(), clientResponse ->
+                            clientResponse.bodyToMono(String.class)
+                                    .map(body -> {
+                                        System.out.println("=== GROQ ERROR BODY ===");
+                                        System.out.println(body);
+                                        return new RuntimeException("Groq error: " + body);
+                                    })
+                    )
+                    .bodyToMono(String.class)
                     .block();
 
-            // Extract the text from Groq's response
-            List<Map> choices = (List<Map>) response.get("choices");
+            System.out.println("=== GROQ RESPONSE ===");
+            System.out.println(response);
+
+            Map responseMap = objectMapper.readValue(response, Map.class);
+            List<Map> choices = (List<Map>) responseMap.get("choices");
             Map message = (Map) choices.get(0).get("message");
             return (String) message.get("content");
 
