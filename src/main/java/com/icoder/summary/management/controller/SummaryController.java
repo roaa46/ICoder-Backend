@@ -6,6 +6,7 @@ import com.icoder.summary.management.service.SummaryAggregationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,8 +18,9 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/summary")
-@RequiredArgsConstructor
 @Tag(name = "Summary", description = "AI-powered performance summary")
+@Slf4j
+@RequiredArgsConstructor
 public class SummaryController {
 
     private final SummaryAggregationService aggregationService;
@@ -30,11 +32,10 @@ public class SummaryController {
             summary = "Get AI performance summary",
             description = "Aggregates user submissions and returns an AI-generated coaching summary"
     )
-    public ResponseEntity<Map<String, Object>> getSummary(
-            @PathVariable Long userId) {
+    public ResponseEntity<Map<String, Object>> getSummary(@PathVariable Long userId) {
+        log.info("Requesting summary for user: {}", userId);
 
         UserStatsDto stats = aggregationService.aggregateUserStats(userId);
-
         String aiSummary = aiSummaryService.generateSummary(stats);
 
         return ResponseEntity.ok(Map.of(
@@ -49,9 +50,7 @@ public class SummaryController {
             summary = "Get raw stats only (no AI)",
             description = "Returns the aggregated stats without calling the AI — useful for testing"
     )
-    public ResponseEntity<UserStatsDto> getStatsOnly(
-            @PathVariable Long userId) {
-
+    public ResponseEntity<UserStatsDto> getStatsOnly(@PathVariable Long userId) {
         return ResponseEntity.ok(aggregationService.aggregateUserStats(userId));
     }
 }

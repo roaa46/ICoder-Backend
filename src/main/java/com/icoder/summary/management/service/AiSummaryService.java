@@ -21,8 +21,10 @@ import java.util.Map;
 public class AiSummaryService {
 
     private static final String PREFERRED_MODEL = "llama-3.3-70b-versatile";
+
     private final WebClient groqWebClient;
     private final ObjectMapper objectMapper;
+
     @Value("${groq.api.key}")
     private String groqApiKey;
 
@@ -40,6 +42,7 @@ public class AiSummaryService {
                     ),
                     "temperature", 0.7,
                     "max_tokens", 1000
+                    // "stream" removed
             );
 
             return groqWebClient.post()
@@ -50,14 +53,20 @@ public class AiSummaryService {
                     .retrieve()
                     .bodyToMono(Map.class)
                     .retryWhen(Retry.backoff(3, Duration.ofSeconds(2))
-                            .filter(throwable -> throwable instanceof WebClientResponseException))
+                            .filter(t -> t instanceof WebClientResponseException))
                     .map(this::extractContent)
-                    .block();
+                    .block(); // ← blocking is fine now
 
         } catch (Exception e) {
             log.error("Failed to generate AI summary: {}", e.getMessage());
             throw new RuntimeException("AI Summary Service currently unavailable.", e);
         }
+    }
+
+    private String extractContent(Map<String, Object> response) {
+        List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
+        Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
+        return (String) message.get("content");
     }
 
     private String getBestAvailableModel() {
@@ -89,12 +98,6 @@ public class AiSummaryService {
             log.error("Failed to fetch models, defaulting to: {}", PREFERRED_MODEL);
             return PREFERRED_MODEL;
         }
-    }
-
-    private String extractContent(Map<String, Object> response) {
-        List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
-        Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
-        return (String) message.get("content");
     }
 
     private String buildPrompt(String statsJson) {
