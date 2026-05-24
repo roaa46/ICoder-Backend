@@ -9,7 +9,9 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.util.retry.Retry;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -18,50 +20,81 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AiSummaryService {
 
-    private final WebClient webClient = WebClient.builder()
-            .baseUrl("https://api.groq.com/openai/v1")
-            .build();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private static final String PREFERRED_MODEL = "llama-3.3-70b-versatile";
+    private final WebClient groqWebClient;
+    private final ObjectMapper objectMapper;
     @Value("${groq.api.key}")
     private String groqApiKey;
 
     public String generateSummary(UserStatsDto stats) {
+        String modelToUse = getBestAvailableModel();
+        log.info("Generating summary using model: {}", modelToUse);
         try {
             String statsJson = objectMapper.writeValueAsString(stats);
-            log.info("statsJson: {}", statsJson);
-            String prompt = buildPrompt(statsJson);
 
             Map<String, Object> requestBody = Map.of(
-                    "model", "llama-3.3-70b-versatile",
+                    "model", modelToUse,
                     "messages", List.of(
-                            Map.of("role", "system",
-                                    "content", "You are an elite Competitive Programming Coach."),
-                            Map.of("role", "user", "content", prompt)
+                            Map.of("role", "system", "content", "You are an elite Competitive Programming Coach."),
+                            Map.of("role", "user", "content", buildPrompt(statsJson))
                     ),
                     "temperature", 0.7,
                     "max_tokens", 1000
             );
 
-            Map response = webClient.post()
+            return groqWebClient.post()
                     .uri("/chat/completions")
                     .header("Authorization", "Bearer " + groqApiKey)
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(requestBody)
                     .retrieve()
                     .bodyToMono(Map.class)
-                    .doOnError(WebClientResponseException.class, e -> {
-                        log.error("Geoq Error Response: {}", e.getResponseBodyAsString());
-                    })
+                    .retryWhen(Retry.backoff(3, Duration.ofSeconds(2))
+                            .filter(throwable -> throwable instanceof WebClientResponseException))
+                    .map(this::extractContent)
                     .block();
 
-            // Extract the text from Groq's response
-            List<Map> choices = (List<Map>) response.get("choices");
-            Map message = (Map) choices.get(0).get("message");
-            return (String) message.get("content");
+        } catch (Exception e) {
+            log.error("Failed to generate AI summary: {}", e.getMessage());
+            throw new RuntimeException("AI Summary Service currently unavailable.", e);
+        }
+    }
+
+    private String getBestAvailableModel() {
+        List<String> priorityList = List.of(
+                "llama-3.3-70b-versatile",
+                "llama-3.1-70b-versatile",
+                "mixtral-8x7b-32768"
+        );
+
+        try {
+            Map response = groqWebClient.get()
+                    .uri("/models")
+                    .header("Authorization", "Bearer " + groqApiKey)
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+
+            List<Map<String, Object>> data = (List<Map<String, Object>>) response.get("data");
+            List<String> availableIds = data.stream()
+                    .map(m -> (String) m.get("id"))
+                    .toList();
+
+            return priorityList.stream()
+                    .filter(availableIds::contains)
+                    .findFirst()
+                    .orElse(availableIds.get(0));
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to generate AI summary: " + e.getMessage(), e);
+            log.error("Failed to fetch models, defaulting to: {}", PREFERRED_MODEL);
+            return PREFERRED_MODEL;
         }
+    }
+
+    private String extractContent(Map<String, Object> response) {
+        List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
+        Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
+        return (String) message.get("content");
     }
 
     private String buildPrompt(String statsJson) {
