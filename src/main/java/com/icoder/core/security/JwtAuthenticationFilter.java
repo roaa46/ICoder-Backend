@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,10 +20,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Arrays;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
@@ -42,6 +45,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String jwtToken = resolveToken(request);
+
+        log.info("JWT token: {}", jwtToken != null ? "[PRESENT]" : "[ABSENT]");
 
         if (jwtToken != null) {
             processAuthentication(jwtToken, request);
@@ -66,10 +71,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             return authHeader.substring(7);
         }
-
         if (request.getCookies() != null) {
             return Arrays.stream(request.getCookies())
-                    .filter(cookie -> "access_token".equals(cookie.getName()))
+                    .filter(c -> "access_token".equals(c.getName()))
                     .map(Cookie::getValue)
                     .findFirst()
                     .orElse(null);
@@ -93,6 +97,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String redisKey = "jwt:token:" + token;
 
         String cachedStatus = redisTemplate.opsForValue().get(redisKey);
+        log.info("Checking Redis for key: {}, found: {}", redisKey, cachedStatus);
 
         if ("REVOKED".equals(cachedStatus)) {
             return false;
@@ -100,21 +105,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return jwtService.isTokenValid(token, userDetails);
         }
 
+        // DB fallback
         boolean isDbValid = tokenRepository.findByToken(token)
                 .map(t -> !t.isExpired() && !t.isRevoked())
                 .orElse(false);
 
-        if (isDbValid) {
-            java.time.Duration ttl = jwtService.getRemainingTime(token);
+        if (!isDbValid) return false;
 
-            if (!ttl.isZero()) {
-                redisTemplate.opsForValue().set(redisKey, "VALID", ttl);
-            } else {
-                isDbValid = false;
-            }
-        }
+        boolean isJwtValid = jwtService.isTokenValid(token, userDetails);
+        if (!isJwtValid) return false;
 
-        return isDbValid && jwtService.isTokenValid(token, userDetails);
+        Duration ttl = jwtService.getRemainingTime(token);
+        if (ttl.isZero()) return false;
+
+        // Only cache after full validation passes
+        redisTemplate.opsForValue().set(redisKey, "VALID", ttl);
+        return true;
     }
 
     private void setSecurityContext(UserDetails userDetails, HttpServletRequest request) {
@@ -123,5 +129,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authToken);
     }
-
 }

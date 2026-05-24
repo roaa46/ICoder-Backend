@@ -5,7 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @Component
 @RequiredArgsConstructor
@@ -14,7 +15,7 @@ public class TokenCleanupScheduler {
 
     @Scheduled(cron = "0 0 2 * * ?") //runs every day at 2 AM
     public void cleanOldTokens() {
-        LocalDateTime cutoff = LocalDateTime.now().minusDays(30);
+        Instant cutoff = Instant.now().minus(30, ChronoUnit.DAYS);
         int deleted = tokenRepository.deleteAllByCreatedAtBefore(cutoff);
         System.out.println("Deleted " + deleted + " old tokens");
     }

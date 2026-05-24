@@ -4,6 +4,7 @@ import com.icoder.user.management.entity.Token;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.enums.TokenType;
 import com.icoder.user.management.repository.TokenRepository;
+import com.icoder.user.management.service.interfaces.JwtService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,8 +16,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.Duration;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,6 +32,10 @@ class TokenServiceImplTest {
     private TokenRepository tokenRepository;
     @Mock
     private HttpServletResponse response;
+    @Mock
+    private JwtService jwtService;
+    @Mock
+    private RedisTemplate<String, String> redisTemplate;
 
     @InjectMocks
     private TokenServiceImpl tokenService;
@@ -95,6 +103,10 @@ class TokenServiceImplTest {
         @DisplayName("should create and save bearer token for user")
         void saveUserToken_shouldCreateAndSaveToken() {
             String jwtToken = "jwt_token";
+            Duration duration = Duration.ofMinutes(10);
+
+            when(jwtService.getRemainingTime(jwtToken)).thenReturn(duration);
+            when(redisTemplate.opsForValue()).thenReturn(mock(ValueOperations.class));
 
             tokenService.saveUserToken(user, jwtToken);
 
