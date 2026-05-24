@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,5 +25,15 @@ public interface TokenRepository extends JpaRepository<Token, Long> {
     Optional<Token> findByToken(String token);
 
     @Transactional
-    int deleteAllByCreatedAtBefore(LocalDateTime dateTime);
+    int deleteAllByCreatedAtBefore(Instant instant);
+
+    @Query("""
+                select t from Token t
+                where t.user.id = :id
+                and (t.isExpired = false and t.isRevoked = false)
+            """)
+    List<Token> findAllValidTokensByUser(Long id);
+
+    @Query("select t.user.id from Token t where t.token = :token")
+    Optional<Long> findUserIdByToken(String token);
 }

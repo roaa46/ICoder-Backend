@@ -4,13 +4,15 @@ import com.icoder.user.management.entity.Token;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.enums.TokenType;
 import com.icoder.user.management.repository.TokenRepository;
+import com.icoder.user.management.service.interfaces.JwtService;
 import com.icoder.user.management.service.interfaces.TokenService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -19,6 +21,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TokenServiceImpl implements TokenService {
     private final TokenRepository tokenRepository;
+    private final RedisTemplate<String, String> redisTemplate;
+    private final JwtService jwtService;
     @Value("${token.expiration}")
     private Long tokenExpiration;
     @Value("${refresh.token.expiration}")
@@ -51,6 +55,11 @@ public class TokenServiceImpl implements TokenService {
                 .createdAt(Instant.now())
                 .build();
         tokenRepository.save(token);
+
+        var ttl = jwtService.getRemainingTime(jwtToken);
+        if (!ttl.isZero()) {
+            redisTemplate.opsForValue().set("jwt:token:" + jwtToken, "VALID", ttl);
+        }
     }
 
     @Override
