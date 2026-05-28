@@ -323,6 +323,23 @@ public class CodingEditorServiceImpl implements CodingEditorService {
                 });
     }
 
+
+    @Override
+    @Transactional(readOnly = true)
+    public CodeTemplateResponse getActiveTemplate(Integer languageId) {
+        Long userId = securityUtils.getCurrentUserId();
+
+        CodeTemplate template = templateRepository.findByUser_IdAndLanguageIdAndEnabledTrue(userId, languageId)
+                .orElseThrow(() -> new TemplateException("Template not found"));
+
+        CodeTemplateResponse response = mapper.toDTO(template);
+
+        response.setLanguageId(template.getLanguageId());
+        enhanceTemplateResponse(response, template.getLanguageId());
+
+        return response;
+    }
+
     @Override
     @Transactional
     public CodeTemplateResponse editTemplate(Long templateId, CodeTemplateRequest request) {
