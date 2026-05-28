@@ -75,6 +75,9 @@ public class SubmissionServiceImpl implements SubmissionService {
     public Page<SubmissionPageResponse> getAllSubmissions(String userHandle, String oj, String problemCode, String language, Pageable pageable) {
 
         OJudgeType judgeType = (oj != null) ? OJudgeType.fromString(oj) : null;
+        if (language != null) {
+            language = language.replace(" ", "+");
+        }
 
         Specification<Submission> spec = new SpecBuilder<Submission>()
                 .with("onlineJudge", ":", judgeType)
