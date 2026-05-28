@@ -164,6 +164,16 @@ public class CodingEditorController {
         return ResponseEntity.ok(codingEditorService.editTemplate(id, request));
     }
 
+    @GetMapping("/templates/active/{languageId}")
+    @Operation(
+            summary = "Retrieve enabled template with a specific language",
+            description = "Returns the details of an enabled single code template using language_id"
+    )
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<CodeTemplateResponse> getActiveTemplate(@PathVariable Integer languageId) {
+        return ResponseEntity.ok(codingEditorService.getActiveTemplate(languageId));
+    }
+
     @DeleteMapping("/templates/{id}")
     @Operation(
             summary = "Delete a code template",
