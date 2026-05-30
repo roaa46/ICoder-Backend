@@ -14,6 +14,8 @@ import com.icoder.submission.management.enums.SubmissionVerdict;
 import com.icoder.submission.management.mapper.SubmissionMapper;
 import com.icoder.submission.management.repository.SubmissionRepository;
 import com.icoder.submission.management.service.interfaces.SubmissionService;
+import com.icoder.submission.management.utils.LanguageNormalizer;
+import com.icoder.submission.management.utils.LanguageSpecification;
 import com.icoder.submission.management.utils.SubmissionUtils;
 import com.icoder.user.management.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -72,7 +74,9 @@ public class SubmissionServiceImpl implements SubmissionService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<SubmissionPageResponse> getAllSubmissions(String userHandle, String oj, String problemCode, String language, Pageable pageable) {
+    public Page<SubmissionPageResponse> getAllSubmissions(
+            String userHandle, String oj, String problemCode,
+            String language, Pageable pageable) {
 
         OJudgeType judgeType = (oj != null) ? OJudgeType.fromString(oj) : null;
 
@@ -80,16 +84,23 @@ public class SubmissionServiceImpl implements SubmissionService {
                 .with("onlineJudge", ":", judgeType)
                 .with("problem.problemCode", ":", problemCode)
                 .with("user.handle", ":", userHandle)
-                .with("language", ":", language)
                 .build();
+
+        if (language != null && !language.isBlank()) {
+            String normalized = LanguageNormalizer.normalize(language)
+                    .orElse(language);
+            Specification<Submission> langSpec = new LanguageSpecification<>(normalized);
+            spec = (spec == null) ? Specification.where(langSpec) : spec.and(langSpec);
+        }
+
         if (spec == null) spec = Specification.where(null);
 
         Page<Submission> submissions = submissionRepository.findAll(spec, pageable);
-        return submissions.map(submission -> submissionMapper.toSubmissionPageResponse(
-                submission,
-                submission.getProblem().getProblemCode(),
-                submission.getUser().getHandle(),
-                submission.getUser().getId()
+        return submissions.map(s -> submissionMapper.toSubmissionPageResponse(
+                s,
+                s.getProblem().getProblemCode(),
+                s.getUser().getHandle(),
+                s.getUser().getId()
         ));
     }
 

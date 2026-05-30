@@ -55,6 +55,4 @@ public interface UserGroupRoleRepository extends JpaRepository<UserGroupRole, Lo
                AND ugr.group.id = :groupId
             """)
     Optional<GroupRole> findRoleByUserIdAndGroupId(Long userId, Long groupId);
-
-    boolean existsByUserIdAndGroupId(Long userId, Long groupId);
 }

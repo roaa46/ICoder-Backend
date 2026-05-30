@@ -10,29 +10,31 @@ public class BaseSpecification<T> implements Specification<T> {
     private final SearchCriteria criteria;
 
     @Override
-    public Predicate toPredicate(Root<T> root, @Nullable CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+    public Predicate toPredicate(Root<T> root, @Nullable CriteriaQuery<?> query, CriteriaBuilder cb) {
         Path<Object> path;
         if (criteria.getKey().contains(".")) {
             String[] parts = criteria.getKey().split("\\.");
-            path = root.join(parts[0]).get(parts[1]);
+            path = getOrCreateJoin(root, parts[0]).get(parts[1]);
         } else {
             path = root.get(criteria.getKey());
         }
 
-        switch (criteria.getOperation()) {
-            case ":":
-                if (path.getJavaType() == String.class) {
-                    return criteriaBuilder.like(criteriaBuilder.lower(path.as(String.class)),
-                            "%" + criteria.getValue().toString().toLowerCase() + "%");
-                } else {
-                    return criteriaBuilder.equal(path, criteria.getValue());
-                }
-            case ">":
-                return criteriaBuilder.greaterThanOrEqualTo(path.as(String.class), criteria.getValue().toString());
-            case "<":
-                return criteriaBuilder.lessThanOrEqualTo(path.as(String.class), criteria.getValue().toString());
-            default:
-                return null;
-        }
+        return switch (criteria.getOperation()) {
+            case ":" -> path.getJavaType() == String.class
+                    ? cb.like(cb.lower(path.as(String.class)),
+                    "%" + criteria.getValue().toString().toLowerCase() + "%")
+                    : cb.equal(path, criteria.getValue());
+            case ">" -> cb.greaterThanOrEqualTo(path.as(String.class), criteria.getValue().toString());
+            case "<" -> cb.lessThanOrEqualTo(path.as(String.class), criteria.getValue().toString());
+            default -> null;
+        };
+    }
+
+    private Join<Object, Object> getOrCreateJoin(Root<T> root, String attribute) {
+        return root.getJoins().stream()
+                .filter(j -> j.getAttribute().getName().equals(attribute))
+                .map(j -> (Join<Object, Object>) j)
+                .findFirst()
+                .orElseGet(() -> root.join(attribute, JoinType.LEFT));
     }
 }
