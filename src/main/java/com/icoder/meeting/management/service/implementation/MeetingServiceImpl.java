@@ -319,12 +319,12 @@ public class MeetingServiceImpl implements MeetingService {
                         new ResourceNotFoundException("User not found"));
     }
 
-    private void validateMembership(Long userId, Long groupId) {
+    private void validateMembership(long userid, long groupid) {
 
         boolean member =
-                userGroupRoleRepository.existsByUserIdAndGroupId(
-                        userId,
-                        groupId
+                userGroupRoleRepository.existInGroup(
+                        userid,
+                        groupid
                 );
 
         if (!member) {
