@@ -1,0 +1,39 @@
+package com.icoder.group.management.entity;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.icoder.core.entity.BaseEntity;
+import com.icoder.group.management.enums.GroupRole;
+import com.icoder.user.management.entity.User;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@Table(name = "user_group_roles", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_id", "group_id"})
+})
+public class UserGroupRole extends BaseEntity<Long> {
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_group_roles_seq")
+    Long id;
+
+    @JoinColumn(name = "user_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
+    User user;
+
+    @JoinColumn(name = "group_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
+    Group group;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    GroupRole role;
+}
