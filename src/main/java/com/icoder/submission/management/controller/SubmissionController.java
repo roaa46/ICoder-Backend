@@ -40,6 +40,9 @@ public class SubmissionController {
             @RequestParam(required = false, value = "problem_code") String problemCode,
             @RequestParam(required = false) String language,
             @PageableDefault(size = 20, sort = "submittedAt", direction = Sort.Direction.DESC) Pageable paging) {
+        if (language != null) {
+            language = language.replace(" ", "+");
+        }
         Page<SubmissionPageResponse> submissions = submissionService.getAllSubmissions(userHandle, oj, problemCode, language, paging);
         return new ResponseEntity<>(submissions, HttpStatus.OK);
     }
