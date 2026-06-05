@@ -3,8 +3,9 @@ package com.icoder.meeting.management.service.interfaces;
 import com.icoder.meeting.management.dto.CreateMeetingRequest;
 import com.icoder.meeting.management.dto.MeetingResponse;
 import com.icoder.meeting.management.dto.QuickSessionRequest;
-
-import java.util.List;
+import com.icoder.meeting.management.enums.MeetingStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface MeetingService {
 
@@ -12,7 +13,7 @@ public interface MeetingService {
 
     MeetingResponse createQuickSession(QuickSessionRequest request);
 
-    List<MeetingResponse> getGroupMeetings(Long groupId);
+    Page<MeetingResponse> getGroupMeetings(Long groupId, MeetingStatus status, Pageable pageable);
 
     MeetingResponse joinMeeting(String roomName);
 

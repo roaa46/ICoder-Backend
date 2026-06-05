@@ -3,13 +3,17 @@ package com.icoder.meeting.management.controller;
 import com.icoder.meeting.management.dto.CreateMeetingRequest;
 import com.icoder.meeting.management.dto.MeetingResponse;
 import com.icoder.meeting.management.dto.QuickSessionRequest;
+import com.icoder.meeting.management.enums.MeetingStatus;
 import com.icoder.meeting.management.service.interfaces.MeetingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/meetings")
@@ -44,12 +48,13 @@ public class MeetingController {
 
     @GetMapping("/group/{groupId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<MeetingResponse>> getGroupMeetings(
-            @PathVariable
-            Long groupId
+    public ResponseEntity<Page<MeetingResponse>> getGroupMeetings(
+            @PathVariable Long groupId,
+            @RequestParam(required = false, value = "status") MeetingStatus status,
+            @PageableDefault(size = 5, sort = "scheduledStartTime", direction = Sort.Direction.DESC) Pageable paging
     ) {
         return ResponseEntity.ok(
-                meetingService.getGroupMeetings(groupId)
+                meetingService.getGroupMeetings(groupId, status, paging)
         );
     }
 

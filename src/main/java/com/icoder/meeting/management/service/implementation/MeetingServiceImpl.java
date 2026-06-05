@@ -5,15 +5,18 @@ import com.icoder.contest.management.enums.ContestStatus;
 import com.icoder.contest.management.repository.ContestRepository;
 import com.icoder.core.exception.ResourceNotFoundException;
 import com.icoder.core.utils.SecurityUtils;
-import com.icoder.group.management.entity.*;
+import com.icoder.group.management.entity.Group;
+import com.icoder.group.management.entity.UserGroupRole;
 import com.icoder.group.management.enums.GroupRole;
-import com.icoder.group.management.repository.*;
-import com.icoder.invitation.management.entity.Invitation;
-import com.icoder.invitation.management.enums.InvitationType;
+import com.icoder.group.management.repository.GroupRepository;
+import com.icoder.group.management.repository.UserGroupRoleRepository;
 import com.icoder.invitation.management.repository.InvitationRepository;
-import com.icoder.meeting.management.dto.*;
+import com.icoder.meeting.management.dto.CreateMeetingRequest;
+import com.icoder.meeting.management.dto.MeetingResponse;
+import com.icoder.meeting.management.dto.QuickSessionRequest;
 import com.icoder.meeting.management.entity.Meeting;
-import com.icoder.meeting.management.enums.*;
+import com.icoder.meeting.management.enums.MeetingStatus;
+import com.icoder.meeting.management.enums.MeetingType;
 import com.icoder.meeting.management.mapper.MeetingMapper;
 import com.icoder.meeting.management.repository.MeetingRepository;
 import com.icoder.meeting.management.service.interfaces.MeetingService;
@@ -24,6 +27,8 @@ import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -84,8 +89,7 @@ public class MeetingServiceImpl implements MeetingService {
 
         if (request.getMeetingType() == MeetingType.GENERAL) {
             generatedTitle = request.getTitle();
-        }
-        else if (request.getMeetingType() == MeetingType.HELPDESK) {
+        } else if (request.getMeetingType() == MeetingType.HELPDESK) {
 
             contest = contestRepository.findById(request.getContestId())
                     .orElseThrow(() -> new ResourceNotFoundException("Contest not found"));
@@ -187,16 +191,15 @@ public class MeetingServiceImpl implements MeetingService {
     }
 
     @Override
-    public List<MeetingResponse> getGroupMeetings(Long groupId) {
-
+    public Page<MeetingResponse> getGroupMeetings(Long groupId, MeetingStatus status, Pageable pageable) {
         User currentUser = getCurrentUser();
-
         validateMembership(currentUser.getId(), groupId);
 
-        return meetingRepository.findByGroupId(groupId)
-                .stream()
-                .map(meetingMapper::toResponse)
-                .toList();
+        Page<Meeting> meetings = (status != null)
+                ? meetingRepository.findByGroupIdAndStatus(groupId, status, pageable)
+                : meetingRepository.findByGroupId(groupId, pageable);
+
+        return meetings.map(meetingMapper::toResponse);
     }
 
     @Override

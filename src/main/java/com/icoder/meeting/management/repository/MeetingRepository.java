@@ -1,9 +1,10 @@
-
 package com.icoder.meeting.management.repository;
 
 import com.icoder.meeting.management.entity.Meeting;
 import com.icoder.meeting.management.enums.MeetingStatus;
 import com.icoder.meeting.management.enums.MeetingType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.Instant;
@@ -12,7 +13,9 @@ import java.util.Optional;
 
 public interface MeetingRepository extends JpaRepository<Meeting, Long> {
 
-    List<Meeting> findByGroupId(Long groupId);
+    Page<Meeting> findByGroupIdAndStatus(Long groupId, MeetingStatus status, Pageable pageable);
+
+    Page<Meeting> findByGroupId(Long groupId, Pageable pageable);
 
     Optional<Meeting> findByRoomName(String roomName);
 

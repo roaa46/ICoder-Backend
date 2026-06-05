@@ -1,12 +1,14 @@
 package com.icoder.meeting.management.entity;
 
 import com.icoder.contest.management.entity.Contest;
+import com.icoder.core.entity.BaseEntity;
 import com.icoder.group.management.entity.Group;
 import com.icoder.meeting.management.enums.MeetingStatus;
 import com.icoder.meeting.management.enums.MeetingType;
 import com.icoder.user.management.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.Instant;
 
 @Entity
@@ -30,7 +32,7 @@ import java.time.Instant;
                 columnList = "contest_id,type,status"
         )
 })
-public class Meeting {
+public class Meeting extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
