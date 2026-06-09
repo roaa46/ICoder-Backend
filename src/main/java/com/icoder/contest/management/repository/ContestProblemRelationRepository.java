@@ -20,4 +20,6 @@ public interface ContestProblemRelationRepository extends JpaRepository<ContestP
     Optional<ContestProblemRelation> findByContestIdAndProblemId(Long contestId, Long problemId);
 
     List<ContestProblemRelation> findByContestId(Long contestId);
+
+    List<ContestProblemRelation> findByContestIdAndProblemIdIn(Long contestId, List<Long> problemIds);
 }

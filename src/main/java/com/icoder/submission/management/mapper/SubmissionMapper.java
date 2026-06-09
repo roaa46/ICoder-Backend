@@ -1,9 +1,6 @@
 package com.icoder.submission.management.mapper;
 
-import com.icoder.submission.management.dto.SubmissionCreateResponse;
-import com.icoder.submission.management.dto.OpenSubmissionResponse;
-import com.icoder.submission.management.dto.SubmissionPageResponse;
-import com.icoder.submission.management.dto.SubmissionResponse;
+import com.icoder.submission.management.dto.*;
 import com.icoder.submission.management.entity.Submission;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -42,6 +39,19 @@ public interface SubmissionMapper {
     @Mapping(target = "isOpen", source = "submission.opened")
     SubmissionPageResponse toSubmissionPageResponse(Submission submission, String problemCode, String userHandle, Long userId);
 
+    @Mapping(target = "userHandle", source = "submission.user.handle")
+    @Mapping(target = "userId", source = "submission.user.id")
+    @Mapping(target = "onlineJudge", source = "submission.onlineJudge")
+    @Mapping(target = "problemId", source = "submission.problem.id")
+    @Mapping(target = "problemAlias", source = "problemAlias")
+    @Mapping(target = "verdict", source = "submission.verdict")
+    @Mapping(target = "language", source = "submission.language")
+    @Mapping(target = "timeUsage", source = "submission.timeUsage", qualifiedByName = "integerToString")
+    @Mapping(target = "memoryUsage", source = "submission.memoryUsage", qualifiedByName = "integerToString")
+    @Mapping(target = "submittedAt", source = "submission.submittedAt")
+    @Mapping(target = "isOpen", source = "submission.opened")
+    @Mapping(target = "remoteRunId", source = "submission.remoteRunId")
+    ContestSubmissionsResponse toContestSubmissionsResponse(Submission submission, String problemAlias);
 
     @Named("integerToString")
     default String integerToString(Integer value) {

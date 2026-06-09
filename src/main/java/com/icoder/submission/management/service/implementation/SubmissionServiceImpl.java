@@ -1,6 +1,7 @@
 package com.icoder.submission.management.service.implementation;
 
 import com.icoder.contest.management.entity.Contest;
+import com.icoder.contest.management.repository.ContestProblemRelationRepository;
 import com.icoder.core.exception.ResourceNotFoundException;
 import com.icoder.core.specification.SpecBuilder;
 import com.icoder.core.utils.SecurityUtils;
@@ -32,6 +33,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +47,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     private final SecurityUtils securityUtils;
     private final SubmissionUtils submissionUtils;
     private final SubmissionPersistenceService submissionPersistenceService;
+    private final ContestProblemRelationRepository contestProblemRelationRepository;
 
     @Cacheable(value = "languages", key = "#onlineJudge")
     public List<LanguageOptionResponse> getLanguages(String onlineJudge) {
@@ -70,6 +74,45 @@ public class SubmissionServiceImpl implements SubmissionService {
         }
 
         return submissionMapper.toOpenSubmissionResponse(submission);
+    }
+
+    @Override
+    public Page<ContestSubmissionsResponse> getContestSubmissions(Long contestId, String userHandle, String result, String language, Long problemId, Pageable pageable) {
+        SubmissionVerdict submissionVerdict = (result != null) ? SubmissionVerdict.valueOf(result) : null;
+        Specification<Submission> spec = new SpecBuilder<Submission>()
+                .with("contest.id", ":", contestId)
+                .with("user.handle", ":", userHandle)
+                .with("verdict", ":", submissionVerdict)
+                .with("problem.id", ":", problemId)
+                .build();
+        if (language != null && !language.isBlank()) {
+            String normalized = LanguageNormalizer.normalize(language)
+                    .orElse(language);
+            Specification<Submission> langSpec = new LanguageSpecification<>(normalized);
+            spec = (spec == null) ? Specification.where(langSpec) : spec.and(langSpec);
+        }
+        if (spec == null) spec = Specification.where(null);
+        Page<Submission> submissions = submissionRepository.findAll(spec, pageable);
+
+        List<Long> problemIds = submissions.stream()
+                .map(s -> s.getProblem().getId())
+                .distinct()
+                .toList();
+
+        Map<Long, String> aliasMap = contestProblemRelationRepository
+                .findByContestIdAndProblemIdIn(contestId, problemIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        rel -> rel.getProblem().getId(),
+                        rel -> rel.getProblemAlias() != null && !rel.getProblemAlias().isBlank()
+                                ? rel.getProblemAlias()
+                                : rel.getProblem().getProblemTitle()
+                ));
+
+        return submissions.map(s -> submissionMapper.toContestSubmissionsResponse(
+                s,
+                aliasMap.getOrDefault(s.getProblem().getId(), s.getProblem().getProblemTitle())
+        ));
     }
 
     @Override

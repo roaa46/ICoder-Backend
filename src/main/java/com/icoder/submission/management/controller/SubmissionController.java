@@ -47,6 +47,23 @@ public class SubmissionController {
         return new ResponseEntity<>(submissions, HttpStatus.OK);
     }
 
+    @GetMapping("contests/{contest_id}")
+    @Operation(summary = "Get all submissions for specific contest with filters (it could be used to reset too)")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<ContestSubmissionsResponse>> getAllSubmissionsForContest(@PathVariable(value = "contest_id") Long contestId,
+                                                                                        @RequestParam(required = false, value = "handle") String userHandle,
+                                                                                        @RequestParam(required = false) String result,
+                                                                                        @RequestParam(required = false) String language,
+                                                                                        @RequestParam(required = false, value = "problem_id") Long problemId,
+                                                                                        @PageableDefault(size = 20, sort = "submittedAt", direction = Sort.Direction.DESC) Pageable paging
+    ) {
+        if (language != null) {
+            language = language.replace(" ", "+");
+        }
+        Page<ContestSubmissionsResponse> submissions = submissionService.getContestSubmissions(contestId, userHandle, result, language, problemId, paging);
+        return new ResponseEntity<>(submissions, HttpStatus.OK);
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Get submission by ID", description = "Retrieve a specific submission by its ID")
     @PreAuthorize("isAuthenticated()")

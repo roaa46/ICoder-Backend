@@ -28,4 +28,6 @@ public interface SubmissionService {
     void deleteSession(Long id);
 
     SessionSubmissionResponse getSession(String judgeType);
+
+    Page<ContestSubmissionsResponse> getContestSubmissions(Long contestId, String userHandle, String result, String language, Long problemId, Pageable pageable);
 }
