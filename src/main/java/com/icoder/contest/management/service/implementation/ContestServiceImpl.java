@@ -7,9 +7,9 @@ import com.icoder.contest.management.dto.ProblemSetResponse;
 import com.icoder.contest.management.entity.Contest;
 import com.icoder.contest.management.entity.ContestProblemRelation;
 import com.icoder.contest.management.entity.ContestUserRelation;
+import com.icoder.contest.management.enums.ContestOpenness;
 import com.icoder.contest.management.enums.ContestRole;
 import com.icoder.contest.management.enums.ContestStatus;
-import com.icoder.contest.management.enums.ContestType;
 import com.icoder.contest.management.mapper.ContestMapper;
 import com.icoder.contest.management.repository.ContestProblemRelationRepository;
 import com.icoder.contest.management.repository.ContestRepository;
@@ -21,12 +21,17 @@ import com.icoder.core.exception.ResourceNotFoundException;
 import com.icoder.core.specification.SpecBuilder;
 import com.icoder.core.utils.SecurityUtils;
 import com.icoder.group.management.entity.Group;
+import com.icoder.group.management.entity.UserGroupRole;
+import com.icoder.group.management.enums.Visibility;
 import com.icoder.group.management.repository.GroupRepository;
 import com.icoder.submission.management.entity.Submission;
 import com.icoder.submission.management.enums.SubmissionVerdict;
 import com.icoder.submission.management.repository.SubmissionRepository;
 import com.icoder.user.management.entity.User;
 import com.icoder.user.management.repository.UserRepository;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -214,20 +219,37 @@ public class ContestServiceImpl implements ContestService {
     }
 
     @Override
-    public Page<ContestResponse> viewAllContests(String contestTitle, String groupName, ContestStatus status, ContestType type, Pageable pageable) {
+    public Page<ContestResponse> viewAllContests(String contestTitle, String groupName, ContestStatus status, ContestOpenness openness, Pageable pageable) {
+
+        Long currentUserId = securityUtils.getCurrentUserId();
 
         Specification<Contest> spec = new SpecBuilder<Contest>()
-
                 .with("title", ":", contestTitle)
-
                 .with("group.name", ":", groupName)
-
                 .with("contestStatus", ":", status)
-
-                .with("contestType", ":", type)
-
+                .with("contestOpenness", ":", openness)
                 .build();
-        if (spec == null) spec = Specification.where(null);
+
+        Specification<Contest> visibilitySpec = (root, query, cb) -> {
+            Predicate isPublic = cb.equal(
+                    root.get("group").get("visibility"), Visibility.PUBLIC
+            );
+
+            Subquery<Long> subquery = query.subquery(Long.class);
+            Root<UserGroupRole> ugr = subquery.from(UserGroupRole.class);
+            subquery.select(ugr.get("group").get("id"))
+                    .where(cb.equal(ugr.get("user").get("id"), currentUserId));
+
+            Predicate isPrivateAndMember = cb.and(
+                    cb.equal(root.get("group").get("visibility"), Visibility.PRIVATE),
+                    root.get("group").get("id").in(subquery)
+            );
+
+            return cb.or(isPublic, isPrivateAndMember);
+        };
+
+        if (spec == null) spec = Specification.where(visibilitySpec);
+        else spec = spec.and(visibilitySpec);
 
         return contestRepository.findAll(spec, pageable)
                 .map(contestMapper::toContestResponse);

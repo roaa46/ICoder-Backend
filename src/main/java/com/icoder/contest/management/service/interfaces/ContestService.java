@@ -4,8 +4,8 @@ import com.icoder.contest.management.dto.ContestDetailsResponse;
 import com.icoder.contest.management.dto.ContestResponse;
 import com.icoder.contest.management.dto.CreateContestRequest;
 import com.icoder.contest.management.dto.ProblemSetResponse;
+import com.icoder.contest.management.enums.ContestOpenness;
 import com.icoder.contest.management.enums.ContestStatus;
-import com.icoder.contest.management.enums.ContestType;
 import com.icoder.core.dto.MessageResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +23,7 @@ public interface ContestService {
 
     Set<ProblemSetResponse> viewProblemSet(Long contestId);
 
-    Page<ContestResponse> viewAllContests(String contestTitle, String groupName, ContestStatus status, ContestType type, Pageable pageable);
+    Page<ContestResponse> viewAllContests(String contestTitle, String groupName, ContestStatus status, ContestOpenness openness, Pageable pageable);
 
     void updateContestStatistics(Long submissionId);
 }

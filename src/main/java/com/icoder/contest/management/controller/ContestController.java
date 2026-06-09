@@ -1,8 +1,8 @@
 package com.icoder.contest.management.controller;
 
 import com.icoder.contest.management.dto.*;
+import com.icoder.contest.management.enums.ContestOpenness;
 import com.icoder.contest.management.enums.ContestStatus;
-import com.icoder.contest.management.enums.ContestType;
 import com.icoder.contest.management.service.interfaces.ContestService;
 import com.icoder.contest.management.service.interfaces.LeaderboardService;
 import com.icoder.core.dto.MessageResponse;
@@ -65,9 +65,9 @@ public class ContestController {
             @RequestParam(required = false) String title,
             @RequestParam(required = false, value = "group_name") String groupName,
             @RequestParam(required = false) ContestStatus status,
-            @RequestParam(required = false) ContestType type,
+            @RequestParam(required = false, value = "contest_openness") ContestOpenness openness,
             @SortDefault(sort = "beginTime", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(contestService.viewAllContests(title, groupName, status, type, pageable));
+        return ResponseEntity.ok(contestService.viewAllContests(title, groupName, status, openness, pageable));
     }
 
     @GetMapping("{contestId}/leaderboard")

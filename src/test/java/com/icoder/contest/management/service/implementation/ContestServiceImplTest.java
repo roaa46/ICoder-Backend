@@ -476,7 +476,7 @@ class ContestServiceImplTest {
                     "Weekly",
                     "Group 1",
                     ContestStatus.SCHEDULED,
-                    ContestType.CLASSICAL,
+                    ContestOpenness.PUBLIC,
                     pageable
             );
 

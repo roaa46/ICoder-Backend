@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.icoder.contest.management.enums.ContestOpenness;
 import com.icoder.contest.management.enums.ContestStatus;
-import com.icoder.contest.management.enums.ContestType;
 import com.icoder.core.utils.LowercaseEnumSerializer;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -36,5 +36,5 @@ public class ContestResponse {
     private ContestStatus status;
 
     @JsonSerialize(using = LowercaseEnumSerializer.class)
-    private ContestType type;
+    private ContestOpenness openness;
 }
