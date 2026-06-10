@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Duration;
 import java.time.Instant;
 
 @Data
@@ -24,6 +25,7 @@ public class ContestDetailsResponse {
     private String description;
     private Instant beginTime;
     private Instant endTime;
+    private Duration remainingTime;
     private String length;
     private boolean historyRank;
 

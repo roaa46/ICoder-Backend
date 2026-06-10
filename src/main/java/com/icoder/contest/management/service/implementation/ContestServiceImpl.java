@@ -189,6 +189,10 @@ public class ContestServiceImpl implements ContestService {
         ContestDetailsResponse response = contestMapper.toContestDetailsDto(contest);
         response.setOwnerId(user.getId());
         response.setOwnerHandle(user.getHandle());
+        Instant now = Instant.now();
+        if (contest.getEndTime() != null && contest.getEndTime().isAfter(now)) {
+            response.setRemainingTime(Duration.between(now, contest.getEndTime()));
+        }
 
         return response;
     }
@@ -252,7 +256,14 @@ public class ContestServiceImpl implements ContestService {
         else spec = spec.and(visibilitySpec);
 
         return contestRepository.findAll(spec, pageable)
-                .map(contestMapper::toContestResponse);
+                .map(contest -> {
+                    ContestResponse response = contestMapper.toContestResponse(contest);
+                    Instant now = Instant.now();
+                    if (contest.getEndTime() != null && contest.getEndTime().isAfter(now)) {
+                        response.setRemainingTime(Duration.between(now, contest.getEndTime()));
+                    }
+                    return response;
+                });
     }
 
     @Transactional

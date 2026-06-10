@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Duration;
 import java.time.Instant;
 
 @Data
@@ -24,7 +25,8 @@ public class ContestResponse {
     private String title;
 
     private Instant beginTime;
-
+    private Instant endTime;
+    private Duration remainingTime;
     private String length;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
