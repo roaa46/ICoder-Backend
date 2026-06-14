@@ -1,9 +1,6 @@
 package com.icoder.contest.management.service.implementation;
 
-import com.icoder.contest.management.dto.ContestDetailsResponse;
-import com.icoder.contest.management.dto.ContestResponse;
-import com.icoder.contest.management.dto.CreateContestRequest;
-import com.icoder.contest.management.dto.ProblemSetResponse;
+import com.icoder.contest.management.dto.*;
 import com.icoder.contest.management.entity.Contest;
 import com.icoder.contest.management.entity.ContestProblemRelation;
 import com.icoder.contest.management.entity.ContestUserRelation;
@@ -24,6 +21,7 @@ import com.icoder.group.management.entity.Group;
 import com.icoder.group.management.entity.UserGroupRole;
 import com.icoder.group.management.enums.Visibility;
 import com.icoder.group.management.repository.GroupRepository;
+import com.icoder.group.management.repository.UserGroupRoleRepository;
 import com.icoder.submission.management.entity.Submission;
 import com.icoder.submission.management.enums.SubmissionVerdict;
 import com.icoder.submission.management.repository.SubmissionRepository;
@@ -37,8 +35,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -59,6 +60,8 @@ public class ContestServiceImpl implements ContestService {
     private final ContestUserRelationRepository contestUserRelationRepository;
     private final ContestProblemRelationRepository contestProblemRelationRepository;
     private final SubmissionRepository submissionRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final UserGroupRoleRepository userGroupRoleRepository;
 
     @Override
     @Transactional
@@ -343,5 +346,38 @@ public class ContestServiceImpl implements ContestService {
 
         contestProblemRelationRepository.save(problemRelation);
         contestUserRelationRepository.save(userRelation);
+    }
+
+    @Override
+    @Transactional
+    public MessageResponse joinProtectedContest(Long contestId, JoinProtectedContestRequest request) {
+        Contest contest = contestRepository.findById(contestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Contest not found with id: " + contestId));
+        if (passwordEncoder.matches(request.password(), contest.getPassword())) {
+            log.info("Contest {} password matched for user {}", contestId, securityUtils.getCurrentUserId());
+            Long userId = securityUtils.getCurrentUserId();
+            ContestUserRelation userRelation = contestUserRelationRepository.findByContestIdAndUserId(contestId, userId)
+                    .orElseGet(() -> ContestUserRelation.builder()
+                            .contest(contest)
+                            .user(userRepository.findById(userId)
+                                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId)))
+                            .role(ContestRole.PARTICIPANT)
+                            .build());
+            userRelation.setRole(ContestRole.PARTICIPANT);
+            contestUserRelationRepository.save(userRelation);
+            return new MessageResponse("Contest joined successfully.");
+        }
+
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid password.");
+    }
+
+    @Override
+    public MessageResponse checkProtectedContestMembership(Long userId, Long groupId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found with id: " + groupId));
+        if (userGroupRoleRepository.existInGroup(userId, groupId)) {
+            return new MessageResponse("User is a member of this group. Forward to contest details.");
+        }
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not a member of this group. Forward to joinProtectedContest.");
     }
 }

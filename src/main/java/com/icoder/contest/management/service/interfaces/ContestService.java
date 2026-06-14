@@ -1,9 +1,6 @@
 package com.icoder.contest.management.service.interfaces;
 
-import com.icoder.contest.management.dto.ContestDetailsResponse;
-import com.icoder.contest.management.dto.ContestResponse;
-import com.icoder.contest.management.dto.CreateContestRequest;
-import com.icoder.contest.management.dto.ProblemSetResponse;
+import com.icoder.contest.management.dto.*;
 import com.icoder.contest.management.enums.ContestOpenness;
 import com.icoder.contest.management.enums.ContestStatus;
 import com.icoder.core.dto.MessageResponse;
@@ -26,4 +23,8 @@ public interface ContestService {
     Page<ContestResponse> viewAllContests(String contestTitle, String groupName, ContestStatus status, ContestOpenness openness, Pageable pageable);
 
     void updateContestStatistics(Long submissionId);
+
+    MessageResponse joinProtectedContest(Long contestId, JoinProtectedContestRequest request);
+
+    MessageResponse checkProtectedContestMembership(Long userId, Long groupId);
 }

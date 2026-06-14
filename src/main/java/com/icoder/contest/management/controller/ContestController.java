@@ -70,6 +70,18 @@ public class ContestController {
         return ResponseEntity.ok(contestService.viewAllContests(title, groupName, status, openness, pageable));
     }
 
+    @PostMapping("/protected/{contestId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse> joinProtectedContest(@PathVariable Long contestId, @RequestBody JoinProtectedContestRequest request) {
+        return ResponseEntity.ok(contestService.joinProtectedContest(contestId, request));
+    }
+
+    @GetMapping("/protected/{userId}/{groupId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse> checkProtectedContestMembership(@PathVariable Long userId, @PathVariable Long groupId) {
+        return ResponseEntity.ok(contestService.checkProtectedContestMembership(userId, groupId));
+    }
+
     @GetMapping("{contestId}/leaderboard")
     public ResponseEntity<List<LeaderboardRowResponse>> getLeaderboard(@PathVariable Long contestId) {
         return ResponseEntity.ok(leaderboardService.getLeaderboard(contestId));
