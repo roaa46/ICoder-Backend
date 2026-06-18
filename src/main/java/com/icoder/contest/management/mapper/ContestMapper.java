@@ -33,6 +33,8 @@ public interface ContestMapper {
 
     @Mapping(target = "id", source = "problem.id")
     @Mapping(target = "origin", source = "problem.problemLink")
+    @Mapping(target = "judgeType", source = "problem.onlineJudge")
+    @Mapping(target = "problemCode", source = "problem.problemCode")
     ProblemSetResponse toProblemSetResponse(ContestProblemRelation relation);
 
     @Mapping(target = "openness", source = "contest.contestOpenness")

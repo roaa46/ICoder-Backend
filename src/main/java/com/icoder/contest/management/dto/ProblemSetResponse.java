@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.icoder.core.utils.LowercaseEnumSerializer;
+import com.icoder.problem.management.enums.OJudgeType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,4 +31,7 @@ public class ProblemSetResponse {
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long problemId;
     private boolean solved;
+    @JsonSerialize(using = LowercaseEnumSerializer.class)
+    private OJudgeType judgeType;
+    private String problemCode;
 }
