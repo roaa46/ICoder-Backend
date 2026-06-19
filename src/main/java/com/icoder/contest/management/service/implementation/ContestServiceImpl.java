@@ -373,8 +373,6 @@ public class ContestServiceImpl implements ContestService {
 
     @Override
     public MessageResponse checkProtectedContestMembership(Long userId, Long groupId) {
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new ResourceNotFoundException("Group not found with id: " + groupId));
         if (userGroupRoleRepository.existInGroup(userId, groupId)) {
             return new MessageResponse("User is a member of this group. Forward to contest details.");
         }

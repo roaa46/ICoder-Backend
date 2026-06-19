@@ -3,6 +3,7 @@ package com.icoder.coding.editor.controller;
 import com.icoder.coding.editor.dto.*;
 import com.icoder.coding.editor.service.interfaces.CodingEditorService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/coding/editor")
+@Tag(name = "Coding Editor")
 @RequiredArgsConstructor
 public class CodingEditorController {
     public static final int FINAL_STATUS_THRESHOLD = 3;

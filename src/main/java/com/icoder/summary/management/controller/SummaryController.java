@@ -17,7 +17,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/summary")
-@Tag(name = "Summary", description = "AI-powered performance summary")
+@Tag(name = "AI Summary Management")
 @RequiredArgsConstructor
 public class SummaryController {
 

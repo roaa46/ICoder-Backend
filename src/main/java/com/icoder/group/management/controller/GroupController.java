@@ -6,6 +6,7 @@ import com.icoder.core.dto.PictureUrlResponse;
 import com.icoder.group.management.dto.*;
 import com.icoder.group.management.service.interfaces.GroupService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,6 +25,7 @@ import java.util.Set;
 
 @Controller
 @RequestMapping("/api/v1/groups")
+@Tag(name = "Group Management")
 @RequiredArgsConstructor
 public class GroupController {
     private final GroupService groupService;
@@ -202,12 +204,14 @@ public class GroupController {
 
     @GetMapping("managed")
     @PreAuthorize(value = "isAuthenticated()")
+    @Operation(summary = "Get managed groups", description = "Retrieve a list of groups the authenticated user manages.")
     public ResponseEntity<Set<ManagedGroupsResponse>> getManagedGroups() {
         return ResponseEntity.ok(groupService.getManagedGroups());
     }
 
     @GetMapping("/{groupId}/contests")
     @PreAuthorize(value = "isAuthenticated()")
+    @Operation(summary = "Get contests in a group", description = "Retrieve a pagination of contests in a specific group.")
     public ResponseEntity<Page<GroupContestsResponse>> getContestsInGroup(@PathVariable Long groupId,
                                                                           @SortDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(groupService.viewContestsInGroup(groupId, pageable));
@@ -215,6 +219,7 @@ public class GroupController {
 
     @GetMapping("/{groupId}/contests/search")
     @PreAuthorize(value = "isAuthenticated()")
+    @Operation(summary = "Search contests by name", description = "Search contests by name in a group.")
     public ResponseEntity<Page<GroupContestsResponse>> searchContestByName(@PathVariable Long groupId,
                                                                            @RequestParam("contest_name") String title,
                                                                            @SortDefault(sort = "beginTime", direction = Sort.Direction.DESC) Pageable pageable) {

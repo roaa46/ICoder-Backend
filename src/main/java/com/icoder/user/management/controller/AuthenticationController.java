@@ -5,6 +5,7 @@ import com.icoder.user.management.dto.auth.*;
 import com.icoder.user.management.service.implementation.LogoutServiceImpl;
 import com.icoder.user.management.service.interfaces.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -18,6 +19,7 @@ import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+@Tag(name = "Authentication Management")
 @RequiredArgsConstructor
 public class AuthenticationController {
     private final AuthenticationService authenticationService;

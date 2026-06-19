@@ -21,7 +21,7 @@ public class StreakController {
     private final StreakService streakService;
 
     @GetMapping()
-    @Operation(summary = "Get User Streak")
+    @Operation(summary = "Get User Streak", description = "Retrieve the current streak of the user")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<StreakResponse> getUserStreak(
             @RequestParam(required = false, defaultValue = "UTC") String timezone) {

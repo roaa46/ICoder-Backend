@@ -1,0 +1,5674 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "ICoder API",
+    "description": "API Documentation for ICoder Project",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:9090",
+      "description": "Generated server url"
+    }
+  ],
+  "paths": {
+    "/api/v1/users/update": {
+      "put": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "Update user profile",
+        "description": "Allows the authenticated user to update their profile details. Requires current password verification.",
+        "operationId": "updateProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/problems": {
+      "get": {
+        "tags": [
+          "Problem Management"
+        ],
+        "summary": "Get all problems with optional filters",
+        "description": "Returns a paginated list of problems. You can optionally filter by OJ, code, or title. Supports sorting and pagination (requires login)",
+        "operationId": "getAllProblems",
+        "parameters": [
+          {
+            "name": "online_judge",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "problemCode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "problemTitle",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageProblemResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Problem Management"
+        ],
+        "summary": "Update favorite status of a problem",
+        "description": "Adds or removes a problem from user's favorites (requires login)",
+        "operationId": "updateFavorite",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FavoriteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/invite/group-response": {
+      "put": {
+        "tags": [
+          "Invitation Management"
+        ],
+        "summary": "Respond to a group invitation",
+        "description": "Respond to a group invitation",
+        "operationId": "respondToGroupInvitation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespondToInvitationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/groups": {
+      "get": {
+        "tags": [
+          "Group Management"
+        ],
+        "summary": "Search groups by name",
+        "description": "Retrieves groups that match the search query with pagination support.",
+        "operationId": "getAllGroups_1",
+        "parameters": [
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageGroupResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Group Management"
+        ],
+        "summary": "Update group details",
+        "description": "Allows group leader to update group information such as name, description, visibility, and contest coordinator type.",
+        "operationId": "updateGroupDetails",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGroupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/groups/{groupId}/join": {
+      "put": {
+        "tags": [
+          "Group Management"
+        ],
+        "summary": "Join a public group",
+        "description": "Allows the authenticated user to join a public group by providing its ID.",
+        "operationId": "joinPublicGroup",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/groups/{groupId}/group-picture": {
+      "get": {
+        "tags": [
+          "Group Management"
+        ],
+        "summary": "View group picture",
+        "description": "Retrieves the URL of the group's profile picture.",
+        "operationId": "viewGroupPicture",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PictureUrlResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Group Management"
+        ],
+        "summary": "Update group picture",
+        "description": "Allows group leader to upload or update the group's profile picture.",
+        "operationId": "updateGroupPicture",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGroupPictureRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Group Management"
+        ],
+        "summary": "Delete group picture",
+        "description": "Allows group leader to remove the group's profile picture.",
+        "operationId": "deleteGroupPicture",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/groups/members/promote": {
+      "put": {
+        "tags": [
+          "Group Management"
+        ],
+        "summary": "Promote member to manager",
+        "description": "Allows group leader to promote a regular member to manager role with additional permissions.",
+        "operationId": "promoteMemberToManager",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupMemberActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/groups/members/demote": {
+      "put": {
+        "tags": [
+          "Group Management"
+        ],
+        "summary": "Demote manager to member",
+        "description": "Allows group leader to demote a manager back to regular member role.",
+        "operationId": "demoteManagerToMember",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupMemberActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/groups/members/add": {
+      "put": {
+        "tags": [
+          "Group Management"
+        ],
+        "summary": "Add member to group",
+        "description": "Allows group leader or manager to add a new member to the group by their user handle.",
+        "operationId": "addMemberToGroup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupMemberActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/groups/join": {
+      "put": {
+        "tags": [
+          "Group Management"
+        ],
+        "summary": "Join group by code",
+        "description": "Allows the authenticated user to join a group using an 8-character invite code.",
+        "operationId": "joinGroupByCode",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/contests/{contestId}": {
+      "get": {
+        "tags": [
+          "Contest Management"
+        ],
+        "summary": "Get contest details",
+        "description": "Retrieves the details of a specific contest.",
+        "operationId": "getContestDetails",
+        "parameters": [
+          {
+            "name": "contestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContestDetailsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Contest Management"
+        ],
+        "summary": "Update an existing contest",
+        "description": "Updates an existing contest with the provided details. Contest coordinators only can update contests.",
+        "operationId": "updateContest",
+        "parameters": [
+          {
+            "name": "contestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateContestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Contest Management"
+        ],
+        "summary": "Delete a contest",
+        "description": "Deletes an existing contest. Contest coordinators only can delete contests.",
+        "operationId": "deleteContest",
+        "parameters": [
+          {
+            "name": "contestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/coding/editor/templates/{id}": {
+      "get": {
+        "tags": [
+          "Coding Editor"
+        ],
+        "summary": "Retrieve a code template by ID",
+        "description": "Returns the details of a single code template using its unique ID (requires login)",
+        "operationId": "getTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodeTemplateResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Coding Editor"
+        ],
+        "summary": "Update an existing code template",
+        "description": "Updates the details of a code template using its ID and returns the updated template (requires login)",
+        "operationId": "editTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodeTemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodeTemplateResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Coding Editor"
+        ],
+        "summary": "Delete a code template",
+        "description": "Deletes the code template identified by the given ID (requires login)",
+        "operationId": "deleteTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/email/request-update": {
+      "post": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "Request email update",
+        "description": "Initiates the email update process by sending a verification link to the new email address. Requires current password verification.",
+        "operationId": "requestEmailUpdate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/email/confirm": {
+      "post": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "Confirm email update",
+        "description": "Completes the email update using the verification token sent to the new email address.",
+        "operationId": "confirmEmailUpdate",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/delete/request": {
+      "post": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "Request account deletion",
+        "description": "Initiates the account deletion process by sending a confirmation link to the user's email.",
+        "operationId": "requestAccountDeletion",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/delete/confirm": {
+      "post": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "Confirm account deletion",
+        "description": "Completes the account deletion process using the token sent to the user's email.",
+        "operationId": "confirmAccountDeletion",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/submissions": {
+      "get": {
+        "tags": [
+          "Submission Management"
+        ],
+        "summary": "Get all submissions with filters (it could be used to reset too)",
+        "description": "Retrieve paginated list of all submissions filtered by ser handle, online judge, problem code, and language",
+        "operationId": "getAllSubmissions",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "online_judge",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "problem_code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "paging",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageSubmissionPageResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Submission Management"
+        ],
+        "summary": "Submit code",
+        "description": "Submit code solution for a problem",
+        "operationId": "submitCode",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmissionCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionCreateResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/submissions/session": {
+      "post": {
+        "tags": [
+          "Submission Management"
+        ],
+        "summary": "Add session id",
+        "description": "add session id to submit with user account",
+        "operationId": "addSession",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionSubmissionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionSubmissionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/submissions/session/update": {
+      "post": {
+        "tags": [
+          "Submission Management"
+        ],
+        "summary": "Update user session id",
+        "description": "update user session id to submit with user account",
+        "operationId": "updateSession",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionSubmissionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionSubmissionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/meetings/quick-session": {
+      "post": {
+        "tags": [
+          "Meeting Management"
+        ],
+        "summary": "Create a quick session",
+        "description": "Creates a quick session with the provided details.",
+        "operationId": "createQuickSession",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuickSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/meetings/official": {
+      "post": {
+        "tags": [
+          "Meeting Management"
+        ],
+        "summary": "Create an official meeting",
+        "description": "Creates an official meeting with the provided details.",
+        "operationId": "createOfficialMeeting",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMeetingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/meetings/join/{roomName}": {
+      "post": {
+        "tags": [
+          "Meeting Management"
+        ],
+        "summary": "Join a meeting",
+        "description": "Joins a meeting with the provided room name.",
+        "operationId": "joinMeeting",
+        "parameters": [
+          {
+            "name": "roomName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/groups/create": {
+      "post": {
+        "tags": [
+          "Group Management"
+        ],
+        "summary": "Create a new group",
+        "description": "Creates a new group with the authenticated user as the owner. Generates a unique group code automatically.",
+        "operationId": "createGroup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGroupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/contests": {
+      "post": {
+        "tags": [
+          "Contest Management"
+        ],
+        "summary": "Create a new contest",
+        "description": "Creates a new contest with the provided details. Contest coordinators only can create contests.",
+        "operationId": "createContest",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateContestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/contests/protected/{contestId}": {
+      "post": {
+        "tags": [
+          "Contest Management"
+        ],
+        "summary": "Join a protected contest",
+        "description": "Allows authenticated users who are not members of the contest's group (non-group members) to join a protected contest using the contest password.",
+        "operationId": "joinProtectedContest",
+        "parameters": [
+          {
+            "name": "contestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinProtectedContestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/coding/editor/templates": {
+      "get": {
+        "tags": [
+          "Coding Editor"
+        ],
+        "summary": "Retrieve all code templates",
+        "description": "Returns a paginated list of all code templates (requires login)",
+        "operationId": "getAllTemplates",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageCodeTemplateResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Coding Editor"
+        ],
+        "summary": "Add a new code template",
+        "description": "Creates a new code template and returns its details along with the resource location (requires login)",
+        "operationId": "addTemplate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodeTemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/coding/editor/submissions": {
+      "post": {
+        "tags": [
+          "Coding Editor"
+        ],
+        "summary": "Submit a single code snippet for execution",
+        "description": "Accepts the source code, language ID, and standard input (stdin). A unique token is returned to poll for results (requires login)",
+        "operationId": "submitCode_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmissionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/coding/editor/submissions/batch": {
+      "get": {
+        "tags": [
+          "Coding Editor"
+        ],
+        "summary": "Retrieve execution results for multiple submissions (Batch Polling Endpoint)",
+        "description": "Retrieves the current status and outputs for a batch of submission tokens. \n\n**Frontend Workflow:** \n1. If this endpoint returns **202 Accepted**, it means **at least one submission** is still in queue or processing. The frontend should wait (e.g., 1-2 seconds) and poll again. \n2. If it returns **200 OK**, all submissions have finished execution (regardless of whether results are 'Accepted', 'Wrong Answer', or 'Error'). \n\n**Note:** Use the `status.id` to distinguish between 'Processing' (< 3) and 'Final' states (>= 3).",
+        "operationId": "getBatchResults",
+        "parameters": [
+          {
+            "name": "tokens",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchSubmissionResult"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Coding Editor"
+        ],
+        "summary": "Submit multiple test cases for a single code snippet in a batch",
+        "description": "Processes a batch request containing source code and multiple test inputs (input/expected output). Returns a list of tokens, one for each submitted test case (requires login)",
+        "operationId": "batchedSubmitCode",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TokenResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/verify/send": {
+      "post": {
+        "tags": [
+          "Authentication Management"
+        ],
+        "summary": "Send email verification link",
+        "description": "Sends a new email containing the verification link to the user's email address.",
+        "operationId": "sendVerificationEmail",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendVerificationEmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": [
+          "Authentication Management"
+        ],
+        "summary": "Register a new user",
+        "description": "Creates a new user account with the provided details and needs to be verified",
+        "operationId": "register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "Authentication Management"
+        ],
+        "summary": "Refresh access token",
+        "description": "Uses the refresh token (sent via cookie) to generate a new access token and update the authentication cookie.",
+        "operationId": "refreshToken",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password/reset": {
+      "post": {
+        "tags": [
+          "Authentication Management"
+        ],
+        "summary": "Reset user password",
+        "description": "Resets the user's password using a valid reset token and a new password.",
+        "operationId": "resetPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password/forget": {
+      "post": {
+        "tags": [
+          "Authentication Management"
+        ],
+        "summary": "Initiate password reset process",
+        "description": "Sends a password reset link to the user's email address.",
+        "operationId": "forgetPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgetPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "Authentication Management"
+        ],
+        "summary": "User logout",
+        "description": "Invalidates the user's session and clears authentication cookies.",
+        "operationId": "logout",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication Management"
+        ],
+        "summary": "User login",
+        "description": "Authenticates a user with handle and password and sets authentication/refresh cookies.",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/profile-picture": {
+      "get": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "View profile picture",
+        "description": "View profile picture for the authenticated user.",
+        "operationId": "viewProfilePicture",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PictureUrlResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "Delete profile picture",
+        "description": "Removes the current profile picture of the authenticated user.",
+        "operationId": "deleteProfilePicture",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "Update profile picture",
+        "description": "Uploads and sets a new profile picture for the authenticated user. Only accepts image file types (PNG, JPEG, JPG, GIF).",
+        "operationId": "updateProfilePicture",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/submissions/{submissionId}/toogle-openness": {
+      "patch": {
+        "tags": [
+          "Submission Management"
+        ],
+        "summary": "Toggle submission openness",
+        "description": "Toggle submission openness (hidden from others or not)",
+        "operationId": "toggleOpenness",
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/{notificationId}/read": {
+      "patch": {
+        "tags": [
+          "Notification Management"
+        ],
+        "summary": "Mark a notification as read",
+        "description": "Mark a specific notification as read.",
+        "operationId": "markAsRead",
+        "parameters": [
+          {
+            "name": "notificationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/read-all": {
+      "patch": {
+        "tags": [
+          "Notification Management"
+        ],
+        "summary": "Mark all notifications as read",
+        "description": "Mark all notifications as read.",
+        "operationId": "markAllAsRead",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/meetings/{meetingId}/end": {
+      "patch": {
+        "tags": [
+          "Meeting Management"
+        ],
+        "summary": "End a meeting",
+        "description": "Ends a meeting with the provided meeting ID.",
+        "operationId": "endMeeting",
+        "parameters": [
+          {
+            "name": "meetingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/coding/editor/templates/{id}/toggle": {
+      "patch": {
+        "tags": [
+          "Coding Editor"
+        ],
+        "summary": "Toggle Template Status",
+        "description": "Toggles the 'enabled' state of a template. If 'force' is false and another template for the same language is already active, it returns a 409 Conflict. If 'force' is true, it deactivates the existing template and activates this one.",
+        "operationId": "toggleTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodeTemplateResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password": {
+      "patch": {
+        "tags": [
+          "Authentication Management"
+        ],
+        "summary": "Change authenticated user's password",
+        "description": "Allows an authenticated user to change their password by providing the old and new passwords.",
+        "operationId": "changePassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users": {
+      "get": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "View user profile",
+        "description": "Retrieves the public profile information for a user identified by their handle.",
+        "operationId": "getProfile",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/summary/{userId}": {
+      "get": {
+        "tags": [
+          "AI Summary Management"
+        ],
+        "summary": "Get AI performance summary",
+        "description": "Aggregates user submissions and returns an AI-generated coaching summary",
+        "operationId": "getSummary",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/summary/{userId}/stats-only": {
+      "get": {
+        "tags": [
+          "AI Summary Management"
+        ],
+        "summary": "Get raw stats only (no AI)",
+        "description": "Returns the aggregated stats without calling the AI — useful for testing",
+        "operationId": "getStatsOnly",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserStatsDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/submissions/{id}": {
+      "get": {
+        "tags": [
+          "Submission Management"
+        ],
+        "summary": "Get submission by ID",
+        "description": "Retrieve a specific submission by its ID",
+        "operationId": "getSubmissionById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/submissions/session/{judgeType}": {
+      "get": {
+        "tags": [
+          "Submission Management"
+        ],
+        "summary": "Get user session by judge type",
+        "description": "get ",
+        "operationId": "getSession",
+        "parameters": [
+          {
+            "name": "judgeType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionSubmissionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/submissions/languages/{oj}": {
+      "get": {
+        "tags": [
+          "Submission Management"
+        ],
+        "summary": "Get languages for online judge",
+        "description": "Retrieve list of languages supported by online judge",
+        "operationId": "getLanguages",
+        "parameters": [
+          {
+            "name": "oj",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LanguageOptionResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/submissions/contests/{contest_id}": {
+      "get": {
+        "tags": [
+          "Submission Management"
+        ],
+        "summary": "Get all submissions for specific contest with filters (it could be used to reset too)",
+        "operationId": "getAllSubmissionsForContest",
+        "parameters": [
+          {
+            "name": "contest_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "handle",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "result",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "problem_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "paging",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageContestSubmissionsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stream/subscribe": {
+      "get": {
+        "tags": [
+          "Stream"
+        ],
+        "summary": "Subscribe to real-time notifications",
+        "description": "Subscribes to real-time notifications from the server.",
+        "operationId": "subscribe",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/SseEmitter"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/problems/{judge_type}/{problem_code}": {
+      "get": {
+        "tags": [
+          "Problem Management"
+        ],
+        "summary": "Get a specific problem",
+        "description": "Returns a specific problem statement by its online judge and problem code (requires login)",
+        "operationId": "getProblem",
+        "parameters": [
+          {
+            "name": "judge_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "problem_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemStatementResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/problems/{judge_type}/{problem_code}/metadata": {
+      "get": {
+        "tags": [
+          "Problem Management"
+        ],
+        "summary": "Get metadata of a specific problem",
+        "description": "Returns a specific problem metadata by its online judge and problem code (e.g., problem title, problem link, contest title, ...) (requires login)",
+        "operationId": "getProblemMetadata",
+        "parameters": [
+          {
+            "name": "judge_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "problem_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/problems/solved": {
+      "get": {
+        "tags": [
+          "Problem Management"
+        ],
+        "summary": "Get all solved problems",
+        "description": "Returns a paginated list of solved problems sorted DESC according to fetched time (requires login)",
+        "operationId": "getSolvedProblems",
+        "parameters": [
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageProblemResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/problems/reset-filters": {
+      "get": {
+        "tags": [
+          "Problem Management"
+        ],
+        "summary": "Get all problems without filters",
+        "description": "Returns a paginated list of problems sorted DESC according to fetched time (requires login)",
+        "operationId": "resetFilters",
+        "parameters": [
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageProblemResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/problems/recrawl/{judge_type}/{problem_code}": {
+      "get": {
+        "tags": [
+          "Problem Management"
+        ],
+        "summary": "Fetch a specific problem",
+        "description": "Fetches a specific problem statement by its online judge and problem code (requires login)",
+        "operationId": "fetchProblem",
+        "parameters": [
+          {
+            "name": "judge_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "problem_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemStatementResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/problems/favorites": {
+      "get": {
+        "tags": [
+          "Problem Management"
+        ],
+        "summary": "Get all favorite problems",
+        "description": "Returns a paginated list of favorite problems sorted DESC according to fetched time (requires login)",
+        "operationId": "getFavoriteProblems",
+        "parameters": [
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageProblemResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/problems/attempted": {
+      "get": {
+        "tags": [
+          "Problem Management"
+        ],
+        "summary": "Get all attempted problems",
+        "description": "Returns a paginated list of attempted problems sorted DESC according to fetched time (requires login)",
+        "operationId": "getAttemptedProblems",
+        "parameters": [
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageProblemResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications": {
+      "get": {
+        "tags": [
+          "Notification Management"
+        ],
+        "summary": "Get my notifications",
+        "description": "Retrieve a list of notifications for the current user.",
+        "operationId": "getMyNotifications",
+        "parameters": [
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageNotificationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/unread-count": {
+      "get": {
+        "tags": [
+          "Notification Management"
+        ],
+        "summary": "Get unread notification count",
+        "description": "Retrieve the count of unread notifications for the current user.",
+        "operationId": "getUnreadCount",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/meetings/group/{groupId}": {
+      "get": {
+        "tags": [
+          "Meeting Management"
+        ],
+        "summary": "Get group meetings",
+        "description": "Retrieves all meetings for a specific group (official & quick session).",
+        "operationId": "getGroupMeetings",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SCHEDULED",
+                "ONGOING",
+                "ENDED"
+              ]
+            }
+          },
+          {
+            "name": "paging",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageMeetingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/groups/{groupId}": {
+      "get": {
+        "tags": [
+          "Group Management"
+        ],
+        "summary": "Get group by ID",
+        "description": "Retrieves a group by its unique ID.",
+        "operationId": "getGroupById",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/groups/{groupId}/members": {
+      "get": {
+        "tags": [
+          "Group Management"
+        ],
+        "summary": "Get all group members",
+        "description": "Retrieves all members of a specific group including their roles with pagination support.",
+        "operationId": "getAllMembers",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageGroupMemberResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Group Management"
+        ],
+        "summary": "Remove member from group",
+        "description": "Allows group leader to remove a member from the group. The group owner cannot be removed.",
+        "operationId": "removeMemberFromGroup",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "userHandle",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/groups/{groupId}/contests": {
+      "get": {
+        "tags": [
+          "Group Management"
+        ],
+        "summary": "Get contests in a group",
+        "description": "Retrieve a pagination of contests in a specific group.",
+        "operationId": "getContestsInGroup",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageGroupContestsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/groups/{groupId}/contests/search": {
+      "get": {
+        "tags": [
+          "Group Management"
+        ],
+        "summary": "Search contests by name",
+        "description": "Search contests by name in a group.",
+        "operationId": "searchContestByName",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "contest_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageGroupContestsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/groups/me": {
+      "get": {
+        "tags": [
+          "Group Management"
+        ],
+        "summary": "Get my groups",
+        "description": "Retrieves all groups that the authenticated user is a member of with pagination support.",
+        "operationId": "getMyGroups",
+        "parameters": [
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageGroupResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/groups/managed": {
+      "get": {
+        "tags": [
+          "Group Management"
+        ],
+        "summary": "Get managed groups",
+        "description": "Retrieve a list of groups the authenticated user manages.",
+        "operationId": "getManagedGroups",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "uniqueItems": true,
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ManagedGroupsResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/contests/{contestId}/problems": {
+      "get": {
+        "tags": [
+          "Contest Management"
+        ],
+        "summary": "Get contest problems",
+        "description": "Retrieves the problems of a specific contest.",
+        "operationId": "getProblemSet",
+        "parameters": [
+          {
+            "name": "contestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "uniqueItems": true,
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProblemSetResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/contests/{contestId}/leaderboard": {
+      "get": {
+        "tags": [
+          "Contest Management"
+        ],
+        "summary": "Get contest leaderboard",
+        "description": "Retrieves the leaderboard of a specific contest.",
+        "operationId": "getLeaderboard",
+        "parameters": [
+          {
+            "name": "contestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LeaderboardRowResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/contests/{contestId}/leaderboard/stream": {
+      "get": {
+        "tags": [
+          "Contest Management"
+        ],
+        "summary": "Stream contest leaderboard",
+        "description": "Streams the leaderboard of a specific contest.",
+        "operationId": "streamLeaderboard",
+        "parameters": [
+          {
+            "name": "contestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/SseEmitter"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/contests/protected/{userId}/{groupId}": {
+      "get": {
+        "tags": [
+          "Contest Management"
+        ],
+        "summary": "Check if a user is a member of a protected contest group",
+        "description": "Checks if a user is a member of a protected contest group.",
+        "operationId": "checkProtectedContestMembership",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/contests/all": {
+      "get": {
+        "tags": [
+          "Contest Management"
+        ],
+        "summary": "Get all contests",
+        "description": "Retrieves a list of all contests with filters.",
+        "operationId": "getAllContests",
+        "parameters": [
+          {
+            "name": "title",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "group_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "RUNNING",
+                "SCHEDULED",
+                "ENDED"
+              ]
+            }
+          },
+          {
+            "name": "contest_openness",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PUBLIC",
+                "PROTECTED",
+                "PRIVATE"
+              ]
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageContestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/coding/editor/templates/active/{languageId}": {
+      "get": {
+        "tags": [
+          "Coding Editor"
+        ],
+        "summary": "Retrieve enabled template with a specific language",
+        "description": "Returns the details of an enabled single code template using language_id",
+        "operationId": "getActiveTemplate",
+        "parameters": [
+          {
+            "name": "languageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodeTemplateResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/coding/editor/submissions/{token}": {
+      "get": {
+        "tags": [
+          "Coding Editor"
+        ],
+        "summary": "Retrieve the execution result (Polling Endpoint)",
+        "description": "Retrieves the current status and output of a submission. \n\n**Frontend Workflow:** \n1. If this endpoint returns **202 Accepted**, it means the code is still in queue or processing. The frontend should wait (e.g., 1-2 seconds) and poll again. \n2. If it returns **200 OK**, the execution is complete (regardless of whether the result is 'Accepted', 'Wrong Answer', or 'Error'). \n\n**Note:** Use the `status.id` to distinguish between 'Processing' (< 3) and 'Final' states (>= 3).",
+        "operationId": "getResult",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/coding/editor/languages": {
+      "get": {
+        "tags": [
+          "Coding Editor"
+        ],
+        "summary": "Retrieve all supported coding languages",
+        "description": "Returns a complete list of languages and their respective IDs available for code submission on the Judge0 platform (doesn't require login)",
+        "operationId": "getLanguages_1",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LanguageResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/coding/editor/language": {
+      "get": {
+        "tags": [
+          "Coding Editor"
+        ],
+        "summary": "Retrieve language details by ID",
+        "description": "Fetches detailed information (name, version) for a specific coding language supported by Judge0 using its unique ID (doesn't require login)",
+        "operationId": "getLanguage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/LanguageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/verify": {
+      "get": {
+        "tags": [
+          "Authentication Management"
+        ],
+        "summary": "Verify user email",
+        "description": "Confirms the user's email address using a verification token sent via email.",
+        "operationId": "verifyEmail",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/activity-streak": {
+      "get": {
+        "tags": [
+          "activity-streak"
+        ],
+        "summary": "Get User Streak",
+        "description": "Retrieve the current streak of the user",
+        "operationId": "getUserStreak",
+        "parameters": [
+          {
+            "name": "timezone",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "UTC"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreakResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/activity-logs/my": {
+      "get": {
+        "tags": [
+          "Activity Logs"
+        ],
+        "summary": "Get My Activity Logs",
+        "description": "Retrieve a paginated list of activity logs for the current user",
+        "operationId": "getMyActivityLogs",
+        "parameters": [
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          },
+          {
+            "name": "verdict",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "ACCEPTED",
+                "WRONG_ANSWER",
+                "IN_QUEUE",
+                "COMPILATION_ERROR",
+                "RUNTIME_ERROR",
+                "TIME_LIMIT_EXCEEDED",
+                "FAILED",
+                "RUNNING",
+                "MEMORY_LIMIT_EXCEEDED",
+                "FAILED_TO_SUBMIT"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageActivityLogResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/activity-logs/grid": {
+      "get": {
+        "tags": [
+          "Activity Logs"
+        ],
+        "summary": "Get Activity Grid",
+        "description": "Retrieve a list of activity grid data for the current user",
+        "operationId": "getActivityGrid",
+        "parameters": [
+          {
+            "name": "year",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "timezone",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "UTC"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ActivityGridResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/submissions/session/{id}": {
+      "delete": {
+        "tags": [
+          "Submission Management"
+        ],
+        "summary": "Delete user session user",
+        "operationId": "deleteSession",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/read": {
+      "delete": {
+        "tags": [
+          "Notification Management"
+        ],
+        "summary": "Delete read notifications",
+        "description": "Delete all read notifications for the current user.",
+        "operationId": "deleteReadNotifications",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UpdateUserProfileRequest": {
+        "required": [
+          "current_password"
+        ],
+        "type": "object",
+        "properties": {
+          "current_password": {
+            "type": "string"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "school": {
+            "type": "string"
+          }
+        }
+      },
+      "MessageResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "FavoriteRequest": {
+        "required": [
+          "problem_id"
+        ],
+        "type": "object",
+        "properties": {
+          "problem_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "is_favourite": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RespondToInvitationRequest": {
+        "required": [
+          "response",
+          "token"
+        ],
+        "type": "object",
+        "properties": {
+          "response": {
+            "type": "string",
+            "enum": [
+              "ACCEPTED",
+              "REJECTED"
+            ]
+          },
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateGroupRequest": {
+        "required": [
+          "group_id"
+        ],
+        "type": "object",
+        "properties": {
+          "group_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "PUBLIC",
+              "PRIVATE"
+            ]
+          },
+          "code_enabled": {
+            "type": "boolean"
+          },
+          "contest_coordinator_type": {
+            "type": "string",
+            "enum": [
+              "LEADER",
+              "LEADER_MANAGER",
+              "ALL_MEMBERS"
+            ]
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateGroupPictureRequest": {
+        "required": [
+          "group_id"
+        ],
+        "type": "object",
+        "properties": {
+          "group_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "picture": {
+            "type": "string",
+            "format": "binary"
+          }
+        }
+      },
+      "GroupMemberActionRequest": {
+        "required": [
+          "group_id",
+          "user_handle"
+        ],
+        "type": "object",
+        "properties": {
+          "user_handle": {
+            "type": "string"
+          },
+          "group_id": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "CreateContestRequest": {
+        "required": [
+          "length",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "group_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "begin_time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "length": {
+            "pattern": "^\\d{1,3}:\\d{2}:\\d{2}$",
+            "type": "string"
+          },
+          "contest_type": {
+            "type": "string",
+            "enum": [
+              "CLASSICAL",
+              "GROUP"
+            ]
+          },
+          "contest_openness": {
+            "type": "string",
+            "enum": [
+              "PUBLIC",
+              "PROTECTED",
+              "PRIVATE"
+            ]
+          },
+          "password": {
+            "type": "string"
+          },
+          "history_rank": {
+            "type": "boolean"
+          },
+          "problem_set": {
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProblemSetRequest"
+            }
+          }
+        }
+      },
+      "ProblemSetRequest": {
+        "required": [
+          "problem_alias"
+        ],
+        "type": "object",
+        "properties": {
+          "problem_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "problem_alias": {
+            "type": "string"
+          },
+          "problem_weight": {
+            "type": "string"
+          }
+        }
+      },
+      "CodeTemplateRequest": {
+        "required": [
+          "code",
+          "created_and_updated_at",
+          "language_id",
+          "template_name"
+        ],
+        "type": "object",
+        "properties": {
+          "template_name": {
+            "type": "string"
+          },
+          "language_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "code": {
+            "type": "string"
+          },
+          "created_and_updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CodeTemplateResponse": {
+        "type": "object",
+        "properties": {
+          "template_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "template_name": {
+            "type": "string"
+          },
+          "language_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "code": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "created_and_updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "monaco_name": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateEmailRequest": {
+        "required": [
+          "current_password",
+          "new_email"
+        ],
+        "type": "object",
+        "properties": {
+          "new_email": {
+            "type": "string"
+          },
+          "current_password": {
+            "type": "string"
+          }
+        }
+      },
+      "SubmissionCreateRequest": {
+        "required": [
+          "code",
+          "language",
+          "online_judge",
+          "problem_code"
+        ],
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "problem_code": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "online_judge": {
+            "type": "string",
+            "enum": [
+              "CODEFORCES",
+              "GYM",
+              "AT_CODER",
+              "CSES"
+            ]
+          },
+          "opened": {
+            "type": "boolean"
+          },
+          "submission_method": {
+            "type": "string",
+            "enum": [
+              "BOT",
+              "SESSION"
+            ]
+          },
+          "contest_id": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "SubmissionCreateResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "remoteRunId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CREATED",
+              "QUEUED",
+              "SUBMITTING",
+              "JUDGING",
+              "COMPLETED",
+              "FAILED"
+            ]
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACCEPTED",
+              "WRONG_ANSWER",
+              "IN_QUEUE",
+              "COMPILATION_ERROR",
+              "RUNTIME_ERROR",
+              "TIME_LIMIT_EXCEEDED",
+              "FAILED",
+              "RUNNING",
+              "MEMORY_LIMIT_EXCEEDED",
+              "FAILED_TO_SUBMIT"
+            ]
+          },
+          "timeUsage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "memoryUsage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "problemCode": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SessionSubmissionRequest": {
+        "required": [
+          "session_data"
+        ],
+        "type": "object",
+        "properties": {
+          "session_data": {
+            "type": "string"
+          },
+          "online_judge": {
+            "type": "string",
+            "enum": [
+              "CODEFORCES",
+              "GYM",
+              "AT_CODER",
+              "CSES"
+            ]
+          }
+        }
+      },
+      "SessionSubmissionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "QuickSessionRequest": {
+        "required": [
+          "group_id",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "group_id": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "MeetingResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "room_name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "GENERAL",
+              "HELPDESK",
+              "EDITORIAL",
+              "QUICK_SESSION"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SCHEDULED",
+              "ONGOING",
+              "ENDED"
+            ]
+          },
+          "official": {
+            "type": "boolean"
+          },
+          "scheduled_start_time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "creator_handle": {
+            "type": "string"
+          },
+          "creator_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ended_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateMeetingRequest": {
+        "required": [
+          "group_id",
+          "instant",
+          "meeting_type"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "meeting_type": {
+            "type": "string",
+            "enum": [
+              "GENERAL",
+              "HELPDESK",
+              "EDITORIAL",
+              "QUICK_SESSION"
+            ]
+          },
+          "group_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "contest_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instant": {
+            "type": "boolean"
+          },
+          "scheduled_start_time": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateGroupRequest": {
+        "required": [
+          "code_enabled",
+          "contest_coordinator_type",
+          "description",
+          "name",
+          "visibility"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "PUBLIC",
+              "PRIVATE"
+            ]
+          },
+          "code_enabled": {
+            "type": "boolean"
+          },
+          "contest_coordinator_type": {
+            "type": "string",
+            "enum": [
+              "LEADER",
+              "LEADER_MANAGER",
+              "ALL_MEMBERS"
+            ]
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "JoinProtectedContestRequest": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "SubmissionRequest": {
+        "type": "object",
+        "properties": {
+          "source_code": {
+            "type": "string"
+          },
+          "language_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "stdin": {
+            "type": "string"
+          }
+        }
+      },
+      "TokenResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "BatchRunRequest": {
+        "type": "object",
+        "properties": {
+          "source_code": {
+            "type": "string"
+          },
+          "language_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "test_inputs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TestInput"
+            }
+          }
+        }
+      },
+      "TestInput": {
+        "type": "object",
+        "properties": {
+          "input": {
+            "type": "string"
+          },
+          "expected_output": {
+            "type": "string"
+          }
+        }
+      },
+      "SendVerificationEmailRequest": {
+        "required": [
+          "handle"
+        ],
+        "type": "object",
+        "properties": {
+          "handle": {
+            "type": "string"
+          }
+        }
+      },
+      "RegisterRequest": {
+        "required": [
+          "email",
+          "handle",
+          "nickname",
+          "password",
+          "password_confirmation"
+        ],
+        "type": "object",
+        "properties": {
+          "handle": {
+            "maxLength": 20,
+            "minLength": 3,
+            "pattern": "^[a-z][a-z0-9_]{2,19}$",
+            "type": "string"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$",
+            "type": "string"
+          },
+          "password_confirmation": {
+            "type": "string"
+          },
+          "school": {
+            "type": "string"
+          }
+        }
+      },
+      "ResetPasswordRequest": {
+        "required": [
+          "confirmation_password",
+          "new_password",
+          "token"
+        ],
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "new_password": {
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$",
+            "type": "string"
+          },
+          "confirmation_password": {
+            "type": "string"
+          }
+        }
+      },
+      "ForgetPasswordRequest": {
+        "required": [
+          "email"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "LoginRequest": {
+        "required": [
+          "handle",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "handle": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "access_token": {
+            "type": "string"
+          },
+          "refresh_token": {
+            "type": "string"
+          }
+        }
+      },
+      "ChangePasswordRequest": {
+        "required": [
+          "current_password",
+          "new_password",
+          "password_confirmation"
+        ],
+        "type": "object",
+        "properties": {
+          "current_password": {
+            "type": "string"
+          },
+          "new_password": {
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$",
+            "type": "string"
+          },
+          "password_confirmation": {
+            "type": "string"
+          }
+        }
+      },
+      "UserProfileResponse": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "school": {
+            "type": "string"
+          },
+          "picture_url": {
+            "type": "string"
+          },
+          "verified": {
+            "type": "boolean"
+          },
+          "accepted_count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "attempted_count": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PictureUrlResponse": {
+        "type": "object",
+        "properties": {
+          "picture_url": {
+            "type": "string"
+          }
+        }
+      },
+      "UserStatsDto": {
+        "type": "object",
+        "properties": {
+          "totalSubmissions": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "overallAcRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "recentAcRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "tleCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rteCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mleCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "compilationErrorCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "strengths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "weaknesses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "mostUsedLanguage": {
+            "type": "string"
+          }
+        }
+      },
+      "Pageable": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "PageSubmissionPageResponse": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubmissionPageResponse"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageableObject": {
+        "type": "object",
+        "properties": {
+          "paged": {
+            "type": "boolean"
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unpaged": {
+            "type": "boolean"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          }
+        }
+      },
+      "SortObject": {
+        "type": "object",
+        "properties": {
+          "sorted": {
+            "type": "boolean"
+          },
+          "unsorted": {
+            "type": "boolean"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SubmissionPageResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "userHandle": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "onlineJudge": {
+            "type": "string",
+            "enum": [
+              "CODEFORCES",
+              "GYM",
+              "AT_CODER",
+              "CSES"
+            ]
+          },
+          "problemCode": {
+            "type": "string"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACCEPTED",
+              "WRONG_ANSWER",
+              "IN_QUEUE",
+              "COMPILATION_ERROR",
+              "RUNTIME_ERROR",
+              "TIME_LIMIT_EXCEEDED",
+              "FAILED",
+              "RUNNING",
+              "MEMORY_LIMIT_EXCEEDED",
+              "FAILED_TO_SUBMIT"
+            ]
+          },
+          "language": {
+            "type": "string"
+          },
+          "timeUsage": {
+            "type": "string"
+          },
+          "memoryUsage": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isOpen": {
+            "type": "boolean"
+          },
+          "remoteRunId": {
+            "type": "string"
+          }
+        }
+      },
+      "SubmissionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "remoteRunId": {
+            "type": "string"
+          },
+          "onlineJudge": {
+            "type": "string",
+            "enum": [
+              "CODEFORCES",
+              "GYM",
+              "AT_CODER",
+              "CSES"
+            ]
+          },
+          "language": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "memoryUsage": {
+            "type": "string"
+          },
+          "timeUsage": {
+            "type": "string"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACCEPTED",
+              "WRONG_ANSWER",
+              "IN_QUEUE",
+              "COMPILATION_ERROR",
+              "RUNTIME_ERROR",
+              "TIME_LIMIT_EXCEEDED",
+              "FAILED",
+              "RUNNING",
+              "MEMORY_LIMIT_EXCEEDED",
+              "FAILED_TO_SUBMIT"
+            ]
+          },
+          "isOpen": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CREATED",
+              "QUEUED",
+              "SUBMITTING",
+              "JUDGING",
+              "COMPLETED",
+              "FAILED"
+            ]
+          },
+          "problemCode": {
+            "type": "string"
+          },
+          "userHandle": {
+            "type": "string"
+          }
+        }
+      },
+      "LanguageOptionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "display_name": {
+            "type": "string"
+          }
+        }
+      },
+      "ContestSubmissionsResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "userHandle": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "onlineJudge": {
+            "type": "string",
+            "enum": [
+              "CODEFORCES",
+              "GYM",
+              "AT_CODER",
+              "CSES"
+            ]
+          },
+          "problemId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "problemAlias": {
+            "type": "string"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACCEPTED",
+              "WRONG_ANSWER",
+              "IN_QUEUE",
+              "COMPILATION_ERROR",
+              "RUNTIME_ERROR",
+              "TIME_LIMIT_EXCEEDED",
+              "FAILED",
+              "RUNNING",
+              "MEMORY_LIMIT_EXCEEDED",
+              "FAILED_TO_SUBMIT"
+            ]
+          },
+          "language": {
+            "type": "string"
+          },
+          "timeUsage": {
+            "type": "string"
+          },
+          "memoryUsage": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isOpen": {
+            "type": "boolean"
+          },
+          "remoteRunId": {
+            "type": "string"
+          }
+        }
+      },
+      "PageContestSubmissionsResponse": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContestSubmissionsResponse"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SseEmitter": {
+        "type": "object",
+        "properties": {
+          "timeout": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PageProblemResponse": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProblemResponse"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ProblemResponse": {
+        "type": "object",
+        "properties": {
+          "problem_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "problem_code": {
+            "type": "string"
+          },
+          "problem_link": {
+            "type": "string"
+          },
+          "online_judge": {
+            "type": "string",
+            "enum": [
+              "CODEFORCES",
+              "GYM",
+              "AT_CODER",
+              "CSES"
+            ]
+          },
+          "contest_title": {
+            "type": "string"
+          },
+          "contest_link": {
+            "type": "string"
+          },
+          "problem_title": {
+            "type": "string"
+          },
+          "solved_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fetched_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "is_solved": {
+            "type": "boolean"
+          },
+          "is_attempted": {
+            "type": "boolean"
+          },
+          "is_favorite": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ContentScrapeDTO": {
+        "type": "object",
+        "properties": {
+          "content_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "content": {
+            "type": "string"
+          },
+          "format_type": {
+            "type": "string",
+            "enum": [
+              "HTML",
+              "PLAIN_TEXT"
+            ]
+          },
+          "order_index": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ProblemStatementResponse": {
+        "type": "object",
+        "properties": {
+          "problem_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "problem_code": {
+            "type": "string"
+          },
+          "problem_link": {
+            "type": "string"
+          },
+          "online_judge": {
+            "type": "string",
+            "enum": [
+              "CODEFORCES",
+              "GYM",
+              "AT_CODER",
+              "CSES"
+            ]
+          },
+          "contest_title": {
+            "type": "string"
+          },
+          "contest_link": {
+            "type": "string"
+          },
+          "problem_title": {
+            "type": "string"
+          },
+          "solved_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attempted_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SectionScrapeDTO"
+            }
+          },
+          "properties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PropertyScrapeDTO"
+            }
+          }
+        }
+      },
+      "PropertyScrapeDTO": {
+        "type": "object",
+        "properties": {
+          "property_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "order_index": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "spoiler": {
+            "type": "boolean"
+          },
+          "content_type": {
+            "type": "string"
+          }
+        }
+      },
+      "SectionScrapeDTO": {
+        "type": "object",
+        "properties": {
+          "section_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "order_index": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "contents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContentScrapeDTO"
+            }
+          }
+        }
+      },
+      "NotificationResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "message": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "INVITATION",
+              "JOIN_REQUEST",
+              "CONTEST_UPDATE",
+              "MEETING_REMINDER",
+              "SYSTEM"
+            ]
+          },
+          "action_url": {
+            "type": "string"
+          },
+          "target_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "read": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageNotificationResponse": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationResponse"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageMeetingResponse": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MeetingResponse"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GroupResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "PUBLIC",
+              "PRIVATE"
+            ]
+          },
+          "contest_coordinator_type": {
+            "type": "string",
+            "enum": [
+              "LEADER",
+              "LEADER_MANAGER",
+              "ALL_MEMBERS"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "picture_url": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "group_members_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "owner_id": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PageGroupResponse": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupResponse"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GroupMemberResponse": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "picture_url": {
+            "type": "string"
+          },
+          "verified": {
+            "type": "boolean"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "MEMBER",
+              "MANAGER",
+              "OWNER"
+            ]
+          }
+        }
+      },
+      "PageGroupMemberResponse": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupMemberResponse"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GroupContestsResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "participants_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "begin_time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "length": {
+            "type": "string"
+          }
+        }
+      },
+      "PageGroupContestsResponse": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupContestsResponse"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ManagedGroupsResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "ContestDetailsResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "begin_time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "remaining_time": {
+            "type": "object",
+            "properties": {
+              "seconds": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "zero": {
+                "type": "boolean"
+              },
+              "nano": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "negative": {
+                "type": "boolean"
+              },
+              "units": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "durationEstimated": {
+                      "type": "boolean"
+                    },
+                    "timeBased": {
+                      "type": "boolean"
+                    },
+                    "dateBased": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "length": {
+            "type": "string"
+          },
+          "history_rank": {
+            "type": "boolean"
+          },
+          "contest_status": {
+            "type": "string",
+            "enum": [
+              "RUNNING",
+              "SCHEDULED",
+              "ENDED"
+            ]
+          },
+          "contest_type": {
+            "type": "string",
+            "enum": [
+              "CLASSICAL",
+              "GROUP"
+            ]
+          },
+          "owner_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "owner_handle": {
+            "type": "string"
+          },
+          "group_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "group_name": {
+            "type": "string"
+          }
+        }
+      },
+      "ProblemSetResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "problem_alias": {
+            "type": "string"
+          },
+          "solved_count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "attempted_count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          },
+          "origin": {
+            "type": "string"
+          },
+          "problem_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "solved": {
+            "type": "boolean"
+          },
+          "judge_type": {
+            "type": "string",
+            "enum": [
+              "CODEFORCES",
+              "GYM",
+              "AT_CODER",
+              "CSES"
+            ]
+          },
+          "problem_code": {
+            "type": "string"
+          }
+        }
+      },
+      "LeaderboardRowResponse": {
+        "type": "object",
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "totalScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPenalty": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "problemResults": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ProblemResultDto"
+            }
+          }
+        }
+      },
+      "ProblemResultDto": {
+        "type": "object",
+        "properties": {
+          "solved": {
+            "type": "boolean"
+          },
+          "solvedTime": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "wrongAttempts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "firstAccepted": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ContestResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "begin_time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "remaining_time": {
+            "type": "object",
+            "properties": {
+              "seconds": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "zero": {
+                "type": "boolean"
+              },
+              "nano": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "negative": {
+                "type": "boolean"
+              },
+              "units": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "durationEstimated": {
+                      "type": "boolean"
+                    },
+                    "timeBased": {
+                      "type": "boolean"
+                    },
+                    "dateBased": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "length": {
+            "type": "string"
+          },
+          "group_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "group_name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "RUNNING",
+              "SCHEDULED",
+              "ENDED"
+            ]
+          },
+          "openness": {
+            "type": "string",
+            "enum": [
+              "PUBLIC",
+              "PROTECTED",
+              "PRIVATE"
+            ]
+          }
+        }
+      },
+      "PageContestResponse": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContestResponse"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageCodeTemplateResponse": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CodeTemplateResponse"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Status": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "SubmissionResult": {
+        "type": "object",
+        "properties": {
+          "stdout": {
+            "type": "string"
+          },
+          "time": {
+            "type": "number",
+            "format": "float"
+          },
+          "memory": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          },
+          "compile_output": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          }
+        }
+      },
+      "BatchSubmissionResult": {
+        "type": "object",
+        "properties": {
+          "submissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubmissionResult"
+            }
+          }
+        }
+      },
+      "LanguageResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "source_file": {
+            "type": "string"
+          },
+          "compile_cmd": {
+            "type": "string"
+          },
+          "run_cmd": {
+            "type": "string"
+          },
+          "monaco_name": {
+            "type": "string"
+          },
+          "archived": {
+            "type": "boolean"
+          }
+        }
+      },
+      "StreakResponse": {
+        "type": "object",
+        "properties": {
+          "current_streak": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_streak": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "last_accepted_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "today_utc": {
+            "type": "string"
+          }
+        }
+      },
+      "ActivityLogResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "user_handle": {
+            "type": "string"
+          },
+          "activity_type": {
+            "type": "string",
+            "enum": [
+              "SUBMISSION",
+              "JOIN",
+              "SOLVED_PROBLEM"
+            ]
+          },
+          "entity_type": {
+            "type": "string"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACCEPTED",
+              "WRONG_ANSWER",
+              "IN_QUEUE",
+              "COMPILATION_ERROR",
+              "RUNTIME_ERROR",
+              "TIME_LIMIT_EXCEEDED",
+              "FAILED",
+              "RUNNING",
+              "MEMORY_LIMIT_EXCEEDED",
+              "FAILED_TO_SUBMIT"
+            ]
+          },
+          "entity_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PageActivityLogResponse": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityLogResponse"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ActivityGridResponse": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "accepted_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attempted_count": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
