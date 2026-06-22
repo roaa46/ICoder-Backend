@@ -188,13 +188,6 @@ public class SubmissionUtils {
             Contest contest = contestRepository.findById(request.getContestId())
                     .orElseThrow(() -> new ResourceNotFoundException("Contest not found"));
 
-            boolean isParticipant = contestUserRelationRepository
-                    .findByContestIdAndUserId(contest.getId(), currentUser.getId())
-                    .isPresent();
-            if (!isParticipant) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not participating in this contest");
-            }
-
             if (contest.getContestStatus() == ContestStatus.SCHEDULED)
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Contest is not yet started");
             boolean isProblemInContest = contestProblemRelationRepository
