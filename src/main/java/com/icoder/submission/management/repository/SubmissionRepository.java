@@ -59,4 +59,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long>, J
     Set<Long> findSolvedProblemIdsByUserIdAndContestId(
             @Param("userId") Long userId,
             @Param("contestId") Long contestId);
+
+    boolean existsByUserIdAndProblemIdAndContestIdAndVerdict(Long userId, Long problemId, Long contestId, SubmissionVerdict verdict);
 }

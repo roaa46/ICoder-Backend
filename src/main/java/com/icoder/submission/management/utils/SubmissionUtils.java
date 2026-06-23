@@ -4,10 +4,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icoder.coding.editor.utils.LanguageMatcher;
 import com.icoder.contest.management.entity.Contest;
+import com.icoder.contest.management.entity.ContestProblemRelation;
 import com.icoder.contest.management.enums.ContestStatus;
 import com.icoder.contest.management.repository.ContestProblemRelationRepository;
 import com.icoder.contest.management.repository.ContestRepository;
-import com.icoder.contest.management.repository.ContestUserRelationRepository;
 import com.icoder.core.exception.ResourceNotFoundException;
 import com.icoder.problem.management.entity.Problem;
 import com.icoder.problem.management.entity.ProblemUserRelation;
@@ -51,7 +51,6 @@ public class SubmissionUtils {
     private final UserRepository userRepository;
     private final UserJudgeSessionRepository sessionRepository;
     private final ContestRepository contestRepository;
-    private final ContestUserRelationRepository contestUserRelationRepository;
     private final ContestProblemRelationRepository contestProblemRelationRepository;
 
     public void handleFailure(Long id) {
@@ -245,6 +244,39 @@ public class SubmissionUtils {
             });
         } else {
             log.info("Problem already marked as solved for this user.");
+        }
+    }
+
+    @Transactional
+    public void updateContestProblemRelation(Submission submission) {
+        Contest contest = submission.getContest();
+        if (contest == null) {
+            return;
+        }
+
+        Long userId = submission.getUser().getId();
+        Long problemId = submission.getProblem().getId();
+        Long contestId = contest.getId();
+
+        boolean alreadySolved = submissionRepository.existsByUserIdAndProblemIdAndContestIdAndVerdict(
+                userId, problemId, contestId, SubmissionVerdict.ACCEPTED);
+
+        if (alreadySolved) {
+            log.info("User {} already solved problem {} in contest {}, skipping counters", userId, problemId, contestId);
+            return;
+        }
+
+        ContestProblemRelation relation = contestProblemRelationRepository
+                .findByContestIdAndProblemId(contestId, problemId)
+                .orElseThrow(() -> new ResourceNotFoundException("Contest-Problem relation not found"));
+
+        contestProblemRelationRepository.incrementAttempted(relation.getId());
+
+        if (submission.getVerdict() == SubmissionVerdict.ACCEPTED) {
+            contestProblemRelationRepository.incrementSolved(relation.getId());
+            if (relation.getFirstAcceptedSubmission() == null) {
+                contestProblemRelationRepository.setFirstAcceptedSubmission(relation.getId(), submission.getId());
+            }
         }
     }
 

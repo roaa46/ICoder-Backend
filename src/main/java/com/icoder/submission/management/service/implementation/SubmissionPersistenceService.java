@@ -64,6 +64,10 @@ public class SubmissionPersistenceService {
             submissionUtils.updateRelationAsSolved(submission);
         }
 
+        if (submissionUtils.isFinalVerdict(result.verdict()) && result.verdict() != SubmissionVerdict.FAILED) {
+            submissionUtils.updateContestProblemRelation(submission);
+        }
+
         if (account != null)
             releaseAccount(account);
         log.info("Submission {} finalized with verdict {}", submissionId, result.verdict());
