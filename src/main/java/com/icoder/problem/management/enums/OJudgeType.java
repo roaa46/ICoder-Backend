@@ -18,7 +18,7 @@ public enum OJudgeType {
         return switch (value.trim().toLowerCase()) {
             case "codeforces", "cf" -> CODEFORCES;
             case "gym" -> GYM;
-            case "atcoder", "ac" -> AT_CODER;
+            case "atcoder", "ac", "at_coder" -> AT_CODER;
             case "cses" -> CSES;
             default -> throw new OnlineJudgeException("Unknown online judge: " + value);
         };

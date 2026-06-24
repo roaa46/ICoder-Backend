@@ -295,7 +295,14 @@ public class ContestServiceImpl implements ContestService {
 
         ContestUserRelation userRelation = contestUserRelationRepository
                 .findByContestIdAndUserId(contest.getId(), submission.getUser().getId())
-                .orElseThrow();
+                .orElseGet(() -> {
+                    ContestUserRelation newRel = ContestUserRelation.builder()
+                            .contest(contest)
+                            .user(submission.getUser())
+                            .role(ContestRole.PARTICIPANT)
+                            .build();
+                    return contestUserRelationRepository.save(newRel);
+                });
 
         problemRelation.setAttemptedCount(problemRelation.getAttemptedCount() + 1);
 

@@ -29,6 +29,8 @@ public interface ContestMapper {
     @Mapping(target = "groupId", source = "contest.group.id")
     @Mapping(target = "groupName", source = "contest.group.name")
     @Mapping(target = "remainingTime", ignore = true)
+    @Mapping(target = "openness", source = "contest.contestOpenness")
+    @Mapping(target = "contestType", source = "contest.contestType")
     ContestDetailsResponse toContestDetailsDto(Contest contest);
 
     @Mapping(target = "id", source = "problem.id")
@@ -43,5 +45,6 @@ public interface ContestMapper {
     @Mapping(target = "groupId", source = "contest.group.id")
     @Mapping(target = "groupName", source = "contest.group.name")
     @Mapping(target = "remainingTime", ignore = true)
+    @Mapping(target = "contestType", source = "contest.contestType")
     ContestResponse toContestResponse(Contest contest);
 }
