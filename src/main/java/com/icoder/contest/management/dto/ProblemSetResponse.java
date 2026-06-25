@@ -34,4 +34,5 @@ public class ProblemSetResponse {
     @JsonSerialize(using = LowercaseEnumSerializer.class)
     private OJudgeType judgeType;
     private String problemCode;
+    private int problemNumber;
 }

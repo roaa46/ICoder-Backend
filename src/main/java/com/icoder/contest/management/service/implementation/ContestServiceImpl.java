@@ -43,9 +43,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -201,28 +202,33 @@ public class ContestServiceImpl implements ContestService {
     }
 
     @Override
-    public Set<ProblemSetResponse> viewProblemSet(Long contestId) {
+    public List<ProblemSetResponse> viewProblemSet(Long contestId) {
         Contest contest = contestRepository.findByIdWithGroupAndProblems(contestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Contest not found with id: " + contestId));
-
         Long userId = securityUtils.getCurrentUserId();
         Set<Long> solvedProblemIds = submissionRepository.findSolvedProblemIdsByUserIdAndContestId(userId, contestId);
         boolean isCoordinator = contestUtils.isUserContestCoordinator(userId, contest.getGroup());
         contestUtils.validateAccessWithRole(contest, isCoordinator);
-
         boolean isContestRunning = contestUtils.checkIfContestRunning(contest);
 
-        return contest.getProblemRelation().stream()
-                .map(relation -> {
-                    ProblemSetResponse response = contestMapper.toProblemSetResponse(relation);
-                    response.setSolved(solvedProblemIds.contains(relation.getProblem().getId()));
-                    if (isContestRunning && !isCoordinator) {
-                        response.setOrigin(null);
-                    }
-                    String title = relation.getProblem().getProblemTitle();
-                    response.setTitle(relation.getProblemAlias() != null && !relation.getProblemAlias().isEmpty() ? response.getProblemAlias() : title);
-                    return response;
-                }).collect(Collectors.toSet());
+        List<ContestProblemRelation> sortedRelations = contest.getProblemRelation().stream()
+                .sorted(Comparator.comparing(ContestProblemRelation::getId))
+                .toList();
+
+        List<ProblemSetResponse> result = new ArrayList<>();
+        for (int i = 0; i < sortedRelations.size(); i++) {
+            ContestProblemRelation relation = sortedRelations.get(i);
+            ProblemSetResponse response = contestMapper.toProblemSetResponse(relation);
+            response.setSolved(solvedProblemIds.contains(relation.getProblem().getId()));
+            if (isContestRunning && !isCoordinator) {
+                response.setOrigin(null);
+            }
+            String title = relation.getProblem().getProblemTitle();
+            response.setTitle(relation.getProblemAlias() != null && !relation.getProblemAlias().isEmpty() ? response.getProblemAlias() : title);
+            response.setProblemNumber((char) ('A' + i));
+            result.add(response);
+        }
+        return result;
     }
 
     @Override

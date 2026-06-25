@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/api/v1/contests")
@@ -63,7 +62,7 @@ public class ContestController {
     @GetMapping("/{contestId}/problems")
     @PreAuthorize(value = "isAuthenticated()")
     @Operation(summary = "Get contest problems", description = "Retrieves the problems of a specific contest.")
-    public ResponseEntity<Set<ProblemSetResponse>> getProblemSet(@PathVariable Long contestId) {
+    public ResponseEntity<List<ProblemSetResponse>> getProblemSet(@PathVariable Long contestId) {
         return ResponseEntity.ok(contestService.viewProblemSet(contestId));
     }
 

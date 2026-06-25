@@ -53,7 +53,6 @@ public class LeaderboardServiceImpl implements LeaderboardService {
                                 Collectors.groupingBy(SubmissionSummary::getProblemId)));
 
         List<LeaderboardRowResponse> leaderboard = new ArrayList<>();
-        int currentRank = 1;
 
         for (ContestUserRelation relation : participants) {
             Long userId = relation.getUser().getId();
@@ -61,7 +60,10 @@ public class LeaderboardServiceImpl implements LeaderboardService {
 
             if (userSubs.isEmpty()) continue;
 
-            Map<String, ProblemResultDto> problemResults = new HashMap<>();
+            Map<String, ProblemResultDto> problemResults = new LinkedHashMap<>();
+
+            int totalScore = 0;
+            int totalPenalty = 0;
 
             for (int i = 0; i < problems.size(); i++) {
                 ContestProblemRelation probRel = problems.get(i);
@@ -99,17 +101,48 @@ public class LeaderboardServiceImpl implements LeaderboardService {
                             .firstAccepted(isFirstAccepted)
                             .build());
                 }
+
+                if (solved) {
+                    totalScore++;
+                    totalPenalty += (int) solvedTime + (wrongAttempts * 20);
+                }
             }
 
             leaderboard.add(LeaderboardRowResponse.builder()
-                    .rank(currentRank++)
                     .userId(userId)
                     .handle(relation.getUser().getHandle())
-                    .totalScore(relation.getScore())
-                    .totalPenalty(relation.getPenalty())
+                    .totalScore(totalScore)
+                    .totalPenalty(totalPenalty)
                     .problemResults(problemResults)
                     .build());
         }
+
+        leaderboard.sort(
+                Comparator.comparing(LeaderboardRowResponse::getTotalScore).reversed()
+                        .thenComparing(LeaderboardRowResponse::getTotalPenalty)
+        );
+
+        int currentPosition = 0;
+        int displayedRank = 0;
+        Integer prevScore = null;
+        Integer prevPenalty = null;
+
+        for (LeaderboardRowResponse row : leaderboard) {
+            currentPosition++;
+            boolean tiedWithPrevious = prevScore != null
+                    && prevScore == row.getTotalScore()
+                    && prevPenalty != null
+                    && prevPenalty == row.getTotalPenalty();
+
+            if (!tiedWithPrevious) {
+                displayedRank = currentPosition;
+            }
+
+            row.setRank(displayedRank);
+            prevScore = row.getTotalScore();
+            prevPenalty = row.getTotalPenalty();
+        }
+
         return leaderboard;
     }
 

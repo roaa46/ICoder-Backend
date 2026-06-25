@@ -30,6 +30,7 @@ public interface ContestProblemRelationRepository extends JpaRepository<ContestP
     void incrementSolved(@Param("id") Long id);
 
     @Modifying
-    @Query("UPDATE ContestProblemRelation cpr SET cpr.firstAcceptedSubmission.id = :submissionId WHERE cpr.id = :id")
-    void setFirstAcceptedSubmission(@Param("id") Long id, @Param("submissionId") Long submissionId);
+    @Query("UPDATE ContestProblemRelation cpr SET cpr.firstAcceptedSubmission.id = :submissionId " +
+            "WHERE cpr.id = :id AND cpr.firstAcceptedSubmission IS NULL")
+    int setFirstAcceptedSubmission(@Param("id") Long id, @Param("submissionId") Long submissionId);
 }

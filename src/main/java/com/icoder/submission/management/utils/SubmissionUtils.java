@@ -253,14 +253,12 @@ public class SubmissionUtils {
         if (contest == null) {
             return;
         }
-
         Long userId = submission.getUser().getId();
         Long problemId = submission.getProblem().getId();
         Long contestId = contest.getId();
 
         boolean alreadySolved = submissionRepository.existsByUserIdAndProblemIdAndContestIdAndVerdict(
                 userId, problemId, contestId, SubmissionVerdict.ACCEPTED);
-
         if (alreadySolved) {
             log.info("User {} already solved problem {} in contest {}, skipping counters", userId, problemId, contestId);
             return;
@@ -274,9 +272,7 @@ public class SubmissionUtils {
 
         if (submission.getVerdict() == SubmissionVerdict.ACCEPTED) {
             contestProblemRelationRepository.incrementSolved(relation.getId());
-            if (relation.getFirstAcceptedSubmission() == null) {
-                contestProblemRelationRepository.setFirstAcceptedSubmission(relation.getId(), submission.getId());
-            }
+            contestProblemRelationRepository.setFirstAcceptedSubmission(relation.getId(), submission.getId());
         }
     }
 
