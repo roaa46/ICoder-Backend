@@ -380,6 +380,7 @@ class ContestServiceImplTest {
         @Test
         @DisplayName("should return full problem set for coordinator and set solved status")
         void viewProblemSet_shouldReturnFullProblemSet_forCoordinator() {
+
             Problem problemA = new Problem();
             problemA.setId(1L);
             problemA.setProblemTitle("Problem A");
@@ -388,38 +389,60 @@ class ContestServiceImplTest {
             problemB.setId(2L);
             problemB.setProblemTitle("Problem B");
 
+            relation1.setId(1L); // IMPORTANT
             relation1.setProblem(problemA);
+
+            relation2.setId(2L); // IMPORTANT
             relation2.setProblem(problemB);
 
             ProblemSetResponse response1 = new ProblemSetResponse();
-            response1.setTitle("Problem A");
             response1.setOrigin("Codeforces");
 
             ProblemSetResponse response2 = new ProblemSetResponse();
-            response2.setTitle("Problem B");
             response2.setOrigin("AtCoder");
 
-            contest.setProblemRelation(new LinkedHashSet<>(Set.of(relation1, relation2)));
+            contest.setProblemRelation(
+                    new LinkedHashSet<>(Arrays.asList(relation1, relation2))
+            );
 
-            // 2. Update the repository method mock
-            when(contestRepository.findByIdWithGroupAndProblems(100L)).thenReturn(Optional.of(contest));
-            when(securityUtils.getCurrentUserId()).thenReturn(10L);
+            when(contestRepository.findByIdWithGroupAndProblems(100L))
+                    .thenReturn(Optional.of(contest));
 
-            // 3. Mock the new submission repository call (Let's simulate that Problem A is solved)
-            when(submissionRepository.findSolvedProblemIdsByUserIdAndContestId(10L, 100L)).thenReturn(Set.of(1L));
+            when(securityUtils.getCurrentUserId())
+                    .thenReturn(10L);
 
-            when(contestUtils.isUserContestCoordinator(10L, group)).thenReturn(true);
-            when(contestUtils.checkIfContestRunning(contest)).thenReturn(true);
-            when(contestMapper.toProblemSetResponse(relation1)).thenReturn(response1);
-            when(contestMapper.toProblemSetResponse(relation2)).thenReturn(response2);
+            when(submissionRepository.findSolvedProblemIdsByUserIdAndContestId(10L, 100L))
+                    .thenReturn(Set.of(1L));
 
-            Set<ProblemSetResponse> result = contestService.viewProblemSet(100L);
+            when(contestUtils.isUserContestCoordinator(10L, group))
+                    .thenReturn(true);
+
+            when(contestUtils.checkIfContestRunning(contest))
+                    .thenReturn(true);
+
+            doNothing().when(contestUtils)
+                    .validateAccessWithRole(contest, true);
+
+            when(contestMapper.toProblemSetResponse(relation1))
+                    .thenReturn(response1);
+
+            when(contestMapper.toProblemSetResponse(relation2))
+                    .thenReturn(response2);
+
+            List<ProblemSetResponse> result = contestService.viewProblemSet(100L);
 
             assertEquals(2, result.size());
 
-            // Assertions include the solved status
-            assertTrue(result.stream().anyMatch(r -> "Problem A".equals(r.getTitle()) && r.isSolved()));
-            assertTrue(result.stream().anyMatch(r -> "Problem B".equals(r.getTitle()) && !r.isSolved()));
+            ProblemSetResponse first = result.get(0);
+            ProblemSetResponse second = result.get(1);
+
+            assertEquals("Problem A", first.getTitle());
+            assertTrue(first.isSolved());
+            assertEquals('A', first.getProblemNumber());
+
+            assertEquals("Problem B", second.getTitle());
+            assertFalse(second.isSolved());
+            assertEquals('B', second.getProblemNumber());
         }
 
         @Test
@@ -446,7 +469,7 @@ class ContestServiceImplTest {
             when(contestUtils.checkIfContestRunning(contest)).thenReturn(true);
             when(contestMapper.toProblemSetResponse(relation1)).thenReturn(response);
 
-            Set<ProblemSetResponse> result = contestService.viewProblemSet(100L);
+            List<ProblemSetResponse> result = contestService.viewProblemSet(100L);
 
             assertEquals(1, result.size());
 
